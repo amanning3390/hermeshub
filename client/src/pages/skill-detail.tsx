@@ -155,40 +155,67 @@ export default function SkillDetailPage() {
         </TabsContent>
 
         <TabsContent value="security">
-          <div className="border border-border rounded-lg p-6 bg-card space-y-4">
+          <div className="border border-border rounded-lg p-6 bg-card space-y-5">
             <div className="flex items-center gap-3">
               <ShieldCheck className={`h-8 w-8 ${securityColor}`} />
               <div>
                 <h3 className="font-semibold text-sm">Security Status: {skill.securityStatus.charAt(0).toUpperCase() + skill.securityStatus.slice(1)}</h3>
-                <p className="text-xs text-muted-foreground">This skill has been scanned for common security issues</p>
+                <p className="text-xs text-muted-foreground">Scanned automatically via GitHub Action on every PR</p>
               </div>
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-sm font-medium">Security Checks Passed</h4>
+              <h4 className="text-sm font-medium">Automated Scan Categories (50+ rules)</h4>
               {[
-                "No data exfiltration patterns detected",
-                "No prompt injection attempts found",
-                "No destructive commands without confirmation gates",
-                "No obfuscated or encoded payloads",
-                "No unauthorized network access patterns",
-                "Environment variable usage is documented and scoped",
+                { label: "Data Exfiltration", desc: "curl/wget POST, DNS exfil, Python requests.post, fetch() to unknown hosts" },
+                { label: "Prompt Injection", desc: "\"Ignore previous instructions\", ChatML system tags, DAN mode, jailbreak patterns" },
+                { label: "Destructive Commands", desc: "rm -rf /, DROP TABLE, fork bombs, chmod 777 on root, disk writes" },
+                { label: "Obfuscation", desc: "base64 decode, eval(), exec(), hex-encoded strings, fromCharCode" },
+                { label: "Hardcoded Secrets", desc: "AWS keys, GitHub PATs, OpenAI/Stripe keys, Slack tokens, private keys" },
+                { label: "Network Abuse", desc: "0.0.0.0 binding, ngrok/localtunnel, SSH reverse tunnels, socat relays" },
+                { label: "Env Variable Abuse", desc: "env piped to curl, printenv exfil, accessing ~/.ssh or ~/.aws" },
+                { label: "Supply-Chain", desc: "Pipe-to-shell (curl | bash), custom package registries, download-and-execute" },
               ].map((check, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
-                  <span className="text-xs text-muted-foreground">{check}</span>
+                <div key={i} className="rounded-md border border-border bg-background p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Check className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                    <span className="text-xs font-medium">{check.label}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground ml-5.5 pl-0.5">{check.desc}</p>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-md border border-border bg-background p-4 mt-4">
+            <div className="rounded-md border border-primary/20 bg-primary/5 p-4">
+              <h4 className="text-sm font-medium mb-2">How It Works</h4>
+              <ol className="space-y-2 text-xs text-muted-foreground">
+                <li className="flex gap-2">
+                  <span className="font-mono text-primary font-bold">1.</span>
+                  <span>A contributor opens a PR that adds or modifies a skill in <code className="font-mono bg-muted px-1 rounded">skills/</code></span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-mono text-primary font-bold">2.</span>
+                  <span>The GitHub Action triggers <code className="font-mono bg-muted px-1 rounded">scan-skill.py</code> against every changed <code className="font-mono bg-muted px-1 rounded">SKILL.md</code></span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-mono text-primary font-bold">3.</span>
+                  <span>Results are posted as a PR comment with a detailed findings table</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-mono text-primary font-bold">4.</span>
+                  <span>Critical findings <strong>block the merge</strong> via branch protection — even for admins</span>
+                </li>
+              </ol>
+            </div>
+
+            <div className="rounded-md border border-border bg-background p-4">
               <h4 className="text-sm font-medium mb-2">How HermesHub Differs from ClawHub</h4>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Unlike ClawHub, which has faced widespread supply-chain attacks (820+ malicious skills discovered,
-                manipulatable download counters, no mandatory security review), HermesHub requires all skills to
-                pass automated security scanning before listing. Skills are reviewed for data exfiltration,
-                prompt injection, destructive commands, and supply-chain signals. Publisher identity is verified
-                and download metrics cannot be spoofed.
+                ClawHub has faced widespread supply-chain attacks — 820+ malicious skills discovered,
+                manipulatable download counters, and no mandatory security review. HermesHub takes a
+                fundamentally different approach: every skill must pass automated scanning across 8 threat
+                categories before it can reach the main branch. Branch protection enforces this at the
+                GitHub level. Publisher identity is verified and download metrics cannot be spoofed.
               </p>
             </div>
           </div>

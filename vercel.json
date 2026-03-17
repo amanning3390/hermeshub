@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npx vite build --outDir public",
-  "outputDirectory": "public",
+  "buildCommand": "npx vite build --outDir dist",
+  "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": null,
   "rewrites": [
