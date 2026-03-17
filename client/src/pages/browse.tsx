@@ -1,13 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "wouter";
-import { Link } from "wouter";
+import { useParams, Link } from "wouter";
 import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SkillCard } from "@/components/SkillCard";
-import { apiRequest } from "@/lib/queryClient";
-import type { Skill } from "@shared/schema";
+import { getSkills } from "@/lib/skills-data";
 import { useState, useMemo } from "react";
 
 const categories = [
@@ -26,12 +22,9 @@ export default function BrowsePage() {
   const activeCategory = params.category || "all";
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: skills, isLoading } = useQuery<Skill[]>({
-    queryKey: ["/api/skills"],
-  });
+  const skills = getSkills();
 
   const filtered = useMemo(() => {
-    if (!skills) return [];
     let result = skills;
     if (activeCategory !== "all") {
       result = result.filter((s) => s.category === activeCategory);
@@ -54,11 +47,10 @@ export default function BrowsePage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-2">Browse Skills</h1>
         <p className="text-sm text-muted-foreground">
-          {skills?.length || 0} verified skills for Hermes Agent
+          {skills.length} verified skills for Hermes Agent
         </p>
       </div>
 
-      {/* Search and filters */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -73,14 +65,13 @@ export default function BrowsePage() {
         </div>
       </div>
 
-      {/* Category pills */}
       <div className="flex flex-wrap gap-2 mb-8">
         {categories.map((cat) => {
           const isActive = activeCategory === cat.name;
           const count =
             cat.name === "all"
-              ? skills?.length || 0
-              : skills?.filter((s) => s.category === cat.name).length || 0;
+              ? skills.length
+              : skills.filter((s) => s.category === cat.name).length;
           return (
             <Link key={cat.name} href={cat.name === "all" ? "/browse" : `/browse/${cat.name}`}>
               <Badge
@@ -99,14 +90,7 @@ export default function BrowsePage() {
         })}
       </div>
 
-      {/* Skills grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-36 rounded-lg" />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="text-center py-16">
           <Filter className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">No skills found matching your criteria.</p>

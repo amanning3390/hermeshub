@@ -1,37 +1,25 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Search, ArrowRight, ShieldCheck, Package, Zap, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SkillCard } from "@/components/SkillCard";
-import { apiRequest } from "@/lib/queryClient";
-import type { Skill } from "@shared/schema";
-import { useState } from "react";
+import { getSkills, getFeaturedSkills, searchSkills } from "@/lib/skills-data";
+import type { Skill } from "@/lib/skills-data";
+import { useState, useMemo } from "react";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: featured, isLoading: loadingFeatured } = useQuery<Skill[]>({
-    queryKey: ["/api/skills/featured"],
-  });
+  const featured = getFeaturedSkills();
+  const allSkills = getSkills();
 
-  const { data: allSkills } = useQuery<Skill[]>({
-    queryKey: ["/api/skills"],
-  });
-
-  const { data: searchResults } = useQuery<Skill[]>({
-    queryKey: ["/api/skills/search", searchQuery],
-    queryFn: () => apiRequest("GET", `/api/skills/search?q=${encodeURIComponent(searchQuery)}`).then(r => r.json()),
-    enabled: searchQuery.length > 1,
-  });
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-  };
-
-  const displaySkills = searchQuery.length > 1 ? searchResults : null;
+  const searchResults = useMemo(() => {
+    if (searchQuery.length > 1) {
+      return searchSkills(searchQuery);
+    }
+    return null;
+  }, [searchQuery]);
 
   return (
     <div>
@@ -52,7 +40,7 @@ export default function HomePage() {
               Security-scanned. Open standard. Community-driven.
             </p>
 
-            <form onSubmit={handleSearch} className="relative max-w-lg mx-auto mb-6">
+            <form onSubmit={(e) => e.preventDefault()} className="relative max-w-lg mx-auto mb-6">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
@@ -65,10 +53,10 @@ export default function HomePage() {
             </form>
 
             {/* Search results dropdown */}
-            {displaySkills && displaySkills.length > 0 && (
+            {searchResults && searchResults.length > 0 && (
               <div className="max-w-lg mx-auto mb-8">
                 <div className="border border-border rounded-lg bg-card divide-y divide-border overflow-hidden">
-                  {displaySkills.slice(0, 5).map((skill) => (
+                  {searchResults.slice(0, 5).map((skill) => (
                     <Link key={skill.id} href={`/skill/${skill.name}`}>
                       <div className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer flex items-center justify-between" data-testid={`search-result-${skill.name}`}>
                         <div className="text-left">
@@ -151,18 +139,9 @@ export default function HomePage() {
             </Button>
           </Link>
         </div>
-
-        {loadingFeatured ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-36 rounded-lg" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {featured?.map((skill) => <SkillCard key={skill.id} skill={skill} />)}
-          </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {featured.map((skill) => <SkillCard key={skill.id} skill={skill} />)}
+        </div>
       </section>
 
       {/* Categories */}
@@ -170,13 +149,13 @@ export default function HomePage() {
         <h2 className="text-xl font-bold mb-6">Browse by Category</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { name: "development", label: "Development", icon: "💻", count: allSkills?.filter(s => s.category === "development").length || 0 },
-            { name: "productivity", label: "Productivity", icon: "📋", count: allSkills?.filter(s => s.category === "productivity").length || 0 },
-            { name: "research", label: "Research", icon: "🔬", count: allSkills?.filter(s => s.category === "research").length || 0 },
-            { name: "devops", label: "DevOps", icon: "⚙️", count: allSkills?.filter(s => s.category === "devops").length || 0 },
-            { name: "security", label: "Security", icon: "🔒", count: allSkills?.filter(s => s.category === "security").length || 0 },
-            { name: "data", label: "Data & Analytics", icon: "📊", count: allSkills?.filter(s => s.category === "data").length || 0 },
-            { name: "communication", label: "Communication", icon: "💬", count: allSkills?.filter(s => s.category === "communication").length || 0 },
+            { name: "development", label: "Development", icon: "💻" },
+            { name: "productivity", label: "Productivity", icon: "📋" },
+            { name: "research", label: "Research", icon: "🔬" },
+            { name: "devops", label: "DevOps", icon: "⚙️" },
+            { name: "security", label: "Security", icon: "🔒" },
+            { name: "data", label: "Data & Analytics", icon: "📊" },
+            { name: "communication", label: "Communication", icon: "💬" },
           ].map((cat) => (
             <Link key={cat.name} href={`/browse/${cat.name}`}>
               <div
@@ -185,7 +164,7 @@ export default function HomePage() {
               >
                 <span className="text-xl mb-2 block">{cat.icon}</span>
                 <p className="text-sm font-medium">{cat.label}</p>
-                <p className="text-xs text-muted-foreground">{cat.count} skills</p>
+                <p className="text-xs text-muted-foreground">{allSkills.filter(s => s.category === cat.name).length} skills</p>
               </div>
             </Link>
           ))}

@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import {
   ArrowLeft, ShieldCheck, Download, Tag, Copy, Check,
@@ -8,16 +7,26 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Skill } from "@shared/schema";
-import { useState } from "react";
+import { getSkillByName, loadSkillMd } from "@/lib/skills-data";
+import { useState, useEffect } from "react";
 
 export default function SkillDetailPage() {
   const { name } = useParams<{ name: string }>();
   const [copied, setCopied] = useState(false);
+  const [skillMdContent, setSkillMdContent] = useState<string>("");
+  const [loadingMd, setLoadingMd] = useState(true);
 
-  const { data: skill, isLoading } = useQuery<Skill>({
-    queryKey: ["/api/skills", name],
-  });
+  const skill = name ? getSkillByName(name) : undefined;
+
+  useEffect(() => {
+    if (name) {
+      setLoadingMd(true);
+      loadSkillMd(name).then((content) => {
+        setSkillMdContent(content);
+        setLoadingMd(false);
+      });
+    }
+  }, [name]);
 
   const copyInstallCommand = () => {
     if (skill?.installCommand) {
@@ -26,16 +35,6 @@ export default function SkillDetailPage() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        <Skeleton className="h-8 w-48 mb-6" />
-        <Skeleton className="h-48 rounded-lg mb-6" />
-        <Skeleton className="h-96 rounded-lg" />
-      </div>
-    );
-  }
 
   if (!skill) {
     return (
@@ -139,7 +138,7 @@ export default function SkillDetailPage() {
                 size="sm"
                 className="h-7 text-xs gap-1"
                 onClick={() => {
-                  navigator.clipboard.writeText(skill.skillMd);
+                  navigator.clipboard.writeText(skillMdContent);
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
                 }}
@@ -150,7 +149,7 @@ export default function SkillDetailPage() {
               </Button>
             </div>
             <pre className="p-4 text-xs font-mono leading-relaxed overflow-x-auto whitespace-pre-wrap text-foreground/90">
-              {skill.skillMd}
+              {loadingMd ? "Loading SKILL.md..." : skillMdContent}
             </pre>
           </div>
         </TabsContent>

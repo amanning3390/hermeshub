@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, Download, Tag } from "lucide-react";
-import type { Skill } from "@shared/schema";
+import type { Skill } from "@/lib/skills-data";
 
 const categoryColors: Record<string, string> = {
   productivity: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
