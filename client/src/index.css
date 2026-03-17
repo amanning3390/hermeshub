@@ -4,47 +4,53 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE - Hermes-inspired warm tones */
+/* 
+   Nous Research / Hermes Agent Theme
+   Dark-first. Deep navy background. Electric cobalt blue accent.
+   Matches hermes-agent.nousresearch.com design language.
+*/
+
+/* LIGHT MODE — cool blue-gray with Nous blue accent */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
-  --background: 240 5% 96%;
-  --foreground: 240 10% 10%;
-  --border: 240 5% 87%;
-  --card: 240 5% 98%;
-  --card-foreground: 240 10% 10%;
-  --card-border: 240 5% 90%;
-  --sidebar: 240 5% 94%;
-  --sidebar-foreground: 240 10% 10%;
-  --sidebar-border: 240 5% 88%;
-  --sidebar-primary: 265 60% 50%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 5% 86%;
-  --sidebar-accent-foreground: 240 10% 10%;
-  --sidebar-ring: 265 60% 50%;
-  --popover: 240 5% 97%;
-  --popover-foreground: 240 10% 10%;
-  --popover-border: 240 5% 87%;
-  --primary: 265 60% 50%;
+  --background: 225 20% 95%;
+  --foreground: 228 25% 10%;
+  --border: 225 15% 86%;
+  --card: 225 20% 98%;
+  --card-foreground: 228 25% 10%;
+  --card-border: 225 15% 89%;
+  --sidebar: 225 20% 93%;
+  --sidebar-foreground: 228 25% 10%;
+  --sidebar-border: 225 15% 87%;
+  --sidebar-primary: 228 90% 55%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 225 15% 85%;
+  --sidebar-accent-foreground: 228 25% 10%;
+  --sidebar-ring: 228 90% 55%;
+  --popover: 225 20% 97%;
+  --popover-foreground: 228 25% 10%;
+  --popover-border: 225 15% 86%;
+  --primary: 228 90% 55%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 240 5% 90%;
-  --secondary-foreground: 240 10% 10%;
-  --muted: 240 5% 91%;
-  --muted-foreground: 240 5% 40%;
-  --accent: 42 90% 55%;
-  --accent-foreground: 240 10% 10%;
+  --secondary: 225 15% 89%;
+  --secondary-foreground: 228 25% 10%;
+  --muted: 225 15% 90%;
+  --muted-foreground: 225 10% 40%;
+  --accent: 200 80% 50%;
+  --accent-foreground: 0 0% 100%;
   --destructive: 0 84% 42%;
   --destructive-foreground: 0 0% 98%;
-  --input: 240 5% 75%;
-  --ring: 265 60% 50%;
-  --chart-1: 265 60% 50%;
-  --chart-2: 42 90% 55%;
-  --chart-3: 173 58% 39%;
+  --input: 225 15% 75%;
+  --ring: 228 90% 55%;
+  --chart-1: 228 90% 55%;
+  --chart-2: 200 80% 50%;
+  --chart-3: 145 60% 42%;
   --chart-4: 340 65% 50%;
-  --chart-5: 200 70% 50%;
+  --chart-5: 260 60% 55%;
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --radius: .5rem;
@@ -75,46 +81,47 @@
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
+/* DARK MODE — Hermes Agent deep navy with electric cobalt */
 .dark {
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
-  --background: 250 15% 8%;
-  --foreground: 240 5% 95%;
-  --border: 250 10% 18%;
-  --card: 250 12% 11%;
-  --card-foreground: 240 5% 95%;
-  --card-border: 250 10% 16%;
-  --sidebar: 250 12% 10%;
-  --sidebar-foreground: 240 5% 95%;
-  --sidebar-border: 250 10% 16%;
-  --sidebar-primary: 265 65% 60%;
+  --background: 230 40% 6%;
+  --foreground: 228 30% 92%;
+  --border: 228 25% 16%;
+  --card: 230 35% 9%;
+  --card-foreground: 228 30% 92%;
+  --card-border: 228 25% 14%;
+  --sidebar: 230 35% 8%;
+  --sidebar-foreground: 228 30% 92%;
+  --sidebar-border: 228 25% 14%;
+  --sidebar-primary: 228 85% 62%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 250 10% 18%;
-  --sidebar-accent-foreground: 240 5% 95%;
-  --sidebar-ring: 265 65% 60%;
-  --popover: 250 12% 12%;
-  --popover-foreground: 240 5% 95%;
-  --popover-border: 250 10% 18%;
-  --primary: 265 65% 60%;
+  --sidebar-accent: 228 25% 16%;
+  --sidebar-accent-foreground: 228 30% 92%;
+  --sidebar-ring: 228 85% 62%;
+  --popover: 230 35% 10%;
+  --popover-foreground: 228 30% 92%;
+  --popover-border: 228 25% 16%;
+  --primary: 228 85% 62%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 250 10% 18%;
-  --secondary-foreground: 240 5% 95%;
-  --muted: 250 10% 20%;
-  --muted-foreground: 240 5% 55%;
-  --accent: 42 85% 55%;
-  --accent-foreground: 240 10% 10%;
+  --secondary: 228 25% 16%;
+  --secondary-foreground: 228 30% 92%;
+  --muted: 228 20% 18%;
+  --muted-foreground: 228 15% 55%;
+  --accent: 200 80% 55%;
+  --accent-foreground: 0 0% 100%;
   --destructive: 0 84% 50%;
   --destructive-foreground: 0 0% 98%;
-  --input: 250 10% 28%;
-  --ring: 265 65% 60%;
-  --chart-1: 265 65% 65%;
-  --chart-2: 42 85% 60%;
-  --chart-3: 173 58% 55%;
+  --input: 228 20% 24%;
+  --ring: 228 85% 62%;
+  --chart-1: 228 85% 65%;
+  --chart-2: 200 80% 58%;
+  --chart-3: 145 60% 55%;
   --chart-4: 340 65% 60%;
-  --chart-5: 200 70% 60%;
+  --chart-5: 260 60% 65%;
   --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
   --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
   --shadow-sm: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 1px 2px -1px hsl(0 0% 0% / 0.00);
