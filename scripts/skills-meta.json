@@ -103,5 +103,12 @@
     "featured": true,
     "installCount": 276,
     "category": "agents"
+  },
+  "paperclip": {
+    "displayName": "Paperclip",
+    "description": "Open-source orchestration for zero-human companies. Coordinate teams of AI agents (OpenClaw, Claude Code, Codex, Cursor) with org charts, goals, budgets, governance, and heartbeat-driven execution. Manage business goals from a dashboard — not pull requests.",
+    "featured": true,
+    "installCount": 645,
+    "category": "agents"
   }
 }
