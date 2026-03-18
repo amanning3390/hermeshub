@@ -4,11 +4,7 @@
   "outputDirectory": "dist/public",
   "installCommand": "npm install",
   "framework": null,
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "@vercel/node@3.2.0"
-    }
-  },
+
   "headers": [
     {
       "source": "/og-image.png",
