@@ -20,8 +20,17 @@ jobs:
         with:
           node-version: '20'
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Run sync script
         run: node scripts/sync-skills.js
+
+      - name: Regenerate OG image with current skill count
+        run: |
+          pip install Pillow
+          python scripts/generate-og.py
 
       - name: Check for changes
         id: changes
@@ -33,6 +42,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add client/src/lib/skills-data.ts client/index.html client/public/sitemap.xml
-          git commit -m "chore: auto-sync skills data [skip ci]"
+          git add client/src/lib/skills-data.ts client/index.html client/public/sitemap.xml client/public/og-image.png
+          git commit -m "chore: auto-sync skills data + OG image [skip ci]"
           git push

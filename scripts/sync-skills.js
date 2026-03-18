@@ -14,6 +14,7 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync } from "fs";
 import { join, resolve } from "path";
 import { fileURLToPath } from "url";
+import { execSync } from "child_process";
 
 const __dirname = resolve(fileURLToPath(import.meta.url), "..");
 const ROOT = resolve(__dirname, "..");
@@ -296,6 +297,27 @@ ${skillUrls}
     }
     writeFileSync(META_FILE, JSON.stringify(metaObj, null, 2) + "\n", "utf-8");
     console.log(`📝 Created ${META_FILE} — edit this to customize featured/installCount/displayName`);
+  }
+
+  // ── Regenerate OG image with current skill count ───────────────────────
+  const ogScript = join(ROOT, "scripts/generate-og.py");
+  if (existsSync(ogScript)) {
+    try {
+      console.log(`\n🖼 Regenerating OG image with ${count} skills...`);
+      execSync(`python3 "${ogScript}" ${count}`, {
+        cwd: ROOT,
+        stdio: "inherit",
+      });
+    } catch (_) {
+      try {
+        execSync(`python "${ogScript}" ${count}`, {
+          cwd: ROOT,
+          stdio: "inherit",
+        });
+      } catch (_e) {
+        console.warn("⚠ OG image generation skipped (Python/Pillow not available)");
+      }
+    }
   }
 
   console.log(`\n✅ Sync complete: ${count} skills`);
