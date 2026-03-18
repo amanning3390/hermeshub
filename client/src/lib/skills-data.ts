@@ -25,6 +25,24 @@ const BASE_INSTALL = "hermes skills install github:amanning3390/hermeshub/skills
 export const skills: Skill[] = [
   {
     id: 1,
+    name: "agent-hardening",
+    displayName: "Agent Hardening",
+    description: "Comprehensive security hardening for Hermes Agent. Detects prompt injection, unicode smuggling, hidden directives, supply-chain skill poisoning, credential exposure, and memory manipulation. 10 threat categories aligned with OWASP LLM Top 10.",
+    category: "security",
+    author: "hermeshub",
+    version: "1.0.0",
+    license: "MIT",
+    compatibility: "Hermes Agent 1.0+",
+    tags: ["security","hardening","prompt-injection","unicode","supply-chain","OWASP","detection","defense","audit"],
+    installCount: 731,
+    securityStatus: "verified",
+    featured: true,
+    skillMd: "",
+    repoUrl: "https://github.com/amanning3390/hermeshub",
+    installCommand: BASE_INSTALL + "agent-hardening",
+  },
+  {
+    id: 2,
     name: "api-builder",
     displayName: "API Builder",
     description: "Scaffold REST and GraphQL APIs with automatic OpenAPI documentation. Generates routes, middleware, validation schemas, and test suites from natural language descriptions.",
@@ -42,7 +60,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "api-builder",
   },
   {
-    id: 2,
+    id: 3,
     name: "arxiv-watcher",
     displayName: "ArXiv Watcher",
     description: "Monitor ArXiv for new papers matching your research interests. Automatic summarization, citation tracking, and trend analysis. Set up keyword alerts and get daily digests.",
@@ -60,7 +78,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "arxiv-watcher",
   },
   {
-    id: 3,
+    id: 4,
     name: "data-analyst",
     displayName: "Data Analyst",
     description: "SQL queries, spreadsheet analysis, statistical methods, and chart generation. Handles CSV/JSON/Excel files, builds visualizations, and produces decision-ready reports with actionable insights.",
@@ -78,7 +96,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "data-analyst",
   },
   {
-    id: 4,
+    id: 5,
     name: "diagram-maker",
     displayName: "Diagram Maker",
     description: "Generate syntactically correct Mermaid diagrams from natural language. Covers flowcharts, sequence diagrams, class diagrams, ER diagrams, state machines, Gantt charts, and more. Strict syntax rules eliminate the parsing failures that plague LLM-generated diagrams.",
@@ -96,7 +114,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "diagram-maker",
   },
   {
-    id: 5,
+    id: 6,
     name: "docker-manager",
     displayName: "Docker Manager",
     description: "Build, run, and manage Docker containers and images. Handles Dockerfile creation, multi-stage builds, container lifecycle, volume management, and docker-compose workflows.",
@@ -114,7 +132,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "docker-manager",
   },
   {
-    id: 6,
+    id: 7,
     name: "github-workflow",
     displayName: "GitHub Workflow",
     description: "Complete GitHub workflow management — clone repos, create branches, commit, push, open PRs, review code, manage issues, and handle release workflows. Works with the GitHub CLI.",
@@ -132,7 +150,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "github-workflow",
   },
   {
-    id: 7,
+    id: 8,
     name: "google-workspace",
     displayName: "Google Workspace",
     description: "Unified access to Gmail, Google Calendar, Drive, Docs, Sheets, and Contacts. Read emails, manage calendar events, search files, create documents, and analyze spreadsheets — all from chat or CLI.",
@@ -150,7 +168,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "google-workspace",
   },
   {
-    id: 8,
+    id: 9,
     name: "hermes-workspace",
     displayName: "Hermes Workspace",
     description: "Native web workspace UI for Hermes Agent — chat with real-time SSE streaming, file browser, terminal, memory editor, skills browser, and 8-theme system. Install as a PWA on desktop or mobile. Built by outsourc-e.",
@@ -168,7 +186,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "hermes-workspace",
   },
   {
-    id: 9,
+    id: 10,
     name: "notion-integration",
     displayName: "Notion Integration",
     description: "Read, create, and manage Notion pages, databases, and workspaces. Search across your knowledge base, create structured documents, and sync content between Notion and local files.",
@@ -186,7 +204,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "notion-integration",
   },
   {
-    id: 10,
+    id: 11,
     name: "paperclip",
     displayName: "Paperclip",
     description: "Open-source orchestration for zero-human companies. Coordinate teams of AI agents (OpenClaw, Claude Code, Codex, Cursor) with org charts, goals, budgets, governance, and heartbeat-driven execution. Manage business goals from a dashboard — not pull requests.",
@@ -204,7 +222,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "paperclip",
   },
   {
-    id: 11,
+    id: 12,
     name: "project-planner",
     displayName: "Project Planner",
     description: "Break down projects into tasks, estimate timelines, assign priorities, and track progress. Generates Gantt charts, dependency graphs, and weekly status reports.",
@@ -222,7 +240,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "project-planner",
   },
   {
-    id: 12,
+    id: 13,
     name: "scrapling",
     displayName: "Scrapling",
     description: "Undetectable, adaptive, high-performance Python web data extraction. Survives website structure changes, bypasses anti-bot systems (Cloudflare, WAFs), outperforms BeautifulSoup/Scrapy. Includes stealth browser fetching, MCP AI server, and interactive CLI.",
@@ -240,7 +258,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "scrapling",
   },
   {
-    id: 13,
+    id: 14,
     name: "security-auditor",
     displayName: "Security Auditor",
     description: "Scan code for vulnerabilities (OWASP Top 10), check for secret leaks, audit dependencies, review configurations, and generate security reports. Includes skill scanning for Hermes agents.",
@@ -258,7 +276,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "security-auditor",
   },
   {
-    id: 14,
+    id: 15,
     name: "slack-bot",
     displayName: "Slack Bot",
     description: "Send messages, monitor channels, react to posts, manage threads, and handle alerts through Slack. Supports scheduled messages, channel management, and team notifications.",
@@ -276,7 +294,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "slack-bot",
   },
   {
-    id: 15,
+    id: 16,
     name: "synapse-swarm",
     displayName: "Synapse Swarm",
     description: "Multi-agent cognitive swarm with three chained AI agents — ZERO (vision), NOVA (tactical), TITAN (arbiter) — that collaboratively analyze visual input through a Streamlit dashboard. Supports voice and text commands with TTS output. Built by devorun.",
@@ -294,7 +312,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "synapse-swarm",
   },
   {
-    id: 16,
+    id: 17,
     name: "test-runner",
     displayName: "Test Runner",
     description: "Run and manage test suites across multiple frameworks (Jest, pytest, Go test, Mocha). Auto-detect test files, generate coverage reports, fix failing tests, and set up CI configurations.",
@@ -312,7 +330,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "test-runner",
   },
   {
-    id: 17,
+    id: 18,
     name: "web-researcher",
     displayName: "Web Researcher",
     description: "Advanced web research agent that searches, extracts, and synthesizes information from multiple sources. Supports DuckDuckGo, Tavily, and direct URL extraction with structured output formatting.",

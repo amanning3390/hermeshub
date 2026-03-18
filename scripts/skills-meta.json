@@ -117,5 +117,12 @@
     "featured": true,
     "installCount": 589,
     "category": "data"
+  },
+  "agent-hardening": {
+    "displayName": "Agent Hardening",
+    "description": "Comprehensive security hardening for Hermes Agent. Detects prompt injection, unicode smuggling, hidden directives, supply-chain skill poisoning, credential exposure, and memory manipulation. 10 threat categories aligned with OWASP LLM Top 10.",
+    "featured": true,
+    "installCount": 731,
+    "category": "security"
   }
 }
