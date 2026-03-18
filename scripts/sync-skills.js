@@ -239,8 +239,13 @@ export function searchSkills(query: string): Skill[] {
       /(\d+) verified skills/g,
       `${count} verified skills`
     );
+    // Cache-bust OG image URL so social platforms re-fetch on count change
+    html = html.replace(
+      /og-image\.png(\?v=\d+)?/g,
+      `og-image.png?v=${count}`
+    );
     writeFileSync(INDEX_HTML, html, "utf-8");
-    console.log(`📝 Updated skill count in ${INDEX_HTML} → ${count}`);
+    console.log(`📝 Updated skill count in ${INDEX_HTML} → ${count} (OG image cache-busted)`);
   }
 
   // ── Update sitemap.xml ─────────────────────────────────────────────────
