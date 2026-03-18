@@ -110,5 +110,12 @@
     "featured": true,
     "installCount": 645,
     "category": "agents"
+  },
+  "scrapling": {
+    "displayName": "Scrapling",
+    "description": "Undetectable, adaptive, high-performance Python web data extraction. Survives website structure changes, bypasses anti-bot systems (Cloudflare, WAFs), outperforms BeautifulSoup/Scrapy. Includes stealth browser fetching, MCP AI server, and interactive CLI.",
+    "featured": true,
+    "installCount": 589,
+    "category": "data"
   }
 }
