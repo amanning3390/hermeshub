@@ -236,6 +236,24 @@ export const skills: Skill[] = [
     repoUrl: "https://github.com/amanning3390/hermeshub",
     installCommand: BASE_INSTALL + "api-builder",
   },
+  {
+    id: 13,
+    name: "diagram-maker",
+    displayName: "Diagram Maker",
+    description: "Generate syntactically correct Mermaid diagrams from natural language. Covers flowcharts, sequence diagrams, class diagrams, ER diagrams, state machines, Gantt charts, and more. Strict syntax rules eliminate the parsing failures that plague LLM-generated diagrams.",
+    category: "documentation",
+    author: "hermeshub",
+    version: "1.0.0",
+    license: "MIT",
+    compatibility: "Any Markdown renderer with Mermaid support (GitHub, Obsidian, Notion, VS Code)",
+    tags: ["mermaid", "diagrams", "flowchart", "sequence-diagram", "architecture", "visualization", "markdown", "documentation"],
+    installCount: 412,
+    securityStatus: "verified",
+    featured: true,
+    skillMd: "",
+    repoUrl: "https://github.com/amanning3390/hermeshub",
+    installCommand: BASE_INSTALL + "diagram-maker",
+  },
 ];
 
 // Load SKILL.md content from GitHub when viewing a specific skill
