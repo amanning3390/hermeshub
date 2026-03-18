@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npx vite build",
+  "buildCommand": "node scripts/sync-skills.js && npx vite build",
   "outputDirectory": "dist/public",
   "installCommand": "npm install",
   "framework": null,

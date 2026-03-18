@@ -1,0 +1,93 @@
+{
+  "google-workspace": {
+    "displayName": "Google Workspace",
+    "description": "Unified access to Gmail, Google Calendar, Drive, Docs, Sheets, and Contacts. Read emails, manage calendar events, search files, create documents, and analyze spreadsheets — all from chat or CLI.",
+    "featured": true,
+    "installCount": 847,
+    "category": "productivity"
+  },
+  "web-researcher": {
+    "displayName": "Web Researcher",
+    "description": "Advanced web research agent that searches, extracts, and synthesizes information from multiple sources. Supports DuckDuckGo, Tavily, and direct URL extraction with structured output formatting.",
+    "featured": true,
+    "installCount": 723,
+    "category": "research"
+  },
+  "github-workflow": {
+    "displayName": "GitHub Workflow",
+    "description": "Complete GitHub workflow management — clone repos, create branches, commit, push, open PRs, review code, manage issues, and handle release workflows. Works with the GitHub CLI.",
+    "featured": true,
+    "installCount": 691,
+    "category": "development"
+  },
+  "docker-manager": {
+    "displayName": "Docker Manager",
+    "description": "Build, run, and manage Docker containers and images. Handles Dockerfile creation, multi-stage builds, container lifecycle, volume management, and docker-compose workflows.",
+    "featured": false,
+    "installCount": 534,
+    "category": "devops"
+  },
+  "data-analyst": {
+    "displayName": "Data Analyst",
+    "description": "SQL queries, spreadsheet analysis, statistical methods, and chart generation. Handles CSV/JSON/Excel files, builds visualizations, and produces decision-ready reports with actionable insights.",
+    "featured": true,
+    "installCount": 812,
+    "category": "data"
+  },
+  "security-auditor": {
+    "displayName": "Security Auditor",
+    "description": "Scan code for vulnerabilities (OWASP Top 10), check for secret leaks, audit dependencies, review configurations, and generate security reports. Includes skill scanning for Hermes agents.",
+    "featured": true,
+    "installCount": 507,
+    "category": "security"
+  },
+  "notion-integration": {
+    "displayName": "Notion Integration",
+    "description": "Read, create, and manage Notion pages, databases, and workspaces. Search across your knowledge base, create structured documents, and sync content between Notion and local files.",
+    "featured": false,
+    "installCount": 389,
+    "category": "productivity"
+  },
+  "slack-bot": {
+    "displayName": "Slack Bot",
+    "description": "Send messages, monitor channels, react to posts, manage threads, and handle alerts through Slack. Supports scheduled messages, channel management, and team notifications.",
+    "featured": false,
+    "installCount": 378,
+    "category": "communication"
+  },
+  "test-runner": {
+    "displayName": "Test Runner",
+    "description": "Run and manage test suites across multiple frameworks (Jest, pytest, Go test, Mocha). Auto-detect test files, generate coverage reports, fix failing tests, and set up CI configurations.",
+    "featured": false,
+    "installCount": 445,
+    "category": "development"
+  },
+  "project-planner": {
+    "displayName": "Project Planner",
+    "description": "Break down projects into tasks, estimate timelines, assign priorities, and track progress. Generates Gantt charts, dependency graphs, and weekly status reports.",
+    "featured": false,
+    "installCount": 367,
+    "category": "productivity"
+  },
+  "arxiv-watcher": {
+    "displayName": "ArXiv Watcher",
+    "description": "Monitor ArXiv for new papers matching your research interests. Automatic summarization, citation tracking, and trend analysis. Set up keyword alerts and get daily digests.",
+    "featured": false,
+    "installCount": 298,
+    "category": "research"
+  },
+  "api-builder": {
+    "displayName": "API Builder",
+    "description": "Scaffold REST and GraphQL APIs with automatic OpenAPI documentation. Generates routes, middleware, validation schemas, and test suites from natural language descriptions.",
+    "featured": false,
+    "installCount": 356,
+    "category": "development"
+  },
+  "diagram-maker": {
+    "displayName": "Diagram Maker",
+    "description": "Generate syntactically correct Mermaid diagrams from natural language. Covers flowcharts, sequence diagrams, class diagrams, ER diagrams, state machines, Gantt charts, and more. Strict syntax rules eliminate the parsing failures that plague LLM-generated diagrams.",
+    "featured": true,
+    "installCount": 412,
+    "category": "documentation"
+  }
+}

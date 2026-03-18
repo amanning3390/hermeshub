@@ -1,0 +1,38 @@
+name: Sync Skills Data
+
+# Runs when skills are added/changed on main — auto-updates the website data files
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**/SKILL.md'
+      - 'scripts/skills-meta.json'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run sync script
+        run: node scripts/sync-skills.js
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push updated files
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add client/src/lib/skills-data.ts client/index.html client/public/sitemap.xml
+          git commit -m "chore: auto-sync skills data [skip ci]"
+          git push

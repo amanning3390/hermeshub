@@ -5,6 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
+    "sync": "node scripts/sync-skills.js",
+    "prebuild": "node scripts/sync-skills.js",
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",

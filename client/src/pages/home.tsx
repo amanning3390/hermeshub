@@ -156,6 +156,7 @@ export default function HomePage() {
             { name: "security", label: "Security", icon: "🔒" },
             { name: "data", label: "Data & Analytics", icon: "📊" },
             { name: "communication", label: "Communication", icon: "💬" },
+            { name: "documentation", label: "Documentation", icon: "📝" },
           ].map((cat) => (
             <Link key={cat.name} href={`/browse/${cat.name}`}>
               <div
