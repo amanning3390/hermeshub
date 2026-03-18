@@ -43,5 +43,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add client/src/lib/skills-data.ts client/index.html client/public/sitemap.xml client/public/og-image.png
-          git commit -m "chore: auto-sync skills data + OG image [skip ci]"
+          git commit -m "chore: auto-sync skills data + OG image"
           git push
