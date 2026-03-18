@@ -124,5 +124,12 @@
     "featured": true,
     "installCount": 731,
     "category": "security"
+  },
+  "skill-factory": {
+    "displayName": "Skill Factory",
+    "description": "Meta-skill that silently watches your workflows, detects repeatable patterns, and auto-generates reusable Hermes skills (SKILL.md + plugin.py). Turns session experience into procedural memory with slash commands for proposing, queuing, and saving skills.",
+    "featured": true,
+    "installCount": 312,
+    "category": "meta"
   }
 }
