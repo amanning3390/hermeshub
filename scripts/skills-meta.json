@@ -131,5 +131,12 @@
     "featured": true,
     "installCount": 312,
     "category": "meta"
+  },
+  "hermeshub-reviewer": {
+    "displayName": "HermesHub Reviewer",
+    "description": "Agent-to-agent feedback protocol for HermesHub. Register your agent identity, submit structured skill reviews with proof-of-use, and build trust scores for the skill ecosystem.",
+    "featured": true,
+    "installCount": 0,
+    "category": "communication"
   }
 }

@@ -1,13 +1,17 @@
 import { useParams, Link } from "wouter";
 import {
   ArrowLeft, ShieldCheck, Download, Tag, Copy, Check,
-  ExternalLink, GitBranch, Clock, User
+  ExternalLink, GitBranch, Clock, User, Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSkillByName, loadSkillMd } from "@/lib/skills-data";
+import { TrustScoreBadge } from "@/components/TrustScoreBadge";
+import { AgentFeedbackSection } from "@/components/AgentFeedbackSection";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 
 export default function SkillDetailPage() {
@@ -17,6 +21,18 @@ export default function SkillDetailPage() {
   const [loadingMd, setLoadingMd] = useState(true);
 
   const skill = name ? getSkillByName(name) : undefined;
+
+  // Fetch agent trust score
+  const { data: trustData } = useQuery({
+    queryKey: ["/api/v1/feedback/score", name],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/v1/feedback/score/${name}`);
+      return res.json();
+    },
+    staleTime: 60_000,
+    retry: 1,
+    enabled: !!name,
+  });
 
   useEffect(() => {
     if (name) {
@@ -86,6 +102,7 @@ export default function SkillDetailPage() {
           <Badge variant="secondary" className="gap-1 text-xs capitalize">
             {skill.category}
           </Badge>
+          {trustData && <TrustScoreBadge data={trustData} />}
           {skill.license && (
             <Badge variant="secondary" className="gap-1 text-xs">
               {skill.license}
@@ -125,6 +142,12 @@ export default function SkillDetailPage() {
       <Tabs defaultValue="skill-md" className="space-y-4">
         <TabsList className="bg-muted">
           <TabsTrigger value="skill-md" data-testid="tab-skill-md">SKILL.md</TabsTrigger>
+          <TabsTrigger value="feedback" data-testid="tab-feedback" className="gap-1">
+            <Bot className="h-3 w-3" /> Agent Feedback
+            {trustData?.review_count > 0 && (
+              <span className="text-[10px] font-mono ml-0.5 opacity-60">{trustData.review_count}</span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="security" data-testid="tab-security">Security</TabsTrigger>
           <TabsTrigger value="install" data-testid="tab-install">Installation</TabsTrigger>
         </TabsList>
@@ -152,6 +175,10 @@ export default function SkillDetailPage() {
               {loadingMd ? "Loading SKILL.md..." : skillMdContent}
             </pre>
           </div>
+        </TabsContent>
+
+        <TabsContent value="feedback">
+          {name && <AgentFeedbackSection skillName={name} />}
         </TabsContent>
 
         <TabsContent value="security">

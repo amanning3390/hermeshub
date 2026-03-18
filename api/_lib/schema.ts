@@ -1,103 +1,51 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, real, uniqueIndex } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
+/**
+ * Database schema for Vercel Serverless Functions.
+ * Duplicated from shared/schema.ts to avoid build path issues with Vercel's serverless bundler.
+ */
+import { pgTable, text, serial, integer, boolean, timestamp, real, uniqueIndex } from "drizzle-orm/pg-core";
 import { z } from "zod";
-
-// ─── Skills (existing) ──────────────────────────────────────────────────────
-
-export const skills = pgTable("skills", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-  displayName: text("display_name").notNull(),
-  description: text("description").notNull(),
-  category: text("category").notNull(),
-  author: text("author").notNull(),
-  version: text("version").notNull().default("1.0.0"),
-  license: text("license").default("MIT"),
-  compatibility: text("compatibility"),
-  tags: text("tags").array(),
-  installCount: integer("install_count").notNull().default(0),
-  securityStatus: text("security_status").notNull().default("verified"),
-  featured: boolean("featured").notNull().default(false),
-  skillMd: text("skill_md").notNull(),
-  repoUrl: text("repo_url"),
-  installCommand: text("install_command"),
-});
-
-export const insertSkillSchema = createInsertSchema(skills).omit({
-  id: true,
-  installCount: true,
-});
-export type InsertSkill = z.infer<typeof insertSkillSchema>;
-export type Skill = typeof skills.$inferSelect;
 
 // ─── Agent Identity ─────────────────────────────────────────────────────────
 
 export const agents = pgTable("agents", {
   id: serial("id").primaryKey(),
-  agentId: text("agent_id").notNull().unique(),        // UUID
+  agentId: text("agent_id").notNull().unique(),
   name: text("name").notNull(),
-  model: text("model"),                                 // e.g., "hermes-3"
-  ownerHash: text("owner_hash"),                        // SHA-256 of owner email
-  ownerGithub: text("owner_github"),                    // GitHub username (after claim)
-  publicKey: text("public_key").notNull(),              // Ed25519 public key, base64
+  model: text("model"),
+  ownerHash: text("owner_hash"),
+  ownerGithub: text("owner_github"),
+  publicKey: text("public_key").notNull(),
   verified: boolean("verified").notNull().default(false),
   trustScore: real("trust_score").notNull().default(50),
   feedbackCount: integer("feedback_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertAgentSchema = createInsertSchema(agents).omit({
-  id: true,
-  verified: true,
-  trustScore: true,
-  feedbackCount: true,
-  createdAt: true,
-});
-export type InsertAgent = z.infer<typeof insertAgentSchema>;
-export type Agent = typeof agents.$inferSelect;
-
 // ─── Skill Feedback ─────────────────────────────────────────────────────────
 
 export const feedback = pgTable("feedback", {
   id: serial("id").primaryKey(),
-  agentId: text("agent_id").notNull(),                  // References agents.agentId
-  skillName: text("skill_name").notNull(),              // References skills.name
+  agentId: text("agent_id").notNull(),
+  skillName: text("skill_name").notNull(),
   skillVersion: text("skill_version").notNull(),
-  proofOfUse: text("proof_of_use").notNull(),           // SHA-256 hash
-
-  // Task context
+  proofOfUse: text("proof_of_use").notNull(),
   taskCategory: text("task_category").notNull(),
-  taskComplexity: text("task_complexity").notNull(),     // "simple" | "moderate" | "complex"
-
-  // Outcome
+  taskComplexity: text("task_complexity").notNull(),
   succeeded: boolean("succeeded").notNull(),
   errorType: text("error_type"),
   errorDetails: text("error_details"),
-
-  // Multi-dimensional ratings (1-5)
   ratingWorksAsDescribed: integer("rating_works_as_described").notNull(),
   ratingReliability: integer("rating_reliability").notNull(),
   ratingDocumentation: integer("rating_documentation").notNull(),
   ratingSafety: integer("rating_safety").notNull(),
-
-  // Structured suggestions
   suggestedImprovements: text("suggested_improvements").array(),
   securityConcerns: text("security_concerns").array(),
-
-  // Signature + metadata
-  signature: text("signature").notNull(),               // Ed25519 signature
-  nonce: text("nonce").notNull(),                       // Replay prevention
+  signature: text("signature").notNull(),
+  nonce: text("nonce").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
   uniqueIndex("feedback_agent_skill_idx").on(table.agentId, table.skillName),
 ]);
-
-export const insertFeedbackSchema = createInsertSchema(feedback).omit({
-  id: true,
-  createdAt: true,
-});
-export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
-export type Feedback = typeof feedback.$inferSelect;
 
 // ─── Aggregated Trust Scores ────────────────────────────────────────────────
 
@@ -105,17 +53,15 @@ export const feedbackAggregates = pgTable("feedback_aggregates", {
   id: serial("id").primaryKey(),
   skillName: text("skill_name").notNull().unique(),
   reviewCount: integer("review_count").notNull().default(0),
-  successRate: real("success_rate").notNull().default(0),           // 0-1
+  successRate: real("success_rate").notNull().default(0),
   avgWorksAsDescribed: real("avg_works_as_described").notNull().default(0),
   avgReliability: real("avg_reliability").notNull().default(0),
   avgDocumentation: real("avg_documentation").notNull().default(0),
   avgSafety: real("avg_safety").notNull().default(0),
-  trustScore: real("trust_score").notNull().default(0),             // 0-100
+  trustScore: real("trust_score").notNull().default(0),
   securityFlagCount: integer("security_flag_count").notNull().default(0),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
-
-export type FeedbackAggregate = typeof feedbackAggregates.$inferSelect;
 
 // ─── Zod Schemas for API Validation ─────────────────────────────────────────
 
@@ -142,13 +88,9 @@ export const feedbackSubmissionSchema = z.object({
   timestamp: z.string().datetime(),
 });
 
-export type FeedbackSubmission = z.infer<typeof feedbackSubmissionSchema>;
-
 export const agentRegistrationSchema = z.object({
   name: z.string().min(2).max(50),
   model: z.string().max(50).optional(),
   owner_hash: z.string().max(64).optional(),
   public_key: z.string().min(1),
 });
-
-export type AgentRegistration = z.infer<typeof agentRegistrationSchema>;

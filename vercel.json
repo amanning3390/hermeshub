@@ -4,15 +4,32 @@
   "outputDirectory": "dist/public",
   "installCommand": "npm install",
   "framework": null,
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node@3.2.0"
+    }
+  },
   "headers": [
     {
       "source": "/og-image.png",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]
+    },
+    {
+      "source": "/api/v1/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=60, stale-while-revalidate=120" }
+      ]
     }
   ],
   "rewrites": [
+    { "source": "/api/v1/agents/register", "destination": "/api/v1/agents/register" },
+    { "source": "/api/v1/agents/:agentId", "destination": "/api/v1/agents/[agentId]" },
+    { "source": "/api/v1/feedback/score/:skill", "destination": "/api/v1/feedback/score/[skill]" },
+    { "source": "/api/v1/feedback/stats", "destination": "/api/v1/feedback/stats" },
+    { "source": "/api/v1/feedback/:skill", "destination": "/api/v1/feedback/[skill]" },
+    { "source": "/api/v1/feedback", "destination": "/api/v1/feedback/index" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

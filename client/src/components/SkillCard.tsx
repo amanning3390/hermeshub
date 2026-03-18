@@ -1,6 +1,9 @@
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, Download, Tag } from "lucide-react";
+import { ShieldCheck, Download, Tag, Bot } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { TrustScoreBadge } from "./TrustScoreBadge";
 import type { Skill } from "@/lib/skills-data";
 
 const categoryColors: Record<string, string> = {
@@ -24,6 +27,16 @@ const categoryIcons: Record<string, string> = {
 };
 
 export function SkillCard({ skill }: { skill: Skill }) {
+  const { data: trustData } = useQuery({
+    queryKey: ["/api/v1/feedback/score", skill.name],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/v1/feedback/score/${skill.name}`);
+      return res.json();
+    },
+    staleTime: 120_000,
+    retry: 1,
+  });
+
   return (
     <Link href={`/skill/${skill.name}`}>
       <div
@@ -37,9 +50,14 @@ export function SkillCard({ skill }: { skill: Skill }) {
               {skill.displayName}
             </h3>
           </div>
-          {skill.securityStatus === "verified" && (
-            <ShieldCheck className="h-4 w-4 text-green-500 flex-shrink-0" />
-          )}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {trustData && trustData.review_count > 0 && (
+              <TrustScoreBadge data={trustData} compact />
+            )}
+            {skill.securityStatus === "verified" && (
+              <ShieldCheck className="h-4 w-4 text-green-500" />
+            )}
+          </div>
         </div>
 
         <p className="text-xs text-muted-foreground leading-relaxed mb-4 line-clamp-2">
