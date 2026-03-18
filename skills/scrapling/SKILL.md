@@ -46,9 +46,9 @@ pip install "scrapling[all]" && scrapling install
 ```python
 from scrapling.fetchers import StealthyFetcher
 
-# Fetch and parse with adaptive selectors
-page = StealthyFetcher.fetch('https://example.com', headless=True)
-products = page.css('.product', adaptive=True)  # Survives site changes
+url = 'https://example.com'
+page = StealthyFetcher.get(url, headless=True)  # Adaptive stealth fetching
+products = page.css('.product', adaptive=True)   # Survives site changes
 
 for product in products:
     print(product.css_first('.title').text)
