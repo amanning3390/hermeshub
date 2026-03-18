@@ -96,5 +96,12 @@
     "featured": true,
     "installCount": 534,
     "category": "productivity"
+  },
+  "synapse-swarm": {
+    "displayName": "Synapse Swarm",
+    "description": "Multi-agent cognitive swarm with three chained AI agents — ZERO (vision), NOVA (tactical), TITAN (arbiter) — that collaboratively analyze visual input through a Streamlit dashboard. Supports voice and text commands with TTS output. Built by devorun.",
+    "featured": true,
+    "installCount": 276,
+    "category": "agents"
   }
 }
