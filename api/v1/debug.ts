@@ -1,6 +1,6 @@
 /**
  * GET /api/v1/debug
- * Temporary diagnostic endpoint - returns environment and DB connection status.
+ * Temporary diagnostic endpoint v2 - test the same imports as stats.ts.
  * DELETE AFTER DEBUGGING.
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
@@ -8,49 +8,54 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
 
-  const checks: Record<string, unknown> = {
-    node_version: process.version,
-    has_database_url: !!process.env.DATABASE_URL,
-    database_url_length: process.env.DATABASE_URL?.length || 0,
-    database_url_preview: process.env.DATABASE_URL
-      ? process.env.DATABASE_URL.substring(0, 30) + "..."
-      : "NOT SET",
-  };
+  const checks: Record<string, unknown> = {};
 
-  // Test neon import
+  // Step 1: Test schema import
   try {
-    const { neon } = await import("@neondatabase/serverless");
-    checks.neon_imported = true;
-    checks.neon_type = typeof neon;
+    const schema = await import("../../api/_lib/schema");
+    checks.schema_imported = true;
+    checks.schema_keys = Object.keys(schema);
+    checks.has_feedbackAggregates = !!schema.feedbackAggregates;
   } catch (e: any) {
-    checks.neon_imported = false;
-    checks.neon_error = e.message;
+    checks.schema_imported = false;
+    checks.schema_error = e.message;
+    checks.schema_stack = e.stack?.split("\n").slice(0, 8);
+    return res.status(200).json(checks);
   }
 
-  // Test drizzle import
+  // Step 2: Test db import
   try {
-    const { drizzle } = await import("drizzle-orm/neon-http");
-    checks.drizzle_imported = true;
-    checks.drizzle_type = typeof drizzle;
+    const { getDb } = await import("../../api/_lib/db");
+    checks.db_imported = true;
+    checks.db_type = typeof getDb;
   } catch (e: any) {
-    checks.drizzle_imported = false;
-    checks.drizzle_error = e.message;
-  }
-
-  // Test DB connection
-  try {
-    const { neon } = await import("@neondatabase/serverless");
-    const { drizzle } = await import("drizzle-orm/neon-http");
-    const sql = neon(process.env.DATABASE_URL!);
-    const db = drizzle(sql);
-    const { sql: rawSql } = await import("drizzle-orm");
-    const result = await db.execute(rawSql`SELECT 1 as test`);
-    checks.db_connection = "SUCCESS";
-    checks.db_rows = result.rows;
-  } catch (e: any) {
-    checks.db_connection = "FAILED";
+    checks.db_imported = false;
     checks.db_error = e.message;
-    checks.db_stack = e.stack?.split("\n").slice(0, 5);
+    checks.db_stack = e.stack?.split("\n").slice(0, 8);
+    return res.status(200).json(checks);
+  }
+
+  // Step 3: Test the exact query from stats.ts
+  try {
+    const { getDb } = await import("../../api/_lib/db");
+    const { feedbackAggregates } = await import("../../api/_lib/schema");
+    const db = getDb();
+    const aggregates = await db.select().from(feedbackAggregates);
+    checks.query_success = true;
+    checks.aggregate_count = aggregates.length;
+  } catch (e: any) {
+    checks.query_success = false;
+    checks.query_error = e.message;
+    checks.query_stack = e.stack?.split("\n").slice(0, 8);
+  }
+
+  // Step 4: Test setCors import
+  try {
+    const { setCors } = await import("../../api/_lib/cors");
+    checks.cors_imported = true;
+  } catch (e: any) {
+    checks.cors_imported = false;
+    checks.cors_error = e.message;
   }
 
   res.status(200).json(checks);
