@@ -89,5 +89,12 @@
     "featured": true,
     "installCount": 412,
     "category": "documentation"
+  },
+  "hermes-workspace": {
+    "displayName": "Hermes Workspace",
+    "description": "Native web workspace UI for Hermes Agent — chat with real-time SSE streaming, file browser, terminal, memory editor, skills browser, and 8-theme system. Install as a PWA on desktop or mobile. Built by outsourc-e.",
+    "featured": true,
+    "installCount": 534,
+    "category": "productivity"
   }
 }
