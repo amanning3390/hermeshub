@@ -24,7 +24,7 @@ export default function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden w-full">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-12 md:pt-24 md:pb-16">
           <div className="max-w-3xl mx-auto text-center">
@@ -35,7 +35,7 @@ export default function HomePage() {
               The Skills Hub for{" "}
               <span className="text-primary">Hermes Agent</span>
             </h1>
-            <p className="text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">
+            <p className="text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed px-2">
               Browse, install, and share verified skills for the self-improving AI agent by Nous Research.
               Security-scanned. Open standard. Community-driven.
             </p>
@@ -87,9 +87,9 @@ export default function HomePage() {
 
           {/* Install command */}
           <div className="max-w-lg mx-auto mt-10">
-            <div className="rounded-lg border border-border bg-card p-4">
+            <div className="rounded-lg border border-border bg-card p-4 overflow-x-auto">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 font-medium">Install from HermesHub</p>
-              <code className="text-sm font-mono text-primary block">
+              <code className="text-xs sm:text-sm font-mono text-primary block break-all">
                 hermes skills install github:amanning3390/hermeshub/skills/&lt;skill-name&gt;
               </code>
             </div>
@@ -176,17 +176,17 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-8 mb-8">
         <div className="border border-border rounded-lg p-6 md:p-8 bg-card">
           <div className="flex items-start gap-4">
-            <BookOpen className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
-            <div>
+            <BookOpen className="h-6 w-6 text-primary flex-shrink-0 mt-0.5 hidden sm:block" />
+            <div className="min-w-0 flex-1">
               <h2 className="text-lg font-bold mb-2">New to Hermes Agent?</h2>
               <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                 Hermes Agent is the self-improving AI agent by Nous Research with a built-in learning loop.
                 Install skills to extend its capabilities — from coding and research to DevOps and security.
               </p>
               <div className="space-y-3">
-                <div className="rounded-md border border-border bg-background p-3">
+                <div className="rounded-md border border-border bg-background p-3 overflow-x-auto">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 font-medium">1. Install Hermes Agent</p>
-                  <code className="text-xs font-mono text-primary">
+                  <code className="text-xs font-mono text-primary break-all whitespace-pre-wrap">
                     curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
                   </code>
                 </div>

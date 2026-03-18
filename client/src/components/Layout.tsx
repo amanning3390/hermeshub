@@ -109,9 +109,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-border py-8 mt-16">
+      <footer className="border-t border-border py-8 mt-16 pb-20 sm:pb-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <HermesLogo />
               <div>
@@ -125,7 +125,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-muted-foreground">
               <a href="https://hermes-agent.nousresearch.com/docs/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                 Hermes Docs
               </a>

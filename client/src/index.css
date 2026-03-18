@@ -152,6 +152,11 @@
     @apply border-border;
   }
 
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
