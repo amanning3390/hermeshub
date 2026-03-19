@@ -138,5 +138,12 @@
     "featured": true,
     "installCount": 0,
     "category": "communication"
+  },
+  "react-reasoning": {
+    "displayName": "ReAct Reasoning",
+    "description": "ReAct (Reasoning + Acting) framework — interleave chain-of-thought reasoning with tool actions to solve complex tasks. Eliminates hallucination by grounding every reasoning step in real observations. Based on Yao et al. (ICLR 2023).",
+    "featured": true,
+    "installCount": 0,
+    "category": "research"
   }
 }
