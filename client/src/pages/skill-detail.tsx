@@ -96,9 +96,11 @@ export default function SkillDetailPage() {
           <Badge variant="secondary" className="gap-1 text-xs">
             <Tag className="h-3 w-3" /> v{skill.version}
           </Badge>
-          <Badge variant="secondary" className="gap-1 text-xs">
-            <Download className="h-3 w-3" /> {skill.installCount.toLocaleString()} installs
-          </Badge>
+          {skill.installCount > 0 && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <Download className="h-3 w-3" /> {skill.installCount.toLocaleString()} installs
+            </Badge>
+          )}
           <Badge variant="secondary" className="gap-1 text-xs capitalize">
             {skill.category}
           </Badge>

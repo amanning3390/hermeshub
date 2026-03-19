@@ -124,7 +124,7 @@ function main() {
       license: fm.license || "MIT",
       compatibility: fm.compatibility || null,
       tags: fm.tags || [],
-      installCount: override.installCount || 100,
+      installCount: override.installCount ?? 0,
       securityStatus: "verified",
       featured: override.featured !== undefined ? override.featured : false,
       repoUrl: "https://github.com/amanning3390/hermeshub",

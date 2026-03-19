@@ -69,10 +69,12 @@ export function SkillCard({ skill }: { skill: Skill }) {
             {skill.category}
           </Badge>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Download className="h-3 w-3" />
-              {skill.installCount.toLocaleString()}
-            </span>
+            {skill.installCount > 0 && (
+              <span className="flex items-center gap-1">
+                <Download className="h-3 w-3" />
+                {skill.installCount.toLocaleString()}
+              </span>
+            )}
             <span className="flex items-center gap-1">
               <Tag className="h-3 w-3" />
               v{skill.version}
