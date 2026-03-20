@@ -26,6 +26,25 @@
     { "source": "/api/v1/feedback/stats", "destination": "/api/v1/feedback/stats" },
     { "source": "/api/v1/feedback/:skill", "destination": "/api/v1/feedback/[skill]" },
     { "source": "/api/v1/feedback", "destination": "/api/v1/feedback/index" },
+
+    { "source": "/api/v1/auth/github", "destination": "/api/v1/auth/github" },
+    { "source": "/api/v1/auth/callback", "destination": "/api/v1/auth/callback" },
+    { "source": "/api/v1/auth/me", "destination": "/api/v1/auth/me" },
+
+    { "source": "/api/v1/creators/wallet", "destination": "/api/v1/creators/wallet" },
+    { "source": "/api/v1/creators/dashboard", "destination": "/api/v1/creators/dashboard" },
+    { "source": "/api/v1/creators/:id", "destination": "/api/v1/creators/[id]" },
+
+    { "source": "/api/v1/skills/marketplace", "destination": "/api/v1/skills/marketplace" },
+    { "source": "/api/v1/skills/private/upload", "destination": "/api/v1/skills/private/upload" },
+    { "source": "/api/v1/skills/private/:id/download", "destination": "/api/v1/skills/private/[id]/download" },
+    { "source": "/api/v1/skills/private/:id", "destination": "/api/v1/skills/private/[id]" },
+
+    { "source": "/api/v1/payments/mpp/session", "destination": "/api/v1/payments/mpp/session" },
+    { "source": "/api/v1/payments/mpp/purchase", "destination": "/api/v1/payments/mpp/purchase" },
+
+    { "source": "/api/v1/licenses/my", "destination": "/api/v1/licenses/my" },
+
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

@@ -1,8 +1,16 @@
 import { Link, useLocation } from "wouter";
-import { Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X, User, LogOut, LayoutDashboard, ShoppingBag } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function HermesLogo() {
   return (
@@ -21,11 +29,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { creator, login, logout } = useAuth();
 
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/browse", label: "Browse Skills" },
     { href: "/submit", label: "Submit a Skill" },
+    ...(creator ? [{ href: "/creator/dashboard", label: "Creator Dashboard" }] : []),
   ];
 
   return (
@@ -56,6 +66,54 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2">
+            {creator ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    {creator.avatar_url ? (
+                      <img
+                        src={creator.avatar_url}
+                        alt={creator.github_username}
+                        width={32}
+                        height={32}
+                        className="rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                        <User className="h-4 w-4 text-primary" />
+                      </div>
+                    )}
+                    <span className="hidden sm:inline text-sm font-medium">{creator.github_username}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/creator/dashboard" className="flex items-center gap-2 cursor-pointer w-full">
+                      <LayoutDashboard className="h-4 w-4" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/library" className="flex items-center gap-2 cursor-pointer w-full">
+                      <ShoppingBag className="h-4 w-4" />
+                      My Library
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="outline" size="sm" onClick={login}>
+                Creator Login
+              </Button>
+            )}
             <a
               href="https://github.com/amanning3390/hermeshub"
               target="_blank"
@@ -103,6 +161,51 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </span>
               </Link>
             ))}
+            {creator ? (
+              <>
+                <div className="px-3 py-2 flex items-center gap-2 border-t border-border mt-1 pt-2">
+                  {creator.avatar_url ? (
+                    <img
+                      src={creator.avatar_url}
+                      alt={creator.github_username}
+                      width={24}
+                      height={24}
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User className="h-3 w-3 text-primary" />
+                    </div>
+                  )}
+                  <span className="text-sm font-medium">{creator.github_username}</span>
+                </div>
+                <Link href="/creator/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                  <span className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground cursor-pointer">
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </span>
+                </Link>
+                <Link href="/library" onClick={() => setMobileMenuOpen(false)}>
+                  <span className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground cursor-pointer">
+                    <ShoppingBag className="h-4 w-4" />
+                    My Library
+                  </span>
+                </Link>
+                <button
+                  onClick={() => { logout(); setMobileMenuOpen(false); }}
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-destructive hover:bg-destructive/10 cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <div className="px-3 py-2 border-t border-border mt-1 pt-2">
+                <Button variant="outline" size="sm" onClick={() => { login(); setMobileMenuOpen(false); }} className="w-full">
+                  Creator Login
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </header>
