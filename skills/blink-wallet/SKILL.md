@@ -19,7 +19,7 @@ required_environment_variables:
     prompt: "Enter your Blink API key"
     help: "https://dashboard.blink.sv — create a free account and generate a key"
     required_for: "All wallet operations"
-allowed-tools: "Bash(command:*)"
+allowed-tools: "Bash(command:node ~/.hermes/skills/blink/scripts/*)"
 ---
 
 # Blink Wallet
@@ -75,6 +75,12 @@ node ~/.hermes/skills/blink/scripts/create_invoice.js --amount 100 --wallet usd
 ```
 
 Returns `paymentRequest` (BOLT-11 string) and `paymentHash`. Generate a QR code from the payment request for the user.
+
+To poll whether an invoice has been paid:
+
+```bash
+node ~/.hermes/skills/blink/scripts/create_invoice.js --check <paymentHash>
+```
 
 ### 4. Send Payments
 
@@ -144,7 +150,7 @@ node ~/.hermes/skills/blink/scripts/l402_store.js clear --expired
 | `--no-store`          | Skip reading/writing the token cache (fully stateless)                      |
 | `--force`             | Pay even if a cached token exists for this URL                              |
 
-Tokens are cached and reused automatically. Always use `--dry-run` first to confirm cost, then `--max-amount` to cap spending.
+Tokens are cached at `~/.blink/l402-tokens.json` (user-only permissions) and reused automatically. Always use `--dry-run` first to confirm cost, then `--max-amount` to cap spending. Use `--no-store` to skip the cache entirely for one-shot requests.
 
 ## Pitfalls
 
@@ -153,7 +159,7 @@ Tokens are cached and reused automatically. Always use `--dry-run` first to conf
 - Never log or echo the API key — it is read from the environment automatically
 - Amounts are in **sats** for BTC and **cents** for USD — do not mix units
 - Use `--dry-run` for L402 before paying; some endpoints may cost more than expected
-- Use `--probe` with `l402_pay.js` to estimate routing fees before paying; probe failures warn but do not block payment
+- Use `--probe` with `l402_pay.js` to estimate routing fees before paying; probe failures emit a warning to stderr but payment proceeds — if the probe fails, inform the user that routing may be unreliable before continuing
 - The `--wallet` flag defaults to `btc` for most commands; specify `usd` explicitly when needed
 - Check balance before sending to avoid failed transactions
 - Blink provides both a BTC wallet and a USD (stablesats) wallet — always clarify which the user wants
