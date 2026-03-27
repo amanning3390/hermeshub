@@ -170,3 +170,9 @@ Tokens are cached at `~/.blink/l402-tokens.json` (user-only permissions) and reu
 - After sending, check that the returned JSON contains a `status: "SUCCESS"` field
 - After L402 pay, confirm the response contains an `l402_paid` event with `data` content
 - After receiving, use the `paymentHash` to poll status: `node ~/.hermes/skills/blink/scripts/create_invoice.js --check <hash>`
+
+## References
+
+- [Blink Agent Playbook](https://dev.blink.sv/api/agent-playbook): Canonical AI agent API reference — order of operations, safety constraints, and verification checklist.
+- [Blink Developer Docs](https://dev.blink.sv/): Full API documentation and guides.
+- [Source & Tests](https://github.com/blinkbitcoin/blink-skills): Full source code, 147 tests.
