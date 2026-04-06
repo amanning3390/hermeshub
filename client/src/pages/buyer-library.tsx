@@ -51,12 +51,14 @@ export default function BuyerLibraryPage() {
   const { data: licenses, isLoading } = useQuery<License[]>({
     queryKey: ["/api/v1/licenses/my", queryString],
     queryFn: async () => {
-      const res = await fetch(`/api/v1/licenses/my?${queryString}`);
+      const res = await fetch(`/api/v1/licenses/my?${queryString}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!res.ok) throw new Error("Failed to fetch licenses");
       const data = await res.json();
       return data.licenses;
     },
-    enabled: !!queryString,
+    enabled: !!queryString && !!token,
   });
 
   const handleSearch = () => {

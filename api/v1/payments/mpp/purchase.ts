@@ -175,10 +175,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // ── Create transaction ─────────────────────────────────────────────────
+    // ── Atomic MPP balance update (MUST happen before inserts) ──────────
+    // SECURITY: Atomic update to prevent race conditions on concurrent purchases
+    // Uses SQL-level check to ensure spending limit is not exceeded
+    // If this fails, no transaction/license records are created (no orphaned writes)
     const platformFee = (priceUsd * 0.05).toFixed(2);
     const creatorPayout = (priceUsd * 0.95).toFixed(2);
 
+    const updateResult = await db
+      .update(mppSessions)
+      .set({
+        amountSpent: sql`${mppSessions.amountSpent} + ${priceUsd.toFixed(2)}`,
+      })
+      .where(
+        and(
+          eq(mppSessions.id, session_id),
+          sql`${mppSessions.amountSpent} + ${priceUsd.toFixed(2)} <= ${mppSessions.spendingLimit}`
+        )
+      )
+      .returning({ id: mppSessions.id });
+
+    // If atomic update returned no rows, a concurrent request already consumed the balance
+    if (updateResult.length === 0) {
+      return res.status(400).json({
+        error: "Insufficient balance (concurrent purchase detected)",
+      });
+    }
+
+    // ── Create transaction ─────────────────────────────────────────────────
     const txRows = await db
       .insert(transactions)
       .values({
@@ -208,28 +232,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       licenseKeyHash: keyHash,
       downloadsRemaining: 5,
     });
-
-    // SECURITY: Atomic update to prevent race conditions on concurrent purchases
-    // Uses SQL-level check to ensure spending limit is not exceeded
-    const updateResult = await db
-      .update(mppSessions)
-      .set({
-        amountSpent: sql`${mppSessions.amountSpent} + ${priceUsd.toFixed(2)}`,
-      })
-      .where(
-        and(
-          eq(mppSessions.id, session_id),
-          sql`${mppSessions.amountSpent} + ${priceUsd.toFixed(2)} <= ${mppSessions.spendingLimit}`
-        )
-      )
-      .returning({ id: mppSessions.id });
-
-    // If atomic update returned no rows, a concurrent request already consumed the balance
-    if (updateResult.length === 0) {
-      return res.status(400).json({
-        error: "Insufficient balance (concurrent purchase detected)",
-      });
-    }
 
     // ── Update skill: increment total_sales and total_revenue ──────────────
     await db
