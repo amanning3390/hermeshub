@@ -127,8 +127,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const skillId = req.query.id as string;
-  if (!skillId) {
-    return res.status(400).json({ error: "Missing skill id" });
+  // SECURITY: Validate UUID format to prevent injection
+  if (!skillId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(skillId)) {
+    return res.status(400).json({ error: "Missing or invalid skill id" });
   }
 
   try {
@@ -303,7 +304,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (err: unknown) {
     console.error("download error:", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

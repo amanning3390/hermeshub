@@ -12,6 +12,7 @@ import {
   boolean,
   timestamp,
 } from "drizzle-orm/pg-core";
+import { z } from "zod";
 
 // ── DB connection ──────────────────────────────────────────────────────────────
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -82,13 +83,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const db = getDb();
 
-    // Parse query params
-    const typeFilter = (req.query.type as string) || "all";
-    const category = req.query.category as string | undefined;
-    const sort = (req.query.sort as string) || "newest";
-    const search = req.query.search as string | undefined;
-    const page = Math.max(1, parseInt((req.query.page as string) || "1", 10));
-    const limit = Math.min(100, Math.max(1, parseInt((req.query.limit as string) || "20", 10)));
+    // SECURITY: Validate and sanitize all query parameters with Zod
+    const querySchema = z.object({
+      type: z.enum(["all", "premium", "free"]).default("all"),
+      category: z.string().max(100).optional(),
+      sort: z.enum(["newest", "price_low", "price_high", "most_purchased"]).default("newest"),
+      search: z.string().max(200).optional(),
+      page: z.coerce.number().int().min(1).max(1000).default(1),
+      limit: z.coerce.number().int().min(1).max(100).default(20),
+    });
+    const qParse = querySchema.safeParse(req.query);
+    if (!qParse.success) {
+      return res.status(400).json({ error: "Invalid query parameters" });
+    }
+    const { type: typeFilter, category, sort, search, page, limit } = qParse.data;
     const offset = (page - 1) * limit;
 
     // Build WHERE conditions
@@ -179,7 +187,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ skills, total, page, limit });
   } catch (err: unknown) {
     console.error("marketplace error:", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

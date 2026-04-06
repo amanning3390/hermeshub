@@ -12,6 +12,7 @@ import {
   boolean,
   timestamp,
 } from "drizzle-orm/pg-core";
+import { z } from "zod";
 
 // ─── DB Connection ────────────────────────────────────────────────────────────
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -78,7 +79,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { id } = req.query;
 
-  if (!id || typeof id !== "string") {
+  // SECURITY: Validate UUID format to prevent injection and DB errors
+  const uuidSchema = z.string().uuid("id must be a valid UUID");
+  const parseResult = uuidSchema.safeParse(id);
+  if (!parseResult.success) {
     return res.status(400).json({ error: "Missing or invalid id parameter" });
   }
 

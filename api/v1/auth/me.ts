@@ -68,6 +68,13 @@ function verifyJwt(token: string, secret: string): JwtPayload {
   }
 
   const [encodedHeader, encodedPayload, receivedSignature] = parts;
+
+  // SECURITY: Enforce HS256 algorithm to prevent algorithm confusion attacks
+  const header = JSON.parse(base64urlDecode(encodedHeader));
+  if (header.alg !== "HS256") {
+    throw new Error("Invalid JWT algorithm");
+  }
+
   const signingInput = `${encodedHeader}.${encodedPayload}`;
 
   // Recompute signature

@@ -209,14 +209,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       downloadsRemaining: 5,
     });
 
-    // ── Update session: increment amount_spent ─────────────────────────────
-    const newAmountSpent = (amountSpent + priceUsd).toFixed(2);
-    await db
+    // SECURITY: Atomic update to prevent race conditions on concurrent purchases
+    // Uses SQL-level check to ensure spending limit is not exceeded
+    const updateResult = await db
       .update(mppSessions)
       .set({
-        amountSpent: newAmountSpent,
+        amountSpent: sql`${mppSessions.amountSpent} + ${priceUsd.toFixed(2)}`,
       })
-      .where(eq(mppSessions.id, session_id));
+      .where(
+        and(
+          eq(mppSessions.id, session_id),
+          sql`${mppSessions.amountSpent} + ${priceUsd.toFixed(2)} <= ${mppSessions.spendingLimit}`
+        )
+      )
+      .returning({ id: mppSessions.id });
+
+    // If atomic update returned no rows, a concurrent request already consumed the balance
+    if (updateResult.length === 0) {
+      return res.status(400).json({
+        error: "Insufficient balance (concurrent purchase detected)",
+      });
+    }
 
     // ── Update skill: increment total_sales and total_revenue ──────────────
     await db
@@ -238,7 +251,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (err: unknown) {
     console.error("mpp purchase error:", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

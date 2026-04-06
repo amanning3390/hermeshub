@@ -12,6 +12,8 @@ import {
   boolean,
   timestamp,
 } from "drizzle-orm/pg-core";
+import { z } from "zod";
+import crypto from "crypto";
 
 // ── DB connection ──────────────────────────────────────────────────────────────
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -24,6 +26,23 @@ function getDb() {
 }
 
 // ── Inline schemas ─────────────────────────────────────────────────────────────
+const creators = pgTable("creators", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  githubId: varchar("github_id", { length: 255 }).notNull().unique(),
+  githubUsername: varchar("github_username", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  avatarUrl: varchar("avatar_url", { length: 500 }),
+  bio: text("bio"),
+  walletAddress: varchar("wallet_address", { length: 255 }),
+  walletChain: varchar("wallet_chain", { length: 50 }).default("base"),
+  solanaAddress: varchar("solana_address", { length: 255 }),
+  stripeAccountId: varchar("stripe_account_id", { length: 255 }),
+  tempoAddress: varchar("tempo_address", { length: 255 }),
+  verified: boolean("verified").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 const privateSkills = pgTable("private_skills", {
   id: uuid("id").primaryKey().defaultRandom(),
   creatorId: uuid("creator_id").notNull(),
@@ -79,6 +98,48 @@ const licenses = pgTable("licenses", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// ── JWT Verification ──────────────────────────────────────────────────────────
+function verifyJWT(
+  token: string,
+  secret: string
+): { creatorId: string; githubId: string; githubUsername: string } | null {
+  try {
+    const [headerB64, payloadB64, signatureB64] = token.split(".");
+    if (!headerB64 || !payloadB64 || !signatureB64) return null;
+    // SECURITY: Enforce HS256 algorithm to prevent algorithm confusion attacks
+    const header = JSON.parse(Buffer.from(headerB64, "base64url").toString());
+    if (header.alg !== "HS256") return null;
+    const expectedSig = crypto
+      .createHmac("sha256", secret)
+      .update(`${headerB64}.${payloadB64}`)
+      .digest("base64url");
+    const sigBuf = Buffer.from(signatureB64, "base64url");
+    const expectedBuf = Buffer.from(expectedSig, "base64url");
+    if (
+      sigBuf.length !== expectedBuf.length ||
+      !crypto.timingSafeEqual(sigBuf, expectedBuf)
+    )
+      return null;
+    const payload = JSON.parse(
+      Buffer.from(payloadB64, "base64url").toString()
+    );
+    if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000))
+      return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+// ── Query validation ──────────────────────────────────────────────────────────
+const querySchema = z.object({
+  wallet: z.string().max(255).optional(),
+  email: z.string().email().max(255).optional(),
+}).refine(
+  (data) => data.wallet !== undefined || data.email !== undefined,
+  { message: "At least one of wallet or email is required" }
+);
+
 // ── Handler ────────────────────────────────────────────────────────────────────
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
@@ -91,17 +152,56 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const wallet = req.query.wallet as string | undefined;
-  const email = req.query.email as string | undefined;
+  // SECURITY: Require JWT authentication to prevent arbitrary license enumeration
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Missing or invalid Authorization header" });
+  }
+  const token = authHeader.slice(7);
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    return res.status(500).json({ error: "Server configuration error" });
+  }
+  const jwtPayload = verifyJWT(token, secret);
+  if (!jwtPayload) {
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
 
-  if (!wallet && !email) {
+  // Validate query parameters
+  const parseResult = querySchema.safeParse(req.query);
+  if (!parseResult.success) {
     return res.status(400).json({
       error: "At least one of `wallet` or `email` query parameters is required",
     });
   }
 
+  const { wallet, email } = parseResult.data;
+
   try {
     const db = getDb();
+
+    // SECURITY: Verify the authenticated creator owns the queried wallet/email
+    const [creator] = await db
+      .select({
+        email: creators.email,
+        walletAddress: creators.walletAddress,
+        solanaAddress: creators.solanaAddress,
+      })
+      .from(creators)
+      .where(eq(creators.id, jwtPayload.creatorId))
+      .limit(1);
+
+    if (!creator) {
+      return res.status(404).json({ error: "Creator not found" });
+    }
+
+    // Only allow querying licenses for the authenticated user's own wallet/email
+    if (email && creator.email !== email) {
+      return res.status(403).json({ error: "You can only view your own licenses" });
+    }
+    if (wallet && wallet !== creator.walletAddress && wallet !== creator.solanaAddress) {
+      return res.status(403).json({ error: "You can only view your own licenses" });
+    }
 
     // Build the buyer filter: match on wallet OR email (whichever is provided)
     let buyerFilter;
@@ -156,7 +256,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ licenses: result, total: result.length });
   } catch (err: unknown) {
     console.error("licenses/my error:", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

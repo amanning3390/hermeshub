@@ -74,6 +74,9 @@ function verifyJWT(
   try {
     const [headerB64, payloadB64, signatureB64] = token.split(".");
     if (!headerB64 || !payloadB64 || !signatureB64) return null;
+    // SECURITY: Enforce HS256 algorithm to prevent algorithm confusion attacks
+    const header = JSON.parse(Buffer.from(headerB64, "base64url").toString());
+    if (header.alg !== "HS256") return null;
     const expectedSig = crypto
       .createHmac("sha256", secret)
       .update(`${headerB64}.${payloadB64}`)
@@ -88,7 +91,7 @@ function verifyJWT(
     const payload = JSON.parse(
       Buffer.from(payloadB64, "base64url").toString()
     );
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000))
+    if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000))
       return null;
     return payload;
   } catch {
@@ -119,7 +122,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { id } = req.query;
 
-  if (!id || typeof id !== "string") {
+  // SECURITY: Validate UUID format
+  if (!id || typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
     return res.status(400).json({ error: "Missing or invalid id parameter" });
   }
 
