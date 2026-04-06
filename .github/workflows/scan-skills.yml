@@ -111,8 +111,8 @@ jobs:
               results = [];
             }
 
-            const icons = { verified: '✅', warning: '⚠️', blocked: '❌' };
-            const sevIcons = { critical: '🔴', warning: '🟡', info: '🔵' };
+            const icons = { verified: '✅', advisory: '⚡', warning: '⚠️', blocked: '❌' };
+            const sevIcons = { critical: '🔴', advisory: '⚡', warning: '🟡', info: '🔵' };
 
             let body = '## 🔍 HermesHub Security Scan Results\n\n';
 
@@ -120,22 +120,45 @@ jobs:
               body += 'No SKILL.md files found to scan.\n';
             } else {
               const verified = results.filter(r => r.status === 'verified').length;
+              const advisory = results.filter(r => r.status === 'advisory').length;
               const warnings = results.filter(r => r.status === 'warning').length;
               const blocked = results.filter(r => r.status === 'blocked').length;
 
               body += `| Status | Count |\n|--------|-------|\n`;
               body += `| ${icons.verified} Verified | ${verified} |\n`;
+              if (advisory > 0) body += `| ${icons.advisory} Advisory | ${advisory} |\n`;
               body += `| ${icons.warning} Warnings | ${warnings} |\n`;
               body += `| ${icons.blocked} Blocked | ${blocked} |\n\n`;
 
               for (const r of results) {
                 body += `### ${icons[r.status] || '?'} \`${r.file}\` — ${r.status.toUpperCase()}\n\n`;
-                if (r.findings.length === 0) {
+
+                // Render external API advisory section
+                if (r.has_external_apis && r.reviewed_domains && r.reviewed_domains.length > 0) {
+                  body += '> **⚡ External API Notice**\n>\n';
+                  body += '> This skill communicates with external services that have been reviewed by HermesHub.\n>\n';
+                  body += '> | Service | Domain | Category | Reviewed |\n';
+                  body += '> |---------|--------|----------|----------|\n';
+                  for (const d of r.reviewed_domains) {
+                    body += `> | ${d.name} | \`${d.domain}\` | ${d.category} | ${d.reviewed} |\n`;
+                  }
+                  body += '>\n';
+                  for (const d of r.reviewed_domains) {
+                    if (d.note) body += `> **${d.name}:** ${d.note}\n>\n`;
+                    if (d.privacy_url) body += `> Privacy policy: ${d.privacy_url}\n>\n`;
+                  }
+                  body += '> ---\n';
+                  body += '> **Before installing:** Verify you trust the external service. Use scoped API keys with minimum permissions. Review the privacy policy linked above.\n\n';
+                }
+
+                // Non-advisory findings
+                const nonAdvisoryFindings = r.findings.filter(f => f.severity !== 'advisory');
+                if (nonAdvisoryFindings.length === 0 && !r.has_external_apis) {
                   body += 'No issues found.\n\n';
-                } else {
+                } else if (nonAdvisoryFindings.length > 0) {
                   body += '| Severity | Rule | Finding | Line |\n';
                   body += '|----------|------|---------|------|\n';
-                  for (const f of r.findings) {
+                  for (const f of nonAdvisoryFindings) {
                     const sev = `${sevIcons[f.severity] || '?'} ${f.severity}`;
                     body += `| ${sev} | ${f.rule_id} | ${f.message} | ${f.line_number || '-'} |\n`;
                   }
@@ -147,6 +170,8 @@ jobs:
                 body += '> **⛔ This PR is blocked.** Critical security findings must be resolved before merging.\n';
               } else if (warnings > 0) {
                 body += '> **⚠️ Warnings found.** Please review before merging.\n';
+              } else if (advisory > 0) {
+                body += '> **⚡ Passed with advisory.** This skill uses reviewed external APIs. See notice above for details.\n';
               } else {
                 body += '> **✅ All skills passed security scanning.**\n';
               }

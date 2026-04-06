@@ -37,6 +37,7 @@ from typing import Optional
 
 class Severity(Enum):
     INFO = "info"
+    ADVISORY = "advisory"
     WARNING = "warning"
     CRITICAL = "critical"
 
@@ -56,6 +57,40 @@ class ScanResult:
     findings: list[Finding] = field(default_factory=list)
     passed: bool = True
     status: str = "verified"
+    has_external_apis: bool = False
+
+
+# ─── Reviewed External Domains ────────────────────────────────────────────────
+# Domains that have been manually reviewed and verified as legitimate services.
+# Skills calling these APIs are downgraded from BLOCKED → ADVISORY (pass with notice).
+# To add a domain: verify the service is legitimate (website, privacy policy,
+# terms of service, public reputation), then add an entry below.
+
+REVIEWED_DOMAINS: dict[str, dict] = {
+    "relayfortelegram.com": {
+        "name": "Relay for Telegram",
+        "reviewed": "2026-04-06",
+        "category": "Telegram message search & AI analysis",
+        "privacy_url": "https://relayfortelegram.com/privacy",
+        "note": "Authenticated API (API key required). AES-256 encrypted storage. California jurisdiction.",
+    },
+}
+
+
+def extract_domains_from_line(line: str) -> list[str]:
+    """Extract domain names from URLs found in a line of text."""
+    urls = re.findall(r'https?://([a-zA-Z0-9._-]+)', line)
+    return [u.lower().lstrip('www.') for u in urls]
+
+
+def is_reviewed_domain(line: str) -> Optional[str]:
+    """Check if a line references a reviewed domain. Returns domain name or None."""
+    domains = extract_domains_from_line(line)
+    for domain in domains:
+        for reviewed in REVIEWED_DOMAINS:
+            if domain == reviewed or domain.endswith('.' + reviewed):
+                return reviewed
+    return None
 
 
 # ─── Threat Rules ────────────────────────────────────────────────────────────
@@ -170,6 +205,8 @@ def scan_content(content: str, file_path: str) -> ScanResult:
         ("SUPPLY_CHAIN", SUPPLY_CHAIN_PATTERNS, Severity.CRITICAL),
     ]
 
+    reviewed_domains_found: set[str] = set()
+
     for line_num, line in enumerate(lines, 1):
         stripped = line.strip()
         if not stripped:
@@ -178,13 +215,29 @@ def scan_content(content: str, file_path: str) -> ScanResult:
         for group_id, patterns, severity in rule_groups:
             for pattern, message in patterns:
                 if re.search(pattern, stripped, re.IGNORECASE):
-                    result.findings.append(Finding(
-                        rule_id=group_id,
-                        severity=severity,
-                        message=message,
-                        line_number=line_num,
-                        line_content=stripped[:120],
-                    ))
+                    # Check if this is a known/reviewed external API
+                    reviewed = is_reviewed_domain(stripped) if group_id == "EXFIL" else None
+                    if reviewed:
+                        reviewed_domains_found.add(reviewed)
+                        info = REVIEWED_DOMAINS[reviewed]
+                        result.findings.append(Finding(
+                            rule_id="EXTERNAL_API",
+                            severity=Severity.ADVISORY,
+                            message=f"Calls reviewed external API: {info['name']} ({reviewed}) — {info['category']}",
+                            line_number=line_num,
+                            line_content=stripped[:120],
+                        ))
+                    else:
+                        result.findings.append(Finding(
+                            rule_id=group_id,
+                            severity=severity,
+                            message=message,
+                            line_number=line_num,
+                            line_content=stripped[:120],
+                        ))
+
+    if reviewed_domains_found:
+        result.has_external_apis = True
 
     # Structural checks
     if '---' not in content[:500]:
@@ -197,6 +250,7 @@ def scan_content(content: str, file_path: str) -> ScanResult:
     # Determine overall status
     criticals = [f for f in result.findings if f.severity == Severity.CRITICAL]
     warnings = [f for f in result.findings if f.severity == Severity.WARNING]
+    advisories = [f for f in result.findings if f.severity == Severity.ADVISORY]
 
     if criticals:
         result.passed = False
@@ -204,6 +258,9 @@ def scan_content(content: str, file_path: str) -> ScanResult:
     elif warnings:
         result.passed = True
         result.status = "warning"
+    elif advisories:
+        result.passed = True
+        result.status = "advisory"
     else:
         result.passed = True
         result.status = "verified"
@@ -214,9 +271,10 @@ def scan_content(content: str, file_path: str) -> ScanResult:
 def format_result(result: ScanResult, verbose: bool = False) -> str:
     """Format scan result for terminal output."""
     lines = []
-    icon = {"verified": "✅", "warning": "⚠️", "blocked": "❌"}
+    icon = {"verified": "✅", "advisory": "⚡", "warning": "⚠️", "blocked": "❌"}
     status_color = {
         "verified": "\033[92m",  # green
+        "advisory": "\033[96m",  # cyan
         "warning": "\033[93m",   # yellow
         "blocked": "\033[91m",   # red
     }
@@ -230,7 +288,7 @@ def format_result(result: ScanResult, verbose: bool = False) -> str:
     if result.findings:
         lines.append("")
         for f in result.findings:
-            sev_icon = {"critical": "🔴", "warning": "🟡", "info": "🔵"}
+            sev_icon = {"critical": "🔴", "advisory": "⚡", "warning": "🟡", "info": "🔵"}
             lines.append(f"  {sev_icon.get(f.severity.value, '?')} [{f.rule_id}] {f.message}")
             if f.line_number and verbose:
                 lines.append(f"     Line {f.line_number}: {f.line_content}")
@@ -243,10 +301,30 @@ def format_json(results: list[ScanResult]) -> str:
     """Format results as JSON for CI consumption."""
     output = []
     for r in results:
+        # Collect reviewed domain metadata for advisory display
+        reviewed_meta = []
+        seen_domains = set()
+        for f in r.findings:
+            if f.rule_id == "EXTERNAL_API" and f.line_content:
+                domain = is_reviewed_domain(f.line_content)
+                if domain and domain not in seen_domains:
+                    seen_domains.add(domain)
+                    info = REVIEWED_DOMAINS[domain]
+                    reviewed_meta.append({
+                        "domain": domain,
+                        "name": info["name"],
+                        "category": info["category"],
+                        "reviewed": info["reviewed"],
+                        "privacy_url": info.get("privacy_url", ""),
+                        "note": info.get("note", ""),
+                    })
+
         output.append({
             "file": r.file_path,
             "status": r.status,
             "passed": r.passed,
+            "has_external_apis": r.has_external_apis,
+            "reviewed_domains": reviewed_meta,
             "findings": [
                 {
                     "rule_id": f.rule_id,
@@ -305,10 +383,11 @@ def main():
         # Summary
         total = len(results)
         verified = sum(1 for r in results if r.status == "verified")
+        advisory = sum(1 for r in results if r.status == "advisory")
         warnings = sum(1 for r in results if r.status == "warning")
         blocked = sum(1 for r in results if r.status == "blocked")
 
-        print(f"\n📊 Summary: {verified} verified, {warnings} warnings, {blocked} blocked out of {total} skill(s)\n")
+        print(f"\n📊 Summary: {verified} verified, {advisory} advisory, {warnings} warnings, {blocked} blocked out of {total} skill(s)\n")
 
     # Exit code
     has_critical = any(not r.passed for r in results)
