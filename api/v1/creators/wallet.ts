@@ -51,6 +51,9 @@ function verifyJWT(
   try {
     const [headerB64, payloadB64, signatureB64] = token.split(".");
     if (!headerB64 || !payloadB64 || !signatureB64) return null;
+    // SECURITY: Enforce HS256 algorithm to prevent algorithm confusion attacks
+    const header = JSON.parse(Buffer.from(headerB64, "base64url").toString());
+    if (header.alg !== "HS256") return null;
     const expectedSig = crypto
       .createHmac("sha256", secret)
       .update(`${headerB64}.${payloadB64}`)
@@ -65,7 +68,8 @@ function verifyJWT(
     const payload = JSON.parse(
       Buffer.from(payloadB64, "base64url").toString()
     );
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000))
+    // SECURITY: Reject tokens without exp or with expired exp
+    if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000))
       return null;
     return payload;
   } catch {
@@ -74,14 +78,18 @@ function verifyJWT(
 }
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
+// SECURITY: Validate wallet address formats to prevent XSS and injection
+const evmAddressRegex = /^0x[0-9a-fA-F]{40}$/;
+const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
 const walletUpdateSchema = z
   .object({
-    wallet_address: z.string().optional(),
+    wallet_address: z.string().regex(evmAddressRegex, "Invalid EVM wallet address format").optional(),
     wallet_chain: z
       .enum(["base", "solana", "ethereum", "tempo"])
       .optional(),
-    solana_address: z.string().optional(),
-    tempo_address: z.string().optional(),
+    solana_address: z.string().regex(solanaAddressRegex, "Invalid Solana address format").optional(),
+    tempo_address: z.string().regex(evmAddressRegex, "Invalid Tempo address format").optional(),
   })
   .refine(
     (data) =>

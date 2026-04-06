@@ -92,6 +92,9 @@ function verifyJWT(
   try {
     const [headerB64, payloadB64, signatureB64] = token.split(".");
     if (!headerB64 || !payloadB64 || !signatureB64) return null;
+    // SECURITY: Enforce HS256 algorithm to prevent algorithm confusion attacks
+    const header = JSON.parse(Buffer.from(headerB64, "base64url").toString());
+    if (header.alg !== "HS256") return null;
     const expectedSig = crypto
       .createHmac("sha256", secret)
       .update(`${headerB64}.${payloadB64}`)
@@ -106,7 +109,7 @@ function verifyJWT(
     const payload = JSON.parse(
       Buffer.from(payloadB64, "base64url").toString()
     );
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000))
+    if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000))
       return null;
     return payload;
   } catch {

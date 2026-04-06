@@ -95,10 +95,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.redirect(302, ERROR_REDIRECT);
   }
 
-  // Optional: validate CSRF state cookie
+  // SECURITY: Validate CSRF state parameter — reject if missing or mismatched
   const cookies = parseCookies(req.headers.cookie ?? "");
   const cookieState = cookies["oauth_state"];
-  if (cookieState && state && cookieState !== state) {
+  if (!cookieState || !state || cookieState !== state) {
     return res.redirect(302, ERROR_REDIRECT);
   }
 

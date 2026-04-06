@@ -101,7 +101,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (err: unknown) {
     console.error("mpp session error:", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
