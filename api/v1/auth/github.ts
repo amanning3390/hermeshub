@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     `oauth_state=${state}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/; Secure`
   );
 
-  const redirectUri = "https://hermeshub.xyz/api/v1/auth/github/callback";
+  const redirectUri = "https://hermeshub.xyz/api/v1/auth/callback";
   const scope = "read:user,user:email";
 
   const params = new URLSearchParams({

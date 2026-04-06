@@ -126,7 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           client_id: clientId,
           client_secret: clientSecret,
           code,
-          redirect_uri: "https://hermeshub.xyz/api/v1/auth/github/callback",
+          redirect_uri: "https://hermeshub.xyz/api/v1/auth/callback",
         }),
       }
     );
