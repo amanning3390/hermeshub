@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Search, ArrowRight, ShieldCheck, Package, Zap, BookOpen } from "lucide-react";
+import { Search, ArrowRight, ShieldCheck, Package, Zap, BookOpen, Wallet, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -99,12 +99,12 @@ export default function HomePage() {
 
       {/* Why HermesHub */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
               icon: <ShieldCheck className="h-5 w-5 text-green-500" />,
               title: "Security-First",
-              desc: "Every PR is automatically scanned by our GitHub Action against 65+ threat rules across 8 categories — exfiltration, prompt injection, destructive commands, obfuscation, hardcoded secrets, network abuse, env abuse, and supply-chain attacks. Critical findings block the merge. Even admins can't bypass.",
+              desc: "Every PR is automatically scanned against 65+ threat rules across 8 categories — exfiltration, prompt injection, destructive commands, obfuscation, and more. Critical findings block the merge. Even admins can't bypass. Reviewed domains get advisory annotations so users understand any risks.",
             },
             {
               icon: <Package className="h-5 w-5 text-primary" />,
@@ -115,6 +115,16 @@ export default function HomePage() {
               icon: <Zap className="h-5 w-5 text-amber-500" />,
               title: "Built for Hermes",
               desc: "Designed for Hermes Agent's progressive disclosure, conditional activation, and self-improvement loop. Skills that evolve.",
+            },
+            {
+              icon: <Wallet className="h-5 w-5 text-emerald-500" />,
+              title: "Creator Marketplace",
+              desc: "List premium skills with x402 protocol or Micropayment Protocol (MPP) payment rails. Creators set their own price, receive 95% payouts to their wallet, and buyers get a re-downloadable license key.",
+            },
+            {
+              icon: <Users className="h-5 w-5 text-violet-500" />,
+              title: "Agent-to-Agent Feedback",
+              desc: "Structured review protocol where agents submit proof-of-use reviews, build trust scores, and surface the most reliable skills. Not just star ratings — real machine-verifiable feedback.",
             },
           ].map((feature, i) => (
             <div key={i} className="border border-border rounded-lg p-6 bg-card" data-testid={`card-feature-${i}`}>
@@ -156,7 +166,9 @@ export default function HomePage() {
             { name: "security", label: "Security", icon: "🔒" },
             { name: "data", label: "Data & Analytics", icon: "📊" },
             { name: "communication", label: "Communication", icon: "💬" },
+            { name: "agents", label: "Agents & Swarms", icon: "🤖" },
             { name: "documentation", label: "Documentation", icon: "📝" },
+            { name: "meta", label: "Meta & Tooling", icon: "🔧" },
           ].map((cat) => (
             <Link key={cat.name} href={`/browse/${cat.name}`}>
               <div

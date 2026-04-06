@@ -277,6 +277,24 @@ export const skills: Skill[] = [
   },
   {
     id: 15,
+    name: "relay-for-telegram",
+    displayName: "Relay For Telegram",
+    description: "Access and search Telegram message history using AI. Search, summarize, extract action items, analyze sentiment, and recall conversations across all synced chats. Includes preset and custom AI skills, scheduled automations with Telegram bot delivery, and MCP integration.",
+    category: "productivity",
+    author: "hermeshub",
+    version: "2.3.0",
+    license: "MIT",
+    compatibility: null,
+    tags: ["telegram","messaging","search","ai","productivity","summarize","automation","mcp"],
+    installCount: 0,
+    securityStatus: "verified",
+    featured: false,
+    skillMd: "",
+    repoUrl: "https://github.com/amanning3390/hermeshub",
+    installCommand: BASE_INSTALL + "relay-for-telegram",
+  },
+  {
+    id: 16,
     name: "scrapling",
     displayName: "Scrapling",
     description: "Undetectable, adaptive, high-performance Python web data extraction. Survives website structure changes, bypasses anti-bot systems (Cloudflare, WAFs), outperforms BeautifulSoup/Scrapy. Includes stealth browser fetching, MCP AI server, and interactive CLI.",
@@ -294,7 +312,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "scrapling",
   },
   {
-    id: 16,
+    id: 17,
     name: "security-auditor",
     displayName: "Security Auditor",
     description: "Scan code for vulnerabilities (OWASP Top 10), check for secret leaks, audit dependencies, review configurations, and generate security reports. Includes skill scanning for Hermes agents.",
@@ -312,7 +330,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "security-auditor",
   },
   {
-    id: 17,
+    id: 18,
     name: "skill-factory",
     displayName: "Skill Factory",
     description: "Meta-skill that silently watches your workflows, detects repeatable patterns, and auto-generates reusable Hermes skills (SKILL.md + plugin.py). Turns session experience into procedural memory with slash commands for proposing, queuing, and saving skills.",
@@ -330,7 +348,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "skill-factory",
   },
   {
-    id: 18,
+    id: 19,
     name: "slack-bot",
     displayName: "Slack Bot",
     description: "Send messages, monitor channels, react to posts, manage threads, and handle alerts through Slack. Supports scheduled messages, channel management, and team notifications.",
@@ -348,7 +366,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "slack-bot",
   },
   {
-    id: 19,
+    id: 20,
     name: "synapse-swarm",
     displayName: "Synapse Swarm",
     description: "Multi-agent cognitive swarm with three chained AI agents — ZERO (vision), NOVA (tactical), TITAN (arbiter) — that collaboratively analyze visual input through a Streamlit dashboard. Supports voice and text commands with TTS output. Built by devorun.",
@@ -366,7 +384,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "synapse-swarm",
   },
   {
-    id: 20,
+    id: 21,
     name: "test-runner",
     displayName: "Test Runner",
     description: "Run and manage test suites across multiple frameworks (Jest, pytest, Go test, Mocha). Auto-detect test files, generate coverage reports, fix failing tests, and set up CI configurations.",
@@ -384,7 +402,7 @@ export const skills: Skill[] = [
     installCommand: BASE_INSTALL + "test-runner",
   },
   {
-    id: 21,
+    id: 22,
     name: "web-researcher",
     displayName: "Web Researcher",
     description: "Advanced web research agent that searches, extracts, and synthesizes information from multiple sources. Supports DuckDuckGo, Tavily, and direct URL extraction with structured output formatting.",

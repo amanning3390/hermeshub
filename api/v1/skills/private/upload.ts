@@ -204,6 +204,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const slug = `${baseSlug}-${uniqueSuffix}`;
 
     // Phase 1: placeholder values for upload-dependent fields
+    // TODO(Phase 2): integrate Vercel Blob or S3 for actual file upload
+    //   - Accept multipart/form-data with the skill archive (.zip)
+    //   - Upload to blob storage, get real URL
+    //   - Compute SHA-256 hash of the archive for integrity verification
+    //   - Generate a unique encryption key for DRM
     const archiveUrl = "pending_upload";
     const archiveHash = crypto.randomBytes(32).toString("hex");
     const encryptionKeyId = "env_default";
@@ -229,7 +234,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
       .returning();
 
-    return res.status(201).json(created);
+    return res.status(201).json({
+      ...created,
+      _notice: "Archive upload is Phase 2. The skill listing is created but the download URL is a placeholder. File storage integration coming soon.",
+    });
   } catch (err) {
     console.error("[POST /skills/private/upload] Error:", err);
     return res.status(500).json({ error: "Internal server error" });

@@ -116,6 +116,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-License-Key, X-PAYMENT");
   if (req.method === "OPTIONS") return res.status(204).end();
 
+  // Disable caching — every request must be fresh (license checks, payment gates)
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.setHeader("Surrogate-Control", "no-store");
+
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -272,7 +278,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ── Branch 3: No credentials — return 402 payment required ──────────────
-    const downloadUrl = `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://hermeshub.xyz"}/api/v1/skills/private/${skillId}/download`;
+    // Always use the production domain — VERCEL_URL resolves to preview domains
+    const downloadUrl = `https://hermeshub.xyz/api/v1/skills/private/${skillId}/download`;
 
     return res.status(402).json({
       status: 402,
