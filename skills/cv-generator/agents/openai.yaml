@@ -1,0 +1,7 @@
+interface:
+  display_name: "CV Generator"
+  short_description: "Generate realistic fake CVs from CvData"
+  default_prompt: "Use $cv-generator to build or repair a valid CvData for the cv-generator MCP server, then validate it before generating HTML or PDF."
+
+policy:
+  allow_implicit_invocation: true
