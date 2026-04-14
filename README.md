@@ -33,7 +33,7 @@ hermes skills browse
 hermes skills search <query>
 ```
 
-## Available Skills (22)
+## Available Skills (23)
 
 ### Development
 | Skill | Description |
@@ -68,6 +68,11 @@ hermes skills search <query>
 |-------|-------------|
 | [data-analyst](skills/data-analyst/) | SQL queries, spreadsheet analysis, statistical methods, and chart generation |
 | [scrapling](skills/scrapling/) | Undetectable, adaptive web data extraction that survives site changes |
+
+### Detection
+| Skill | Description |
+|-------|-------------|
+| [resemble-detect](skills/resemble-detect/) | Deepfake detection and media safety — detect AI-generated audio, images, video, and text; source tracing; watermarking; speaker verification |
 
 ### DevOps
 | Skill | Description |
