@@ -98,7 +98,13 @@ Coverage: ALL tiers — Champions League to Regionalliga.
 
 ### Basketball
 Same fields as soccer. TheSportsDB covers NBA, EuroLeague, BBL, LKL, LNB, etc.
-If TheSportsDB returns nothing, scores.sh falls back to ESPN NBA API automatically.
+If TheSportsDB returns nothing, scores.sh falls back to ESPN for:
+- **NBA** — `nba/scoreboard`
+- **WNBA** — `wnba/scoreboard`
+- **NCAA Men's** — `mens-college-basketball/scoreboard`
+- **NCAA Women's** — `womens-college-basketball/scoreboard`
+
+EuroLeague and other international leagues are covered by TheSportsDB directly.
 
 ### Tennis
 DIFFERENT field structure on TheSportsDB:

@@ -1,7 +1,7 @@
 ---
 name: acca-tracker
 description: Track accumulator (acca) betting slips across football, basketball, and tennis — parses slip photo or text, checks live scores every 15 minutes, and reports bet status with overall acca health and cash-out context.
-version: 1.3.0
+version: 1.3.1
 author: Ruby (Hermes Agent)
 tags: [betting, football, basketball, tennis, accumulator, live-scores, sports, gambling, parlay, bet-tracking]
 license: MIT
@@ -253,3 +253,13 @@ See `references/bet-types.md` for the full list of 18+ bet types with scoring lo
 - When acca dies, keep tracking for interest
 - Flag "near misses" (hit post, disallowed goal) if mentioned in results
 - Name each cron differently for multi-slip support
+- Tennis coverage on TheSportsDB is tournament-dependent — may return zero events between tournaments. Always have web_search as fallback.
+- Basketball events are rich on TheSportsDB — covers NBA, EuroLeague, BBL, LKL, LNB, Japanese B1, etc. ESPN is backup only.
+
+## ClawHub Publishing
+
+- Current slug: `sports-acca-tracker` (old `football-acca-tracker` also exists, no delete cmd)
+- Publish command: `clawhub publish <path> --slug <slug> --name "Name" --version X.Y.Z --tags "tag1,tag2"`
+- After publish, skill is hidden until security scan completes (usually minutes)
+- Verify with: `clawhub inspect <slug>`
+- ClawHub has no unpublish/delete — slug collisions mean choosing a new slug, not overwriting
