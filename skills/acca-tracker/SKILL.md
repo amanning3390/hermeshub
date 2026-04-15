@@ -1,25 +1,26 @@
 ---
 name: acca-tracker
-description: Track football accumulator (acca) betting slips — parses slip photo or text, checks live scores every 15 minutes, and reports bet status (WINNING/LOST/PENDING) for each leg with overall acca health and cash-out context.
-version: 1.1.0
+description: Track accumulator (acca) betting slips across football, basketball, and tennis — parses slip photo or text, checks live scores every 15 minutes, and reports bet status with overall acca health and cash-out context.
+version: 1.3.0
 author: Ruby (Hermes Agent)
-tags: [betting, football, accumulator, live-scores, sports, gambling, parlay, bet-tracking]
+tags: [betting, football, basketball, tennis, accumulator, live-scores, sports, gambling, parlay, bet-tracking]
 license: MIT
 metadata:
   hermes:
     tags: [leisure, sports, betting]
-    requires_toolsets: [web]
+    requires_toolsets: [web, terminal]
 ---
 
-# Acca Tracker — Football Accumulator Monitor
+# Acca Tracker — Multi-Sport Accumulator Monitor
 
-Track football accumulator (parlay) bets by monitoring live scores and reporting whether each leg is still alive. Works with any betting slip — photo, screenshot, or typed text.
+Track accumulator (parlay) bets across **football, basketball, and tennis** by monitoring live scores and reporting whether each leg is still alive. Works with any betting slip — photo, screenshot, or typed text.
 
 ## When to Use
 
 - User shares a photo/screenshot of a betting slip (accumulator/parlay/bet builder)
 - User wants live score updates for their bets
 - User says "track my acca", "monitor my bet", "is my bet alive", "check my slip"
+- Slips can mix sports (e.g., 2 football + 1 basketball + 1 tennis)
 
 ## How It Works
 
@@ -40,7 +41,8 @@ Use `vision_analyze` with the image and this question:
 
 ```
 Extract all betting legs from this slip. For each leg return:
-- Match (Team A vs Team B)
+- Match (Team A vs Team B) or Event (Player A vs Player B for tennis)
+- Sport (football/soccer, basketball, tennis)
 - Competition/League
 - Date and kickoff time
 - Bet type (exact wording from slip)
@@ -48,6 +50,15 @@ Extract all betting legs from this slip. For each leg return:
 
 Also extract: total odds, stake amount, max return, any bonus info.
 ```
+
+### Sport Detection
+
+Auto-detect sport per leg based on:
+- **Tennis:** single names/players, WTA/ATP/Grand Slam, "set" in bet type, no team names
+- **Basketball:** NBA, EuroLeague, BBL, "quarter", "points", "rebounds"
+- **Football/Soccer:** everything else (default)
+
+Tag each leg with its sport — the cron prompt uses sport-specific APIs.
 
 ### From Text
 
@@ -60,13 +71,13 @@ After parsing, confirm with the user before starting tracking:
 ```
 📋 PARSED SLIP — 5 legs
 
- 1. Arsenal vs PSG (UCL, 21:00) — Arsenal W (1.55) — 64.5%
- 2. Bayern vs Inter (UCL, 21:00) — Bayern W (1.40) — 71.4%
- 3. Luton vs Northampton (L1, 20:45) — BTTS No (1.77) — 56.5%
- 4. Wimbledon vs Stockport (L1, 20:45) — Stockport W (1.85) — 54.1%
- 5. FSV Schöningen vs Lohne (RL, 18:00) — BTTS No (2.65) — 37.7% ⚠️
+ 1. Arsenal vs PSG (⚽ UCL, 21:00) — Arsenal W (1.55) — 64.5%
+ 2. Bayern vs Inter (⚽ UCL, 21:00) — Bayern W (1.40) — 71.4%
+ 3. Lakers vs Celtics (🏀 NBA, 02:30) — Lakers W (1.80) — 55.6%
+ 4. Djokovic vs Alcaraz (🎾 ATP, 14:00) — Djokovic W (2.10) — 47.6%
+ 5. FSV Schöningen vs Lohne (⚽ RL, 18:00) — BTTS No (2.65) — 37.7% ⚠️
 
-Stake: €10 | Combined odds: 21.04 | Max return: €210.40
+Stake: €10 | Combined odds: 30.12 | Max return: €301.20
 Riskiest leg: #5 (37.7% implied)
 
 Start tracking? (yes/no)
@@ -99,37 +110,52 @@ prompt: {see template below}
 ### Cron Prompt Template
 
 ```
-You are tracking a football accumulator bet. Check live scores NOW and report.
+You are tracking a MULTI-SPORT accumulator bet. Check live scores NOW and report.
 
 SLIP DETAILS:
-{paste all legs with bet types, odds, and win conditions}
+{paste all legs with sport tags, bet types, odds, and win conditions}
 
 Total odds: {total} | Stake: {stake} | Max return: {max_return}
 
 INSTRUCTIONS:
-1. For each match, web_search: "{Team A} vs {Team B} live score {date}"
-2. Also try: "{Team A} {Team B} {competition} score today"
-3. For each leg determine:
+1. For each leg, determine scores using the scores.sh helper script:
+   - Run in terminal: bash scripts/scores.sh {DATE} Soccer
+   - Run in terminal: bash scripts/scores.sh {DATE} Basketball
+   - Run in terminal: bash scripts/scores.sh {DATE} Tennis
+   - Output: league|home|away|home_score|away_score|status (or league|event|result|status for tennis)
+   - Match results to legs by team/player names
+   - If script returns NO_DATA, fall back to web_search as last resort
+2. For each leg determine:
    - Current score
-   - Match status: Not Started / Live (minute) / HT / FT / Postponed / Abandoned
+   - Match status: Not Started / Live (minute/set) / HT / FT / Postponed / Abandoned
+   - Sport-specific score format (football: goals, basketball: points, tennis: sets+games)
    - Bet status: ✅ WON / ✅ WINNING / ⏳ PENDING / ❌ LOST / ❌ DEAD
-4. Calculate overall acca status:
+3. Calculate overall acca status:
    - ALL SAFE ✅ = no legs lost
    - STILL ALIVE ⏳ = no legs lost, none confirmed won
    - ACCA DEAD ❌ = at least one leg LOST
-5. If acca dead: name the killing leg, explain why
-6. Calculate "legs alive / won / lost / pending / total"
-7. If all FT: state "TRACKING COMPLETE" and summarize
+4. If acca dead: name the killing leg, explain why
+5. Calculate "legs alive / won / lost / pending / total"
+6. If all FT: state "TRACKING COMPLETE" and summarize
+
+SPORT-SPECIFIC BET EVALUATION:
+- Football: standard 90min + stoppage (see references/bet-types.md)
+- Basketball: Match Winner = team with more points at FT. Overtime counts.
+  Over/Under = total combined points of both teams.
+- Tennis: Match Winner = player who wins required sets (2/3 or 3/5).
+  Set betting = exact set score. Games over/Under = total games in match.
 
 REPORT FORMAT (code blocks only):
 🏟️ ACCA LIVE REPORT — {time}
 
-Leg | Match                          | Score | Status | Bet        | Result
-----|--------------------------------|-------|--------|------------|----------
- 1  | Team A vs Team B              | 2 - 0 | 67'    | Team A W   | ✅ WINNING
+Leg | Match                          | Score        | Status | Bet        | Result
+----|--------------------------------|--------------|--------|------------|----------
+ 1  | ⚽ Arsenal vs PSG              | 2 - 0 (67')  | 67'    | Arsenal W  | ✅ WINNING
+ 2  | 🏀 Lakers vs Celtics           | 98 - 102     | Q4     | Lakers W   | ❌ DEAD
+ 3  | 🎾 Djokovic vs Alcaraz         | 6-4, 3-2     | Set 2  | Djokovic W | ✅ WINNING
 
-📊 1 winning / 0 won / 0 lost / 2 pending (3 total)
-💰 ⏳ STILL ALIVE
+📊 1 winning / 0 won / 1 dead / 1 pending (3 total)
+❌ ACCA DEAD — Leg 2 killed it (Lakers trailing 98-102 Q4)
 
 DATA: If no score found, say so explicitly. Never guess scores.
 If 2+ hours past kickoff with no data: "unverified — likely finished"
@@ -192,13 +218,13 @@ Only include when: at least 1 leg WON, at least 1 PENDING, acca NOT dead. Always
 
 ## Data Source Strategy
 
-See `references/data-sources.md` for full tier system and search patterns.
+See `references/data-sources.md` for full API details.
 
 Quick reference:
-- **Major leagues:** BBC, ESPN, Google scores (near real-time)
-- **Second tier:** Sky Sports, Sofascore (5-10 min lag)
-- **Low tier:** TheSportsDB, Wikipedia (HT/FT only)
-- **No data found:** State explicitly, never guess
+- **PRIMARY:** `scripts/scores.sh {date} {sport}` — handles all transport, all sports
+- **FALLBACK:** `execute_code` with Python/urllib (same API, different transport)
+- **WEB SEARCH:** last resort when script returns NO_DATA
+- **TENNIS NOTE:** Player names in `strEvent` (not strHomeTeam/strAwayTeam), coverage tournament-dependent
 
 ## Bet Types
 
@@ -213,10 +239,12 @@ See `references/bet-types.md` for the full list of 18+ bet types with scoring lo
 
 ## Limitations
 
-- **15-min intervals** — goals missed between checks, not real-time
-- **Low-tier leagues** — limited coverage, may only get HT/FT
+- **15-min intervals** — goals/points missed between checks, not real-time
+- **Low-tier football leagues** — limited coverage, may only get HT/FT
 - **JS-rendered sites** — Flashscore/Sofascore can't be scraped directly
-- **Bookmaker-specific rules** — some bet types vary by bookmaker
+- **Tennis player names** — TheSportsDB stores in `strEvent`, parsing required
+- **Bookmaker-specific rules** — some bet types vary by bookmaker (e.g., retirement handling)
+- **Telegram cron delivery** — if reports fail to arrive, check `last_delivery_error`. Try explicit `telegram:chat_id:thread_id` format. Reports still generate at `~/.hermes/cron/output/{job_id}/.md`
 
 ## Tips
 
