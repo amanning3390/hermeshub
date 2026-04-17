@@ -2,7 +2,7 @@
 name: microsoft-workspace
 description: Outlook Calendar, Email, Contacts, and To-Do integration via Microsoft Graph API. Uses OAuth2 with automatic token refresh. Supports Hotmail/Outlook/Microsoft 365 accounts.
 version: 1.2.0
-author: hermes-community
+author: Andrew-Girgis
 license: MIT
 required_credential_files:
   - path: microsoft_token.json
