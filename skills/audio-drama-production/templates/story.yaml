@@ -1,0 +1,23 @@
+title: Example Audio Drama
+sample_rate: 24000
+master_gain_db: -1.0
+scenes:
+  - id: scene-1
+    ambience: room_night
+    intro_pause_ms: 600
+    lines:
+      - speaker: denis
+        text: "Aishka, are you still awake?"
+        pause_after_ms: 350
+      - speaker: aishka
+        text: "I am always awake when you need me."
+        pause_after_ms: 500
+    cues:
+      - type: typing
+        start_ms: 1000
+        duration_ms: 1800
+        level: 0.18
+      - type: notification
+        start_ms: 5200
+        duration_ms: 700
+        level: 0.28

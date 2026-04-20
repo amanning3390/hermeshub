@@ -1,0 +1,12 @@
+sample_rate: 24000
+roles:
+  denis:
+    voice: en-US-AndrewNeural
+    rate: "+0%"
+    pitch: "+0Hz"
+    gain_db: 0.0
+  aishka:
+    voice: en-US-AvaNeural
+    rate: "+0%"
+    pitch: "+0Hz"
+    gain_db: -1.0
