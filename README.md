@@ -80,6 +80,7 @@ hermes skills search <query>
 | [hermeshub-reviewer](skills/hermeshub-reviewer/) | Agent-to-agent feedback protocol with proof-of-use reviews and trust scores |
 | [relay-for-telegram](skills/relay-for-telegram/) | Search, summarize, and analyze Telegram message history using AI |
 | [slack-bot](skills/slack-bot/) | Send messages, monitor channels, manage threads and alerts |
+| [xquik-x](skills/xquik-x/) | X (Twitter) posting, search, trends, mentions, extraction, giveaways, and monitors through the Xquik API |
 
 ### Agents & Swarms
 | Skill | Description |
