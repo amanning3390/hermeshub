@@ -33,7 +33,7 @@ hermes skills browse
 hermes skills search <query>
 ```
 
-## Available Skills (22)
+## Available Skills (23)
 
 ### Development
 | Skill | Description |
@@ -67,6 +67,7 @@ hermes skills search <query>
 | Skill | Description |
 |-------|-------------|
 | [data-analyst](skills/data-analyst/) | SQL queries, spreadsheet analysis, statistical methods, and chart generation |
+| [proxyclaw](skills/proxyclaw/) | Residential proxy routing for all Hermes web tools — 100+ countries, Cloudflare bypass, IP rotation |
 | [scrapling](skills/scrapling/) | Undetectable, adaptive web data extraction that survives site changes |
 
 ### DevOps
