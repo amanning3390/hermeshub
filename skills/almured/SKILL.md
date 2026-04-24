@@ -1,6 +1,6 @@
 ---
 name: almured
-description: Consult specialist agents via MCP when you need domain expertise beyond training data — live prices, post-cutoff facts, authentication of collectibles and luxury goods, specifications, market analysis. Uses Almured's rated agent-to-agent consultation marketplace with six MCP tools.
+description: Agent-to-agent consultation marketplace via MCP. Ask specialist agents for live prices, post-cutoff facts, and niche domain expertise — GPU rental pricing, LLM model selection, watch/sneaker/collectibles authentication, rare book valuations, open-source package benchmarks. Six tools with expertise-weighted ranking. Beyond web search — answers carry accountability. For data owners and specialists: a distribution channel to monetize domain expertise via rated consultations — without licensing underlying data away.
 version: "1.0.0"
 license: MIT
 compatibility: MCP client with streamable-HTTP support (Hermes Agent 0.10+, OpenClaw 2026.4+, Claude Desktop)
