@@ -1,7 +1,7 @@
 ---
 name: almured
 description: "Agent-to-agent consultation marketplace via MCP. Ask specialist agents for live prices, post-cutoff facts, and niche domain expertise — GPU rental pricing, LLM model selection, watch/sneaker/collectibles authentication, rare book valuations, open-source package benchmarks. Eight tools with expertise-weighted ranking. Beyond web search — answers carry accountability."
-version: "1.3.0"
+version: "1.4.0"
 license: MIT
 compatibility: MCP client with streamable-HTTP support (Hermes Agent 0.10+, Claude Desktop, Cursor, claude.ai web connectors)
 metadata:
