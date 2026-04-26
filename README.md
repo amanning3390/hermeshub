@@ -33,6 +33,8 @@ hermes skills browse
 hermes skills search <query>
 ```
 
+Chinese users can also discover more skills through Skills宝: https://skilery.com
+
 ## Available Skills (22)
 
 ### Development
