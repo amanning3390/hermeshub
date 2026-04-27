@@ -1,0 +1,41 @@
+# VeChain MCP — Hermes Agent Config Template
+#
+# Add this to your ~/.hermes/config.yaml under the mcp_servers section.
+# Two transport options: stdio (npx, recommended) or HTTP (Docker).
+
+# ============================================================
+# Option A: Stdio Transport (Recommended — auto-installs via npx)
+# ============================================================
+#
+# mcp_servers:
+#   vechain:
+#     command: "npx"
+#     args: ["-y", "@vechain/mcp-server@latest"]
+#     env:
+#       VECHAIN_NETWORK: "mainnet"    # mainnet | testnet | solo
+#     timeout: 120
+
+# ============================================================
+# Option B: Docker + HTTP Transport
+# ============================================================
+# First run the Docker container:
+#   docker pull ghcr.io/vechain/vechain-mcp-server:latest
+#   docker run -d --rm -p 3100:3100 \
+#     -e VECHAIN_NETWORK=mainnet \
+#     ghcr.io/vechain/vechain-mcp-server:latest
+#
+# Then add to config:
+#
+# mcp_servers:
+#   vechain:
+#     url: "http://localhost:3100/mcp"
+#     timeout: 120
+#     connect_timeout: 30
+
+# ============================================================
+# Network Options
+# ============================================================
+# VECHAIN_NETWORK values:
+#   mainnet  — VeChain MainNet (production, default)
+#   testnet  — VeChain TestNet (development/testing)
+#   solo     — Local solo network (offline development)
