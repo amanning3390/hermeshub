@@ -243,6 +243,9 @@ The MCP server exposes tools organized into these categories:
 - **Docker users** — ensure the container port (3100) matches the config URL
 - **Network selection** — always confirm `VECHAIN_NETWORK` is set correctly (mainnet vs testnet)
 - **Stderr has startup logs** — if the server seems stuck, check stderr for upstream connection progress
+- **`getValidators(status=ACTIVE)` may fail with schema mismatch** — the upstream `vechain-mcp-server` response sometimes lacks `blockId`/`blockTimestamp`/`nftYieldsNextCycle` fields. Workaround: call without status filter or use `getValidatorRegistry` for basic metadata
+- **`getStargateTotalVetStaked` may fail with type error** — upstream returns string values where numbers are expected. Use `getStargateTotalVetStakedHistoric` or `getStargateVetStakedByPeriod` as reliable alternatives
+- **Cross-check with live test** — before relying on any tool's output for decision-making, run a quick smoke test against the actual data to catch upstream schema changes
 
 ## References
 
