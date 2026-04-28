@@ -54,6 +54,7 @@ Deliver personalized top news briefings with trend insights, preference tracking
 > 5. **Send briefings as text messages.** Not files, not images. Clean formatted text.
 > 6. **Use the user's language.** Detect from conversation context and match it. All onboarding prompts, briefings, and interactions should be in the user's language. This SKILL.md is in English for portability — you translate at runtime.
 > 7. **Follow the exact formatting in templates.** Onboarding questions use plain text with aligned spacing — NOT markdown tables. Copy the format exactly, only translate the text. Do not reformat into tables, bullets, or any other structure.
+> 8. **Don't patch skill files yourself.** If you find a bug or missing feature in this skill, tell the user and suggest running `hermes skills update top-news`. The skill is maintained upstream — local edits will be overwritten on the next update.
 
 ## When to Use
 

@@ -45,6 +45,7 @@ with customizable outfits, environments, and accessories.
 > 3. **Send images via `MEDIA:` prefix only.** Never use browser_navigate or any other method to show images.
 > 4. **Three approval gates: creative brief (Step 1), prompt (Step 4), and grid image (Step 6). Do NOT skip any.**
 > 5. **All intermediate and output files are managed by the script.** Do not save files to /tmp or any other location manually.
+> 6. **Don't patch skill files yourself.** If you find a bug or missing feature in this skill, tell the user and suggest running `hermes skills update consistent-portrait-set`. The skill is maintained upstream — local edits will be overwritten on the next update.
 
 ## When to Use
 
