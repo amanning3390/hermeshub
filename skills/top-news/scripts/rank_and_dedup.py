@@ -102,9 +102,8 @@ def rank_articles(articles: list[dict], tracking: dict) -> list[dict]:
     """Rank articles by score. Higher = more relevant.
 
     Scoring:
-    - Recency: newer articles score higher
-    - Source score (HN score if available)
-    - Streak bonus: trending items get a boost
+    - Recency: newer articles score higher (0-100)
+    - Streak bonus: trending items get a boost (streak_days * 10)
     """
     now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
@@ -118,10 +117,6 @@ def rank_articles(articles: list[dict], tracking: dict) -> list[dict]:
             score += max(0, 100 - hours_ago * 2)
         except (ValueError, TypeError):
             score += 30  # unknown time, moderate score
-
-        # Source score (e.g., HN upvotes)
-        if article.get("score"):
-            score += min(article["score"] * 0.5, 100)
 
         # Streak bonus
         streak = compute_streak(article, tracking)
@@ -169,8 +164,17 @@ def main():
     # Rank
     ranked = rank_articles(deduped, tracking)
 
-    # Take top N
-    top = ranked[:args.top]
+    # Take top N with source diversity (max 5 per source)
+    top = []
+    source_counts: dict[str, int] = {}
+    for article in ranked:
+        src = article.get("source", "unknown")
+        if source_counts.get(src, 0) >= 5:
+            continue
+        top.append(article)
+        source_counts[src] = source_counts.get(src, 0) + 1
+        if len(top) >= args.top:
+            break
 
     # Update tracking with selected articles
     tracking = update_tracking(top, tracking)

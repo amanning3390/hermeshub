@@ -1,105 +1,73 @@
 # Data Sources Catalog
 
-Available news sources organized by category. During onboarding, sources are automatically enabled based on user's selected interests. Users can also add custom RSS feeds.
+News is fetched via Google News RSS. The agent generates query URLs based on user's selected topics, language, and region. Users can also add custom RSS/Atom feeds.
 
-**Last verified: 2026-04-27**
+**Last updated: 2026-04-28**
 
-## Technology
+## Google News RSS
 
-| Source | URL | Language | Format | Status |
-|--------|-----|----------|--------|--------|
-| Hacker News | https://hacker-news.firebaseio.com/v0/ | EN | JSON API | ✅ |
-| TechCrunch | https://techcrunch.com/feed/ | EN | RSS | ✅ |
-| The Verge | https://www.theverge.com/rss/index.xml | EN | RSS | ✅ |
-| Ars Technica | https://feeds.arstechnica.com/arstechnica/index | EN | RSS | ✅ |
-| 36氪 | https://36kr.com/feed | ZH | RSS | ✅ |
-| 少数派 | https://sspai.com/feed | ZH | RSS | ✅ |
+Free, no API key required. One query per topic.
 
-## Finance & Business
-
-| Source | URL | Language | Format | Status |
-|--------|-----|----------|--------|--------|
-| Bloomberg | https://feeds.bloomberg.com/markets/news.rss | EN | RSS | ✅ (30 items) |
-| FT Chinese | https://www.ftchinese.com/rss/feed | ZH | RSS | ✅ (20 items) |
-| ~~Reuters Business~~ | ~~https://www.reutersagency.com/feed/~~ | EN | RSS | ❌ 404 |
-| ~~华尔街见闻~~ | ~~https://wallstreetcn.com/rss~~ | ZH | RSS | ❌ 404 |
-
-## World News
-
-| Source | URL | Language | Format | Status |
-|--------|-----|----------|--------|--------|
-| BBC News | https://feeds.bbci.co.uk/news/rss.xml | EN | RSS | ✅ |
-| AP News | https://apnews.com/rss | EN | RSS | ✅ |
-| ~~Reuters Top~~ | ~~https://www.reutersagency.com/feed/~~ | EN | RSS | ❌ 404 |
-| ~~澎湃新闻~~ | ~~https://www.thepaper.cn/rss~~ | ZH | RSS | ❌ 404 |
-
-## AI & Machine Learning
-
-| Source | URL | Language | Format | Status |
-|--------|-----|----------|--------|--------|
-| Hacker News (AI filtered) | https://hn.algolia.com/api/v1/search_by_date?tags=story&query=AI | EN | JSON API | ✅ |
-| MIT Tech Review | https://www.technologyreview.com/feed/ | EN | RSS | ✅ |
-| ~~机器之心~~ | ~~https://www.jiqizhixin.com/rss~~ | ZH | RSS | ❌ Returns HTML |
-
-## Science
-
-| Source | URL | Language | Format | Status |
-|--------|-----|----------|--------|--------|
-| ~~Nature News~~ | ~~https://www.nature.com/nature.rss~~ | EN | RSS | ❌ 0 items |
-| ~~Science~~ | ~~https://www.science.org/rss/news_current.xml~~ | EN | RSS | ❌ 0 items |
-
-## Entertainment
-
-| Source | URL | Language | Format | Status |
-|--------|-----|----------|--------|--------|
-| Variety | https://variety.com/feed/ | EN | RSS | ✅ |
-| 虎嗅 | https://www.huxiu.com/rss/0.xml | ZH | RSS | ✅ |
-
-## German / Deutsch
-
-| Source | URL | Language | Format | Status |
-|--------|-----|----------|--------|--------|
-| Spiegel | https://www.spiegel.de/schlagzeilen/tops/index.rss | DE | RSS | ✅ (19 items) |
-| tagesschau | https://www.tagesschau.de/xml/rss2/ | DE | RSS | ✅ (40 items) |
-| Heise | https://www.heise.de/rss/heise-atom.xml | DE | Atom | ✅ (156 items) |
-| FAZ | https://www.faz.net/rss/aktuell/ | DE | RSS | ✅ (124 items) |
-| Golem | https://rss.golem.de/rss.php?feed=RSS2.0 | DE | RSS | ✅ (40 items) |
-| t3n | https://t3n.de/rss.xml | DE | RSS | ✅ (20 items) |
-
-## Aggregators
-
-| Source | URL | Language | Format | Status |
-|--------|-----|----------|--------|--------|
-| Google News | https://news.google.com/rss | Multi | RSS | ✅ |
-| NewsAPI.org | https://newsapi.org/v2/ | Multi | JSON API | Free tier (100 req/day) |
-
-## Category → Source Mapping
-
-Default sources enabled per user interest (only verified working sources):
-
+**URL pattern:**
 ```
-technology     → Hacker News, TechCrunch, The Verge, 36氪
-ai             → Hacker News AI, MIT Tech Review
-finance        → Bloomberg, FT Chinese
-world          → BBC, AP News
-science        → (no reliable free RSS sources currently)
-entertainment  → Variety, 虎嗅
-
-# German locale defaults (auto-added when user language is DE)
-de:technology  → Heise, Golem, t3n
-de:world       → tagesschau, Spiegel
-de:finance     → FAZ
+https://news.google.com/rss/search?q={topic}&hl={lang}&gl={region}&ceid={region}:{lang}
 ```
 
-## Known Broken Sources (2026-04-27)
+## How Sources Are Generated
 
-- 机器之心: RSS URL returns HTML page, not feed
-- Reuters: reutersagency.com/feed/ returns 404
-- 华尔街见闻: wallstreetcn.com/rss returns 404
-- 澎湃新闻: thepaper.cn/rss returns 404
-- Nature: RSS exists but returns 0 items
-- Science: RSS exists but returns 0 items
+During onboarding, the agent creates `sources.json` from the user's selected topics:
 
-## Adding Custom Sources
+```json
+[
+  {"type": "google-news", "topic": "technology", "language": "en", "region": "US"},
+  {"type": "google-news", "topic": "AI artificial intelligence", "language": "en", "region": "US"},
+  {"type": "google-news", "topic": "finance stock market", "language": "en", "region": "US"}
+]
+```
 
-Users can add their own RSS feed URLs. The fetch script accepts any valid RSS/Atom feed.
+## Topic → Query Keyword Mapping
+
+Default search keywords per user interest. The agent can adjust these based on conversation context:
+
+```
+technology       → "technology"
+ai               → "AI artificial intelligence"
+finance          → "finance stock market"
+world            → "world news"
+science          → "science research"
+entertainment    → "entertainment movies TV"
+```
+
+For bilingual users, the agent generates two entries per topic — one in each language:
+
+```json
+[
+  {"type": "google-news", "topic": "technology", "language": "en", "region": "US"},
+  {"type": "google-news", "topic": "科技", "language": "zh", "region": "CN"}
+]
+```
+
+## Language → Region Mapping
+
+| Language | Google News hl | Google News gl |
+|----------|---------------|---------------|
+| en | en | US |
+| zh | zh | CN |
+| de | de | DE |
+| fr | fr | FR |
+| es | es | ES |
+
+## Custom RSS Feeds
+
+Users can add any RSS/Atom feed URL as an additional source:
+
+```json
+{"type": "rss", "name": "My Favorite Blog", "url": "https://example.com/feed/"}
+```
+
+Custom feeds are fetched alongside Google News queries and go through the same dedup and ranking pipeline.
+
+## Future Considerations
+
+- **NewsAPI.org** (needs key, 100 req/day free) — structured JSON, category/source filtering
+- **GNews API** (needs key, 100 req/day free) — multi-language, topic filtering

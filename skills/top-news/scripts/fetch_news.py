@@ -2,7 +2,8 @@
 """
 Top News — Data Fetcher
 
-Fetches news from RSS feeds and APIs, outputs unified JSON format.
+Fetches news from Google News RSS and custom RSS/Atom feeds.
+Outputs unified JSON format.
 
 Usage:
   python fetch_news.py --sources sources.json --output raw_news.json
@@ -14,16 +15,13 @@ import datetime
 import json
 import logging
 import os
-import sys
-import time
-import urllib.request
 import ssl
+import urllib.request
+import urllib.parse
 import xml.etree.ElementTree as ET
-from typing import Any
 
 logger = logging.getLogger("top-news")
 
-DEFAULT_LIMIT = 50
 REQUEST_TIMEOUT = 15
 USER_AGENT = "TopNews/1.0 (RSS Aggregator)"
 
@@ -119,46 +117,22 @@ def _parse_atom_entry_no_ns(entry, source_name: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Hacker News API
+# Google News RSS
 # ---------------------------------------------------------------------------
 
-def fetch_hackernews(limit: int = 20) -> list[dict]:
-    """Fetch top stories from Hacker News API."""
-    ctx = ssl.create_default_context()
-    try:
-        req = urllib.request.Request(
-            "https://hacker-news.firebaseio.com/v0/topstories.json",
-            headers={"User-Agent": USER_AGENT}
-        )
-        with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT, context=ctx) as resp:
-            story_ids = json.loads(resp.read())[:limit]
-    except Exception as e:
-        logger.warning(f"Failed to fetch HN top stories: {e}")
-        return []
+def build_google_news_url(topic: str, language: str = "en", region: str = "US") -> str:
+    """Build Google News RSS search URL for a topic."""
+    query = urllib.parse.quote(topic)
+    hl = language.lower()
+    gl = region.upper()
+    return f"https://news.google.com/rss/search?q={query}&hl={hl}&gl={gl}&ceid={gl}:{hl}"
 
-    articles = []
-    for sid in story_ids:
-        try:
-            req = urllib.request.Request(
-                f"https://hacker-news.firebaseio.com/v0/item/{sid}.json",
-                headers={"User-Agent": USER_AGENT}
-            )
-            with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT, context=ctx) as resp:
-                item = json.loads(resp.read())
-            if item and item.get("title"):
-                articles.append({
-                    "title": item["title"],
-                    "url": item.get("url", f"https://news.ycombinator.com/item?id={sid}"),
-                    "summary": "",
-                    "published": datetime.datetime.fromtimestamp(item.get("time", 0)).isoformat(),
-                    "source": "Hacker News",
-                    "score": item.get("score", 0),
-                    "fetched_at": datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat(),
-                })
-        except Exception:
-            continue
 
-    return articles
+def fetch_google_news(topic: str, language: str = "en", region: str = "US", limit: int = 20) -> list[dict]:
+    """Fetch Google News RSS for a given topic."""
+    url = build_google_news_url(topic, language, region)
+    source_name = f"Google News ({topic})"
+    return fetch_rss(url, source_name, limit)
 
 
 # ---------------------------------------------------------------------------
@@ -170,8 +144,8 @@ def load_sources(sources_path: str) -> list[dict]:
 
     Expected format:
     [
-      {"name": "TechCrunch", "url": "https://techcrunch.com/feed/", "type": "rss"},
-      {"name": "Hacker News", "type": "hackernews"},
+      {"type": "google-news", "topic": "technology", "language": "en", "region": "US"},
+      {"type": "rss", "name": "Custom Blog", "url": "https://example.com/feed/"},
       ...
     ]
     """
@@ -185,12 +159,21 @@ def fetch_all(sources: list[dict], limit_per_source: int = 20) -> list[dict]:
 
     for src in sources:
         src_type = src.get("type", "rss")
-        src_name = src.get("name", "Unknown")
+        src_name = src.get("name", src.get("topic", "Unknown"))
 
         logger.info(f"Fetching: {src_name} ({src_type})")
 
-        if src_type == "hackernews":
-            articles = fetch_hackernews(limit=limit_per_source)
+        if src_type == "google-news":
+            topic = src.get("topic", "")
+            if not topic:
+                logger.warning("No topic for google-news source, skipping")
+                continue
+            articles = fetch_google_news(
+                topic=topic,
+                language=src.get("language", "en"),
+                region=src.get("region", "US"),
+                limit=limit_per_source,
+            )
         elif src_type in ("rss", "atom"):
             url = src.get("url", "")
             if not url:

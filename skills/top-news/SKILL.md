@@ -94,23 +94,11 @@ All enabled by default. Reply with numbers to toggle (e.g. "5 6" to disable Scie
 ```
 WAIT for answer.
 
-**Question 2: News Sources** [MULTI-SELECT — reply with numbers to toggle]
-
-Based on chosen topics, list the matching sources from `references/sources-catalog.md` with numbers. Include locale-specific sources if detected (e.g. German sources for DE users):
-
+**Question 2: Custom RSS Feeds** [OPTIONAL]
 ```
-Sources for your topics: (reply with numbers to toggle on/off)
+Want to add any custom RSS feeds? (in addition to Google News)
 
-1. Hacker News (EN, tech + AI)  ✅
-2. TechCrunch (EN, tech)  ✅
-3. The Verge (EN, tech)  ✅
-4. Bloomberg (EN, finance)  ✅
-5. MIT Tech Review (EN, AI)  ✅
-6. BBC News (EN, world)  ✅
-7. 36氪 (ZH, tech)  ✅
-...
-
-All enabled by default. Reply with numbers to toggle, or 0 to skip.
+Enter RSS/Atom URLs (one per line), or 0 to skip.
 ```
 WAIT for answer.
 
@@ -204,7 +192,7 @@ Present as a clean aligned summary. Use monospace or pre-formatted text to ensur
 Your briefing configuration:
 
 📋 Topics      [list of selected topics]
-📰 Sources     [count] sources (all enabled / or list changes)
+🔍 Source      Google News (+ [N] custom RSS feeds)
 🌐 Language    [choice]
 📝 Format      [choice]
 🔢 Items       [count] per briefing
@@ -269,14 +257,20 @@ workspace/top-news/
 
 ### sources.json Format
 
-Generated from user interests using the sources catalog (`references/sources-catalog.md`):
+Generated from user topics. See `references/sources-catalog.md` for query keyword mapping:
 
 ```json
 [
-  {"name": "Hacker News", "type": "hackernews"},
-  {"name": "TechCrunch", "url": "https://techcrunch.com/feed/", "type": "rss"},
-  {"name": "36氪", "url": "https://36kr.com/feed", "type": "rss"}
+  {"type": "google-news", "topic": "technology", "language": "en", "region": "US"},
+  {"type": "google-news", "topic": "AI artificial intelligence", "language": "en", "region": "US"},
+  {"type": "google-news", "topic": "finance stock market", "language": "en", "region": "US"}
 ]
+```
+
+For bilingual users (language = "both"), generate two entries per topic — one per language. Users can also add custom RSS feeds:
+
+```json
+{"type": "rss", "name": "My Blog", "url": "https://example.com/feed/"}
 ```
 
 ### Delivering a Briefing

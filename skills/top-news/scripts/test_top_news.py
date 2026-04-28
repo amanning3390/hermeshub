@@ -24,11 +24,11 @@ import rank_and_dedup
 @pytest.fixture
 def sample_articles():
     return [
-        {"title": "AI Breakthrough in 2026", "url": "https://example.com/1", "summary": "Big news about AI", "published": "2026-04-27T08:00:00", "source": "TechCrunch", "fetched_at": "2026-04-27T10:00:00"},
-        {"title": "AI Breakthrough in 2026!", "url": "https://example.com/2", "summary": "Same news different source", "published": "2026-04-27T07:00:00", "source": "The Verge", "fetched_at": "2026-04-27T10:00:00"},
-        {"title": "Stock Market Hits Record High", "url": "https://example.com/3", "summary": "Markets are up", "published": "2026-04-27T09:00:00", "source": "Bloomberg", "fetched_at": "2026-04-27T10:00:00"},
-        {"title": "New Python Release", "url": "https://example.com/4", "summary": "Python 3.15 is out", "published": "2026-04-27T06:00:00", "source": "Hacker News", "fetched_at": "2026-04-27T10:00:00"},
-        {"title": "Climate Summit Results", "url": "https://example.com/5", "summary": "Global leaders agree", "published": "2026-04-27T05:00:00", "source": "BBC", "fetched_at": "2026-04-27T10:00:00"},
+        {"title": "AI Breakthrough in 2026", "url": "https://example.com/1", "summary": "Big news about AI", "published": "2026-04-27T08:00:00", "source": "Google News (AI)", "fetched_at": "2026-04-27T10:00:00"},
+        {"title": "AI Breakthrough in 2026!", "url": "https://example.com/2", "summary": "Same news different source", "published": "2026-04-27T07:00:00", "source": "Google News (technology)", "fetched_at": "2026-04-27T10:00:00"},
+        {"title": "Stock Market Hits Record High", "url": "https://example.com/3", "summary": "Markets are up", "published": "2026-04-27T09:00:00", "source": "Google News (finance)", "fetched_at": "2026-04-27T10:00:00"},
+        {"title": "New Python Release", "url": "https://example.com/4", "summary": "Python 3.15 is out", "published": "2026-04-27T06:00:00", "source": "Google News (technology)", "fetched_at": "2026-04-27T10:00:00"},
+        {"title": "Climate Summit Results", "url": "https://example.com/5", "summary": "Global leaders agree", "published": "2026-04-27T05:00:00", "source": "Google News (world)", "fetched_at": "2026-04-27T10:00:00"},
     ]
 
 
@@ -53,15 +53,13 @@ def tracking_with_streak():
 class TestDedup:
     def test_removes_similar_titles(self, sample_articles):
         result = rank_and_dedup.dedup_articles(sample_articles)
-        titles = [a["title"] for a in result]
-        # "AI Breakthrough in 2026" and "AI Breakthrough in 2026!" should dedup
         assert len(result) == 4
 
     def test_keeps_different_titles(self, sample_articles):
         result = rank_and_dedup.dedup_articles(sample_articles)
-        sources = {a["source"] for a in result}
-        assert "Bloomberg" in sources
-        assert "BBC" in sources
+        titles = [a["title"] for a in result]
+        assert any("Stock Market" in t for t in titles)
+        assert any("Climate" in t for t in titles)
 
 
 class TestTitleSimilarity:
@@ -143,6 +141,24 @@ class TestNormalize:
 
 
 # ---------------------------------------------------------------------------
+# URL Builder Tests
+# ---------------------------------------------------------------------------
+
+class TestUrlBuilders:
+    def test_google_news_url(self):
+        url = fetch_news.build_google_news_url("technology", "en", "US")
+        assert "news.google.com/rss/search" in url
+        assert "q=technology" in url
+        assert "hl=en" in url
+        assert "gl=US" in url
+
+    def test_google_news_url_chinese(self):
+        url = fetch_news.build_google_news_url("科技", "zh", "CN")
+        assert "hl=zh" in url
+        assert "gl=CN" in url
+
+
+# ---------------------------------------------------------------------------
 # Network Tests (requires --network flag)
 # ---------------------------------------------------------------------------
 
@@ -160,13 +176,17 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.mark.network
 class TestFetchNetwork:
-    def test_fetch_hackernews(self):
-        articles = fetch_news.fetch_hackernews(limit=3)
+    def test_fetch_google_news(self):
+        articles = fetch_news.fetch_google_news("technology", limit=3)
         assert len(articles) > 0
         assert articles[0]["title"]
-        assert articles[0]["source"] == "Hacker News"
+        assert "Google News" in articles[0]["source"]
 
-    def test_fetch_rss(self):
+    def test_fetch_google_news_chinese(self):
+        articles = fetch_news.fetch_google_news("科技", language="zh", region="CN", limit=3)
+        assert len(articles) > 0
+
+    def test_fetch_custom_rss(self):
         articles = fetch_news.fetch_rss(
             "https://feeds.bbci.co.uk/news/rss.xml",
             "BBC News",
