@@ -7,14 +7,13 @@ license: MIT
 metadata:
   hermes:
     tags: [bilibili, 哔哩哔哩, video, subtitle, transcript, chinese, asr, whisper]
-    related_skills: [youtube-content]
 ---
 
 # Bilibili Content Tool · B站内容提取工具
 
-提取 B站视频字幕和热门评论，输出为摘要、学习笔记、博客等格式。对标 `youtube-content`，专为中文视频优化。
+提取 B站视频字幕和热门评论，输出为摘要、学习笔记、博客等格式。
 
-Extract Bilibili video subtitles and top comments. Output as study notes, summaries, threads, or blog posts. The B站 equivalent of `youtube-content`.
+Extract Bilibili video subtitles and top comments. Output as study notes, summaries, threads, or blog posts.
 
 ## 功能 / Features
 
