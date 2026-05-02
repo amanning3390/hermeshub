@@ -5,7 +5,8 @@ version: "1.0.0"
 license: MIT
 compatibility: Requires internet access. No API key needed.
 metadata:
-  author: hermeshub
+  author: wali-reheman
+  source: https://github.com/wali-reheman/fly-smart
   hermes:
     tags: [flights, travel, self-transfer, hidden-city, google-flights, budget-travel, arbitrage, hub-transfer]
     category: research
