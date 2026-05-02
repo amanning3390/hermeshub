@@ -1,7 +1,7 @@
 ---
 name: fly-smart
 description: Find cheaper flight routes using hidden-city arbitrage and hub transfer combinations. Activates when users search for flights, find cheap flights, compare routes, or look for budget travel deals. Supports 70+ global hubs, multi-date scanning, SQLite caching, and self-transfer detection. No API keys required.
-version: "1.0.0"
+version: "1.2.0"
 license: MIT
 compatibility: macOS, Linux (Python 3.10+ with venv)
 metadata:
@@ -67,9 +67,15 @@ python3 ~/.hermes/scripts/flight-transfer-finder.py -o <ORIGIN> -d <DESTINATION>
 | `--aggressive` | Check 60 hubs instead of 25 | off |
 | `--all-hubs` | Check all 70+ global hubs | off |
 | `--save-route` | Append results to `~/.hermes/data/flight-searches.jsonl` | off |
+| `--verify-rules` | Verify self-transfer rules (3h buffer, transit visa) for top result | off |
+| `--export-csv` | Export results to CSV file | off |
+| `--csv-output PATH` | CSV output path | fly-smart-deals-YYYY-MM-DD.csv |
+| `--export-notion` | Export results to a Notion database | off |
+| `--notion-database ID` | Notion database ID (or set NOTION_FLIGHT_DEALS_DB_ID env var) | — |
+| `--alert-below PRICE` | Only report if best transfer < PRICE | off |
 | `--json` | Raw JSON output | off |
 | `--no-cache` | Bypass 1h price cache | off |
-| `-C cabin` | Cabin: economy, premium-economy, business, first | economy |
+| `-c cabin` | Cabin: economy, premium-economy, business, first | economy |
 
 ### Step 4 — Present Results
 
@@ -121,6 +127,35 @@ Input: "Compare flights from SFO, LAX, and OAK to Bangkok for mid-June"
 Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o SFO,LAX,OAK -d BKK -dt 2026-06-15 --flexible 5
 Present: all origins aggregated and ranked by price
 ```
+
+### Example 4: Rule verification (v5+)
+```
+Input: "Verify the self-transfer rules for the best LAX to HKG deal on June 15"
+Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15 --verify-rules
+```
+Checks: 3h+ buffer between legs, carry-on only advisory, transit visa requirements for the hub.
+
+### Example 5: CSV export (v5+)
+```
+Input: "Export the LAX to HKG results to a CSV file"
+Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15 --export-csv --csv-output ~/flight-deals.csv
+```
+
+### Example 6: Notion export (v5+)
+```
+Input: "Add my flight deals to Notion"
+Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15 \
+  --export-notion --notion-database <your-db-id> --notion-api-key <your-token>
+# Or set env vars: NOTION_FLIGHT_DEALS_DB_ID and NOTION_API_KEY
+```
+
+### Example 7: Price alert (v5+)
+```
+Input: "Alert me if any LAX to HKG deal drops below $600 in the next 7 days"
+Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15 \
+  --flexible 7 --alert-below 600
+```
+Prints a 🔔 ALERT line when the best available transfer is below your threshold.
 
 ## Pitfalls
 
