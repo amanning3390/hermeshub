@@ -29,14 +29,23 @@
 
 ## Quick Start
 
+Choose your interface:
+
+### CLI
+
 ```bash
 pip install git+https://github.com/wali-reheman/fly-smart@v1.2.0
 fly-smart search LAX HKG 2026-06-15 --flexible 3
 ```
 
-**Or through Hermes Agent:**
+### Hermes Agent
 
-> "search flights from LAX to HKG on June 15"
+```bash
+git clone https://github.com/wali-reheman/fly-smart.git \
+  ~/.hermes/skills/repos/wali-reheman/fly-smart
+```
+
+Then just ask: **"search flights from LAX to HKG on June 15"**
 
 ---
 
@@ -123,26 +132,6 @@ fly-smart search LAX HKG 2026-06-15 -c business -p 3
 - ✅ **Carry-on only** — no checked bags (they won't transfer between tickets)
 - ✅ **3+ hour buffer** between connecting legs
 - ✅ Check **transit visa** requirements for the hub country
-
----
-
-## Installation
-
-```bash
-pip install git+https://github.com/wali-reheman/fly-smart@v1.2.0
-```
-
-Or clone and install manually:
-
-```bash
-git clone https://github.com/wali-reheman/fly-smart.git
-cd fly-smart
-pip install .
-```
-
-**Hermes Agent** — once installed, just ask naturally:
-
-> "find cheapest flights from LAX to HKG on June 15"
 
 ---
 
