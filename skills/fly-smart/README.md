@@ -27,33 +27,22 @@
 
 ---
 
-## Why fly-smart?
-
-Airlines price routes based on demand and hub competition — not just distance. This creates **pricing arbitrage**: flying LAX → SEA → HKG can cost less than LAX → HKG direct. `fly-smart` finds these combos by scanning 70+ global hubs.
-
-- **No API key** — uses Google Flights directly via `fast-flights`
-- **No browser** — runs in your terminal, no GUI needed
-- **70+ hubs** — Northeast Asia, China, SEA, Middle East, Europe, US coasts
-- **Multi-date + multi-origin** — scan ±7 days across LAX, SFO, OAK, SAN simultaneously
-- **Rule verification** — checks 3h buffer and transit visa requirements
-
----
-
 ## Quick Start
 
 ```bash
-# 1. Install
-python3 -m venv ~/.hermes/venvs/flight-search
-~/.hermes/venvs/flight-search/bin/pip install fast-flights
-
-# 2. Run
-python3 ~/.hermes/scripts/flight-transfer-finder.py \
-  -o LAX -d HKG -dt 2026-06-15 --flexible 3
+pip install git+https://github.com/wali-reheman/fly-smart@v1.2.0
+fly-smart search LAX HKG 2026-06-15 --flexible 3
 ```
 
-**Or use it through Hermes Agent:**
+**Or through Hermes Agent:**
 
 > "search flights from LAX to HKG on June 15"
+
+---
+
+## How It Works
+
+Airlines price routes based on demand and hub competition — not just distance. This creates **pricing arbitrage**: flying LAX → SEA → HKG can cost less than LAX → HKG direct. `fly-smart` finds these combos by scanning 70+ global hubs.
 
 ---
 
@@ -99,35 +88,29 @@ python3 ~/.hermes/scripts/flight-transfer-finder.py \
 ## Commands
 
 ```bash
-# Basic: cheapest transfer route
-python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15
+# Basic search
+fly-smart search LAX HKG 2026-06-15
 
-# Flexible dates: scan ±3 days
---flexible 3
+# Flexible dates — scan ±3 days
+fly-smart search LAX HKG 2026-06-15 --flexible 3
 
-# Multi-origin: compare 5 California airports
--o LAX,SFO,OAK,SAN,SJC -d HKG --flexible 3
+# Multi-origin — compare 5 California airports
+fly-smart search LAX,SFO,OAK,SAN,SJC HKG 2026-06-15 --flexible 3
 
 # Verify self-transfer rules (3h buffer, transit visa)
---verify-rules
+fly-smart verify LAX HKG 2026-06-15
 
 # Alert if any deal drops below $600
---alert-below 600
+fly-smart alert LAX HKG 2026-06-15 --alert-below 600
 
 # Export to CSV
---export-csv --csv-output ~/deals.csv
+fly-smart export LAX HKG 2026-06-15 --csv-output ~/deals.csv
 
-# Export to Notion (set NOTION_FLIGHT_DEALS_DB_ID + NOTION_API_KEY)
---export-notion --notion-database <db-id>
+# All 70+ hubs (default: 25)
+fly-smart search LAX HKG 2026-06-15 --all-hubs
 
-# All hubs (70+) instead of 25
---all-hubs
-
-# Passengers / cabin class
--p 3 -c business
-
-# Skip hub search — direct price only (fast)
---direct-only
+# Business class, 3 passengers
+fly-smart search LAX HKG 2026-06-15 -c business -p 3
 ```
 
 ---
@@ -146,16 +129,20 @@ python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15
 ## Installation
 
 ```bash
-# Clone into your Hermes skills directory
-git clone https://github.com/wali-reheman/fly-smart.git \
-  ~/.hermes/skills/repos/wali-reheman/fly-smart
-
-# Set up Python environment
-python3 -m venv ~/.hermes/venvs/flight-search
-~/.hermes/venvs/flight-search/bin/pip install fast-flights
+pip install git+https://github.com/wali-reheman/fly-smart@v1.2.0
 ```
 
-Then ask Hermes: **"find cheapest flights from LAX to HKG on June 15"**
+Or clone and install manually:
+
+```bash
+git clone https://github.com/wali-reheman/fly-smart.git
+cd fly-smart
+pip install .
+```
+
+**Hermes Agent** — once installed, just ask naturally:
+
+> "find cheapest flights from LAX to HKG on June 15"
 
 ---
 
