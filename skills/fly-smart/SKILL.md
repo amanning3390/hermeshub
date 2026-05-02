@@ -35,17 +35,17 @@ Create an isolated venv (required due to PEP 668 dependency conflicts):
 
 ```bash
 python3 -m venv ~/.hermes/venvs/flight-search
-~/.hermes/venvs/flight-search/bin/pip install flight-search
+pip install git+https://github.com/wali-reheman/fly-smart@v1.2.0
 ```
 
-The `flight-transfer-finder.py` script at `~/.hermes/scripts/flight-transfer-finder.py` is the main tool.
+The main entry point is the `fly-smart` CLI (installed via pip).
 
 ### Step 2 — Quick Direct Flight Search
 
 For single-date, direct origin→destination lookups:
 
 ```bash
-~/.hermes/venvs/flight-search/bin/flight-search <ORIGIN> <DESTINATION> -d YYYY-MM-DD [options]
+fly-smart search <ORIGIN> <DESTINATION> -d YYYY-MM-DD [options]
 ```
 
 ### Step 3 — Transfer Finder for Hidden-City and Hub Arbitrage
@@ -53,7 +53,7 @@ For single-date, direct origin→destination lookups:
 For cheaper routes via intermediate hubs (separate tickets, no checked bags):
 
 ```bash
-python3 ~/.hermes/scripts/flight-transfer-finder.py -o <ORIGIN> -d <DESTINATION> -dt <YYYY-MM-DD> [options]
+fly-smart search -o <ORIGIN> -d <DESTINATION> -dt <YYYY-MM-DD> [options]
 ```
 
 **Arguments quick reference:**
@@ -98,7 +98,7 @@ Format output as a markdown table sorted by total price:
 Run this exact command and confirm clean JSON output:
 
 ```bash
-python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15 --json
+fly-smart search -o LAX -d HKG -dt 2026-06-15 --json
 ```
 
 ✅ Success: valid JSON array, prices are numeric, no `ValueError` or `ModuleNotFoundError` in stderr.
@@ -110,41 +110,41 @@ python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15
 ### Example 1: Single date, direct route
 ```
 Input: "Find flights from LAX to HKG on May 20th"
-Run: flight-search LAX HKG -d 2026-05-20
+Run: fly-smart search LAX HKG -d 2026-05-20
 Present: top 3 results as a markdown table with price, duration, stops
 ```
 
 ### Example 2: Cheaper route via transfer
 ```
 Input: "Find the cheapest way to fly from SFO to HKG, I don't mind a layover"
-Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o SFO -d HKG -dt 2026-06-15 --flexible 3
+Run: fly-smart search -o SFO -d HKG -dt 2026-06-15 --flexible 3
 Present: sorted table, highlight best transfer with savings vs direct
 ```
 
 ### Example 3: Multi-origin power search
 ```
 Input: "Compare flights from SFO, LAX, and OAK to Bangkok for mid-June"
-Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o SFO,LAX,OAK -d BKK -dt 2026-06-15 --flexible 5
+Run: fly-smart search -o SFO,LAX,OAK -d BKK -dt 2026-06-15 --flexible 5
 Present: all origins aggregated and ranked by price
 ```
 
 ### Example 4: Rule verification (v5+)
 ```
 Input: "Verify the self-transfer rules for the best LAX to HKG deal on June 15"
-Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15 --verify-rules
+Run: fly-smart search -o LAX -d HKG -dt 2026-06-15 --verify-rules
 ```
 Checks: 3h+ buffer between legs, carry-on only advisory, transit visa requirements for the hub.
 
 ### Example 5: CSV export (v5+)
 ```
 Input: "Export the LAX to HKG results to a CSV file"
-Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15 --export-csv --csv-output ~/flight-deals.csv
+Run: fly-smart search -o LAX -d HKG -dt 2026-06-15 --export-csv --csv-output ~/flight-deals.csv
 ```
 
 ### Example 6: Notion export (v5+)
 ```
 Input: "Add my flight deals to Notion"
-Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15 \
+Run: fly-smart search -o LAX -d HKG -dt 2026-06-15 \
   --export-notion --notion-database <your-db-id> --notion-api-key <your-token>
 # Or set env vars: NOTION_FLIGHT_DEALS_DB_ID and NOTION_API_KEY
 ```
@@ -152,7 +152,7 @@ Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-
 ### Example 7: Price alert (v5+)
 ```
 Input: "Alert me if any LAX to HKG deal drops below $600 in the next 7 days"
-Run: python3 ~/.hermes/scripts/flight-transfer-finder.py -o LAX -d HKG -dt 2026-06-15 \
+Run: fly-smart search -o LAX -d HKG -dt 2026-06-15 \
   --flexible 7 --alert-below 600
 ```
 Prints a 🔔 ALERT line when the best available transfer is below your threshold.
