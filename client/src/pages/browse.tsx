@@ -135,8 +135,8 @@ export default function BrowsePage() {
 
   // Merge into unified list
   const allUnified = useMemo<UnifiedSkill[]>(() => {
-    const free = freeSkills.map(freeToUnified);
-    const premium = premiumSkillsRaw.map(premiumToUnified);
+    const free = (freeSkills ?? []).map(freeToUnified);
+    const premium = (premiumSkillsRaw ?? []).map(premiumToUnified);
     return [...free, ...premium];
   }, [freeSkills, premiumSkillsRaw]);
 
