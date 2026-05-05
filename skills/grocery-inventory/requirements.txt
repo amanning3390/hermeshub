@@ -1,0 +1,4 @@
+hermes-tools
+Pillow
+opencv-python
+pytest
