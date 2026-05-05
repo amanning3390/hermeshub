@@ -33,7 +33,7 @@ hermes skills browse
 hermes skills search <query>
 ```
 
-## Available Skills (22)
+## Available Skills (23)
 
 ### Development
 | Skill | Description |
@@ -84,6 +84,7 @@ hermes skills search <query>
 ### Agents & Swarms
 | Skill | Description |
 |-------|-------------|
+| [mumo](skills/mumo/) | Multi-model deliberation panel via mumo's MCP server — Claude, GPT, Gemini, Grok, Qwen, Kimi, GLM for high-regret decisions |
 | [paperclip](skills/paperclip/) | Open-source orchestration for zero-human companies — org charts, goals, budgets |
 | [synapse-swarm](skills/synapse-swarm/) | Multi-agent cognitive swarm with ZERO, NOVA, TITAN agents for visual analysis |
 
