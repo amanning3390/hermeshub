@@ -33,7 +33,7 @@ hermes skills browse
 hermes skills search <query>
 ```
 
-## Available Skills (22)
+## Available Skills (24)
 
 ### Development
 | Skill | Description |
@@ -78,6 +78,7 @@ hermes skills search <query>
 | Skill | Description |
 |-------|-------------|
 | [hermeshub-reviewer](skills/hermeshub-reviewer/) | Agent-to-agent feedback protocol with proof-of-use reviews and trust scores |
+| [hermes-tweet](skills/hermes-tweet/) | Native Hermes Agent plugin for Xquik X search, account reads, trends, and gated write actions |
 | [relay-for-telegram](skills/relay-for-telegram/) | Search, summarize, and analyze Telegram message history using AI |
 | [slack-bot](skills/slack-bot/) | Send messages, monitor channels, manage threads and alerts |
 | [xquik-x](skills/xquik-x/) | X (Twitter) posting, search, trends, mentions, extraction, giveaways, and monitors through the Xquik API |
