@@ -29,20 +29,46 @@ echo ""
 # 配置 Hermes cron job
 echo "⏰ Setting up cron job..."
 
+# 创建独立的清理脚本文件
+HERMES_SCRIPTS="$HERMES_HOME/scripts"
+CLEANUP_SCRIPT="$HERMES_SCRIPTS/session-daily-cleanup.sh"
+mkdir -p "$HERMES_SCRIPTS"
+
+cat > "$CLEANUP_SCRIPT" << 'SCRIPT_EOF'
+#!/bin/bash
+# Session Archivist — 每日自动清理
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ARCHIVER="${HERMES_HOME:-$HOME/.hermes}/skills/productivity/session-archivist/scripts/session_archiver.py"
+
+python3 "$ARCHIVER" 2>&1
+
+# 清理30天前的session
+hermes sessions prune --older-than 30 2>&1
+
+# 清理旧的session archives (保留7天)
+find "${HERMES_HOME:-$HOME/.hermes}/session-archives" -name "*.md" -mtime +7 -delete 2>/dev/null
+find "${HERMES_HOME:-$HOME/.hermes}/session-archives/backups" -name "*.json" -mtime +7 -delete 2>/dev/null
+
+echo "Session cleanup complete at $(date)"
+SCRIPT_EOF
+
+chmod +x "$CLEANUP_SCRIPT"
+echo "  📄 Script created: $CLEANUP_SCRIPT"
+
 # 检查是否已有 session-archivist cron
 EXISTING=$(hermes cron list 2>/dev/null | grep -i "session-archivist" || true)
 if [ -n "$EXISTING" ]; then
     echo "  ⚠ Session Archivist cron job already exists"
     echo "  Use 'hermes cron list' to see existing jobs"
 else
-    # 创建 cron job
+    # 创建 cron job（script 模式，不走 agent，不消耗 token）
     hermes cron create "0 3 * * *" \
         --name "session-archivist-daily" \
-        --prompt "Run session archivist archival: python3 $ARCHIVER --max-size 1024" \
+        --script "$CLEANUP_SCRIPT" \
         2>/dev/null || {
         echo "  ⚠ Could not create hermes cron job"
         echo "  You can manually add it later:"
-        echo "    hermes cron create '0 3 * * *' --name session-archivist-daily --prompt 'python3 $ARCHIVER'"
+        echo "    hermes cron create '0 3 * * *' --name session-archivist-daily --script '$CLEANUP_SCRIPT'"
     }
 fi
 
