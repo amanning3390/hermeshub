@@ -33,7 +33,7 @@ hermes skills browse
 hermes skills search <query>
 ```
 
-## Available Skills (22)
+## Available Skills (23)
 
 ### Development
 | Skill | Description |
@@ -73,6 +73,7 @@ hermes skills search <query>
 | Skill | Description |
 |-------|-------------|
 | [docker-manager](skills/docker-manager/) | Docker container lifecycle, Dockerfile creation, docker-compose workflows |
+| [agent-wol](skills/agent-wol/) | Wake a known machine with Wake-on-LAN, including safe MAC and broadcast discovery |
 
 ### Communication
 | Skill | Description |
