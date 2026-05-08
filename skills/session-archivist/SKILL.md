@@ -1,9 +1,8 @@
 ---
 name: session-archivist
-description: "Use when session files grow too large (>1MB), context compression fails to trigger, or you need to manage long-running session lifecycle. Auto-archives old sessions, scores message importance, flushes memory before compression, and keeps session files small."
-version: 1.0.0
+description: "Use when session files grow too large (>2MB or >20 messages), context compression fails to trigger, or you need to manage long-running session lifecycle. Event-driven triggers, priority queue, state-aware processing, large message extraction (no truncation). Keeps session files small without data loss."
+version: 2.0.0
 author: zhangqb666
-repository: https://github.com/zhangqb666/hermes-session-archivist
 license: MIT
 metadata:
   hermes:
@@ -18,13 +17,14 @@ metadata:
 Session Archivist 解决 Hermes Agent 的已知问题：session 文件无限增长导致 Web UI 卡死、上下文压缩失效、API 配额耗尽。
 
 核心能力：
-1. **大 session 检测** — 自动扫描超过阈值的 session 文件
-2. **重要性评分** — 不是所有消息都值得保留，智能评分筛选
-3. **压缩前记忆刷新** — 压缩前先存档关键信息，防止丢失
-4. **结构化摘要** — 提取意图/决策/待办/引用，不是简单的文本压缩
-5. **去重/冲突检测** — 避免重复记忆，矛盾事实自动更新
-6. **会话边界检测** — 话题切换时自动分割归档
-7. **session 裁剪** — 归档后裁剪到目标大小
+1. **事件驱动触发** — 消息数 >20 或文件 >2MB 自动触发，不依赖定时任务
+2. **优先级队列** — P0-P3 优先级排序，空闲 session 先处理
+3. **状态感知** — 4 层安全检查：压缩中/文件锁/agent 运行/gateway 繁忙
+4. **大消息无损提取** — tool 输出 >100KB 和 assistant 回复 >50KB 提取到独立文件，不截断
+5. **重要性评分** — 7 维度评分筛选高价值消息
+6. **结构化摘要** — 提取意图/决策/待办/引用
+7. **会话边界检测** — 话题切换时自动分割归档
+8. **session 裁剪** — 归档后裁剪到目标大小
 
 **无外部依赖也能用**：摘要保存为本地 markdown 文件。
 **有 Hindsight 增强**：自动存入向量记忆库，支持跨会话召回。
@@ -60,13 +60,13 @@ python3 ~/.hermes/skills/productivity/session-archivist/scripts/session_archiver
 ```yaml
 session_archivist:
   enabled: true
-  max_session_size_kb: 1024        # 超过 1MB 触发归档
+  max_session_size_kb: 2048        # 超过 2MB 触发归档 (v2: raised from 1024)
+  max_messages: 20                 # 超过 20 条消息触发归档 (v2: new)
   target_session_size_kb: 512      # 归档后目标大小
   importance_threshold: 0.5        # 重要性评分阈值（0-1）
   archive_dir: ~/.hermes/session-archives
   hindsight_enabled: auto          # auto/true/false
-  cron_schedule: "0 3 * * *"      # 每天凌晨3点执行
-  summary_template: structured     # structured/compact/raw
+  cron_schedule: "0 3 * * *"      # 每天凌晨3点执行（兜底，主要靠事件驱动）
 ```
 
 ## How It Works
@@ -174,6 +174,61 @@ session_archivist:
 1. 搜索返回结果包含 session_id
 2. 可用 `hermes --resume <session_id>` 恢复
 
+## Event-Driven Triggers (v2 — Implemented)
+
+**Problem with cron-only:** Large sessions grow unchecked between cron runs, causing WebUI freezes mid-conversation.
+
+**Solution: Event-driven triggers + priority queue + state-aware processing.**
+
+### Trigger Layer (dual threshold)
+- **Condition 1:** Message count > 20 → trigger (`--max-messages 20`)
+- **Condition 2:** File size > 2MB → trigger (`--max-size 2048`)
+- Either condition → start processing flow
+
+```bash
+# Check if any session needs archiving (for hook integration)
+python3 session_archiver.py --check-trigger
+# Returns JSON: {"trigger": true, "count": 3, "sessions": [...]}
+```
+
+### State Detection Layer
+Before processing any session, 4-layer safety check:
+1. **Compression in progress:** File mtime < 30 seconds → skip
+2. **File locked:** fcntl.LOCK_EX held by another process → skip
+3. **Active agent task:** Gateway log has active session record → skip
+4. **Gateway busy:** `pgrep -f run_agent` → skip
+All pass → mark as "processable"
+
+### Priority Queue (P0-P3)
+```
+P0: Idle >30 min    → safest, process first
+P1: Idle 5-30 min   → likely abandoned
+P2: Idle <5 min     → just finished, process while fresh
+P3: Active >5MB     → wait for idle, then process
+None: Active <5MB   → skip entirely
+```
+
+Sort: by priority ascending, then by size descending within same priority.
+
+### Large Message Extraction (No Truncation)
+```
+Tool output > 100KB → ~/.hermes/session-archives/tool-outputs/{session_id}_{idx}.json
+Assistant reply > 50KB → ~/.hermes/session-archives/long-replies/{session_id}_{idx}.json
+Original position: {"_extracted": true, "file": "path", "preview": "first 500 chars..."}
+```
+Full content preserved in separate files. Session file shrinks, no data lost.
+
+### Processing Order
+1. State check (4-layer safety)
+2. File lock (fcntl.LOCK_EX)
+3. Extract large messages (no truncation)
+4. Importance scoring
+5. Topic boundary detection
+6. Generate structured summary
+7. Archive to markdown + Hindsight
+8. Backup original → trim session file
+9. Release lock, process next session (one at a time)
+
 ## Common Pitfalls
 
 1. **压缩前没存档就裁剪** — 导致信息永久丢失。Session Archivist 的 memory_flush 机制确保先存后删。
@@ -185,6 +240,16 @@ session_archivist:
 4. **cron 任务和 hermes gateway 压缩冲突** — 内置 4 层安全防护：①跳过最近 5 分钟有更新的 session ②检测 gateway 日志中的活跃 session ③检测 run_agent 进程是否运行 ④fcntl 文件锁防止并发写入。cron 建议在凌晨执行，避开活跃使用时段。
 
 5. **裁剪后 session 无法恢复** — 原始 session 备份在 `~/.hermes/session-archives/backups/`，保留 7 天。
+
+6. **批量执行 300 秒超时** — `session_archiver.py` 按顺序处理每个 session，40+ 个大会话必然超时。解决方案：连续执行多次，每次运行会重新扫描未归档的 session。实测 3 次清完 43 个（14 → 26 → 3）。
+
+7. **活跃 session 被跳过** — 最近 5 分钟有修改的 session 会跳过（"session is active"）。这是安全机制，不是 bug。凌晨 cron 自然避开了这个问题。
+
+8. **Hindsight 超时不阻塞** — Hindsight 连接超时时日志显示 "Hindsight failed: timed out"，但归档和裁剪仍然完成。非阻塞。
+
+9. **高重要性 session 裁剪效果差** — 如果大部分消息都是高分（包含决策/代码/错误修复），裁剪效果有限。实测 1329KB → 1116KB，几乎没减少。这种情况属于"内容确实重要"，不是 bug。
+
+10. **setup_cron.sh 的 --prompt vs --script 模式（严重，已修复 v1.0.0）** — 旧版 setup_cron.sh 用 `hermes cron create --prompt "python3 ..."` 创建 cron job，这会导致 script 字段存的是脚本内容而非文件路径。Hermes 在 no_agent 模式下把 script 当路径解析，报 Script not found。修复方案：先创建脚本文件到 ~/.hermes/scripts/session-daily-cleanup.sh，再用 --script session-daily-cleanup.sh --no-agent 创建 cron job。如果你是通过 tap add 安装的旧版本，需要重新运行 bash setup_cron.sh 更新 cron job。
 
 ## Verification Checklist
 
