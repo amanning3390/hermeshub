@@ -37,9 +37,12 @@ mkdir -p "$HERMES_SCRIPTS"
 cat > "$CLEANUP_SCRIPT" << 'SCRIPT_EOF'
 #!/bin/bash
 # Session Archivist — 每日自动清理
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ARCHIVER="${HERMES_HOME:-$HOME/.hermes}/skills/productivity/session-archivist/scripts/session_archiver.py"
 
+# 事件驱动检查（检测大 session）
+python3 "$ARCHIVER" --check 2>&1
+
+# 兜底：cron 模式处理遗留的大 session
 python3 "$ARCHIVER" 2>&1
 
 # 清理30天前的session
@@ -61,7 +64,6 @@ if [ -n "$EXISTING" ]; then
     echo "  ⚠ Session Archivist cron job already exists"
     echo "  Use 'hermes cron list' to see existing jobs"
 else
-    # 创建 cron job（script 模式，不走 agent，不消耗 token）
     hermes cron create "0 3 * * *" \
         --name "session-archivist-daily" \
         --script "$CLEANUP_SCRIPT" \
