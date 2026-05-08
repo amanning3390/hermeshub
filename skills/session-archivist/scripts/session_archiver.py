@@ -44,12 +44,16 @@ DEFAULT_KEEP_RECENT = 20
 DEFAULT_EXTRACT_THRESHOLD_KB = 100
 BACKUP_RETENTION_DAYS = 7
 DEFAULT_RETENTION_DAYS = 5
+DEFAULT_MAIN_RETENTION_DAYS = 10
 
 # 触发阈值
 TRIGGER_MSG_COUNT = 20
 TRIGGER_SIZE_KB = 2048  # 2MB
 # 过期 session 清理
 STALE_SESSION_EXTRACTION_THRESHOLD_DAYS = DEFAULT_RETENTION_DAYS
+
+# WebUI session 索引
+WEBUI_SESSIONS_DIR = HERMES_HOME / "webui" / "sessions"
 
 
 # 状态检测阈值
@@ -589,6 +593,7 @@ class SessionArchiver:
         self.keep_recent = config.get("keep_recent", DEFAULT_KEEP_RECENT)
         self.extract_threshold_kb = config.get("extract_threshold_kb", DEFAULT_EXTRACT_THRESHOLD_KB)
         self.retention_days = config.get("retention_days", DEFAULT_RETENTION_DAYS)
+        self.main_retention_days = config.get("main_retention_days", DEFAULT_MAIN_RETENTION_DAYS)
         self.dry_run = config.get("dry_run", False)
         self.check_mode = config.get("check_mode", False)
 
@@ -818,23 +823,55 @@ class SessionArchiver:
                 count += 1
         if count:
             print(f"\n{'[DRY-RUN] ' if self.dry_run else ''}Cleaned up {count} old backups")
+    def _load_main_session_ids(self) -> set:
+        """加载 WebUI 主 session ID 集合（从 WebUI 索引文件）"""
+        main_ids = set()
+        index_path = WEBUI_SESSIONS_DIR / "_index.json"
+        if index_path.exists():
+            try:
+                with open(index_path) as f:
+                    index = json.load(f)
+                for entry in index:
+                    sid = entry.get("id", entry.get("session_id", ""))
+                    if sid:
+                        main_ids.add(sid)
+            except Exception:
+                pass
+        # 也扫描 WebUI sessions 目录下的实际文件
+        if WEBUI_SESSIONS_DIR.exists():
+            for f in WEBUI_SESSIONS_DIR.glob("session_*.json"):
+                sid = f.stem.replace("session_", "")
+                main_ids.add(sid)
+        return main_ids
+
     def cleanup_stale_sessions(self) -> int:
-        """删除超过 retention_days 未更新的 session 文件
+        """删除超过保留期未更新的 session 文件
+
+        主 session（WebUI 索引里的）→ main_retention_days（默认 10 天）
+        子 session（cron/api/中间会话）→ retention_days（默认 5 天）
 
         安全规则：
         - 跳过活跃 session（最近 5 分钟有更新）
-        - 跳过有 _session_archivist 标记的（已归档过的保留）
+        - 已归档的优先删除（摘要已保存）
         - 删除前先备份到 session-archives/backups/
         """
-        cutoff_seconds = self.retention_days * 86400
+        main_ids = self._load_main_session_ids()
+        main_cutoff = self.main_retention_days * 86400
+        sub_cutoff = self.retention_days * 86400
         now = time.time()
         deleted = 0
+        stats = {"main": 0, "sub": 0}
 
         for f in SESSIONS_DIR.glob("session_*.json"):
             try:
                 mtime = f.stat().st_mtime
                 age_seconds = now - mtime
-                if age_seconds < cutoff_seconds:
+                session_id = f.stem.replace("session_", "")
+
+                # 主 session 和子 session 用不同的保留期
+                is_main = session_id in main_ids
+                cutoff = main_cutoff if is_main else sub_cutoff
+                if age_seconds < cutoff:
                     continue  # 未过期
 
                 # 安全检查：跳过活跃 session
@@ -851,23 +888,26 @@ class SessionArchiver:
                 except Exception:
                     continue  # 读不了的跳过
 
-                session_id = f.stem.replace("session_", "")
                 size_kb = f.stat().st_size / 1024
                 age_days = age_seconds / 86400
+                label = "main" if is_main else "sub"
 
                 if self.dry_run:
-                    print(f"  [DRY-RUN] Would delete: {f.name} ({size_kb:.0f}KB, {age_days:.1f}d old)")
+                    print(f"  [DRY-RUN] Would delete [{label}]: {f.name} ({size_kb:.0f}KB, {age_days:.1f}d old)")
                 else:
                     # 备份再删除
                     backup_path = BACKUP_DIR / f"{session_id}_stale_{datetime.now().strftime('%Y%m%d')}.json"
                     shutil.copy2(f, backup_path)
                     f.unlink()
-                    print(f"  🗑 Deleted: {f.name} ({size_kb:.0f}KB, {age_days:.1f}d old)")
+                    print(f"  🗑 Deleted [{label}]: {f.name} ({size_kb:.0f}KB, {age_days:.1f}d old)")
                 deleted += 1
+                stats[label] += 1
 
             except Exception as e:
                 print(f"  ⚠ Error processing {f.name}: {e}")
 
+        if deleted:
+            print(f"  📊 Deleted: {stats['main']} main (> {self.main_retention_days}d), {stats['sub']} sub (> {self.retention_days}d)")
         return deleted
 
 
@@ -885,6 +925,7 @@ def main():
     parser.add_argument("--extract-threshold", type=int, help="大消息提取阈值 (KB)")
     parser.add_argument("--no-hindsight", action="store_true", help="禁用 Hindsight")
     parser.add_argument("--retention-days", type=int, help="session 保留天数（默认 5 天）")
+    parser.add_argument("--main-retention-days", type=int, help="主 session 保留天数（默认 10 天）")
     parser.add_argument("--list", action="store_true", help="列出大 session 文件")
     args = parser.parse_args()
 
@@ -896,6 +937,7 @@ def main():
     if args.threshold: config["importance_threshold"] = args.threshold
     if args.extract_threshold: config["extract_threshold_kb"] = args.extract_threshold
     if args.retention_days: config["retention_days"] = args.retention_days
+    if args.main_retention_days: config["main_retention_days"] = args.main_retention_days
     if args.no_hindsight: config["hindsight_enabled"] = False
 
     archiver = SessionArchiver(config)
