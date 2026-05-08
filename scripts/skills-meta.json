@@ -145,5 +145,12 @@
     "featured": true,
     "installCount": 0,
     "category": "research"
+  },
+  "personal-api": {
+    "displayName": "Personal API",
+    "description": "Turn your Obsidian vault into a personal identity layer for AI. Any agent reads ME.md and AGENT.md and instantly knows who you are, how you think, and how to work with you.",
+    "featured": false,
+    "installCount": 0,
+    "category": "identity"
   }
 }
