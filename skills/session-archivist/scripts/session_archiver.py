@@ -43,10 +43,14 @@ DEFAULT_IMPORTANCE_THRESHOLD = 0.5
 DEFAULT_KEEP_RECENT = 20
 DEFAULT_EXTRACT_THRESHOLD_KB = 100
 BACKUP_RETENTION_DAYS = 7
+DEFAULT_RETENTION_DAYS = 5
 
 # 触发阈值
 TRIGGER_MSG_COUNT = 20
 TRIGGER_SIZE_KB = 2048  # 2MB
+# 过期 session 清理
+STALE_SESSION_EXTRACTION_THRESHOLD_DAYS = DEFAULT_RETENTION_DAYS
+
 
 # 状态检测阈值
 COMPRESSION_WINDOW_SEC = 30
@@ -584,6 +588,7 @@ class SessionArchiver:
         self.importance_threshold = config.get("importance_threshold", DEFAULT_IMPORTANCE_THRESHOLD)
         self.keep_recent = config.get("keep_recent", DEFAULT_KEEP_RECENT)
         self.extract_threshold_kb = config.get("extract_threshold_kb", DEFAULT_EXTRACT_THRESHOLD_KB)
+        self.retention_days = config.get("retention_days", DEFAULT_RETENTION_DAYS)
         self.dry_run = config.get("dry_run", False)
         self.check_mode = config.get("check_mode", False)
 
@@ -813,6 +818,58 @@ class SessionArchiver:
                 count += 1
         if count:
             print(f"\n{'[DRY-RUN] ' if self.dry_run else ''}Cleaned up {count} old backups")
+    def cleanup_stale_sessions(self) -> int:
+        """删除超过 retention_days 未更新的 session 文件
+
+        安全规则：
+        - 跳过活跃 session（最近 5 分钟有更新）
+        - 跳过有 _session_archivist 标记的（已归档过的保留）
+        - 删除前先备份到 session-archives/backups/
+        """
+        cutoff_seconds = self.retention_days * 86400
+        now = time.time()
+        deleted = 0
+
+        for f in SESSIONS_DIR.glob("session_*.json"):
+            try:
+                mtime = f.stat().st_mtime
+                age_seconds = now - mtime
+                if age_seconds < cutoff_seconds:
+                    continue  # 未过期
+
+                # 安全检查：跳过活跃 session
+                if (now - mtime) < ACTIVE_THRESHOLD_SECONDS:
+                    continue
+
+                # 检查是否已归档
+                try:
+                    with open(f) as fh:
+                        data = json.load(fh)
+                    if data.get("_session_archivist"):
+                        # 已归档的 session，安全删除
+                        pass
+                except Exception:
+                    continue  # 读不了的跳过
+
+                session_id = f.stem.replace("session_", "")
+                size_kb = f.stat().st_size / 1024
+                age_days = age_seconds / 86400
+
+                if self.dry_run:
+                    print(f"  [DRY-RUN] Would delete: {f.name} ({size_kb:.0f}KB, {age_days:.1f}d old)")
+                else:
+                    # 备份再删除
+                    backup_path = BACKUP_DIR / f"{session_id}_stale_{datetime.now().strftime('%Y%m%d')}.json"
+                    shutil.copy2(f, backup_path)
+                    f.unlink()
+                    print(f"  🗑 Deleted: {f.name} ({size_kb:.0f}KB, {age_days:.1f}d old)")
+                deleted += 1
+
+            except Exception as e:
+                print(f"  ⚠ Error processing {f.name}: {e}")
+
+        return deleted
+
 
 
 # ─── CLI 入口 ───────────────────────────────────────────────────────────
@@ -827,6 +884,7 @@ def main():
     parser.add_argument("--threshold", type=float, help="重要性阈值 (0-1)")
     parser.add_argument("--extract-threshold", type=int, help="大消息提取阈值 (KB)")
     parser.add_argument("--no-hindsight", action="store_true", help="禁用 Hindsight")
+    parser.add_argument("--retention-days", type=int, help="session 保留天数（默认 5 天）")
     parser.add_argument("--list", action="store_true", help="列出大 session 文件")
     args = parser.parse_args()
 
@@ -837,6 +895,7 @@ def main():
     if args.target_size: config["target_session_size_kb"] = args.target_size
     if args.threshold: config["importance_threshold"] = args.threshold
     if args.extract_threshold: config["extract_threshold_kb"] = args.extract_threshold
+    if args.retention_days: config["retention_days"] = args.retention_days
     if args.no_hindsight: config["hindsight_enabled"] = False
 
     archiver = SessionArchiver(config)
@@ -865,6 +924,9 @@ def main():
             results.append(result)
 
         archiver.cleanup_old_backups()
+        stale_deleted = archiver.cleanup_stale_sessions()
+        if stale_deleted:
+            print(f"  🗑 Stale sessions deleted: {stale_deleted} (>{archiver.retention_days}d)")
         _print_summary(results, archiver, args)
         return
 
@@ -896,6 +958,9 @@ def main():
         results.append(result)
 
     archiver.cleanup_old_backups()
+    stale_deleted = archiver.cleanup_stale_sessions()
+    if stale_deleted:
+        print(f"  🗑 Stale sessions deleted: {stale_deleted} (>{archiver.retention_days}d)")
     _print_summary(results, archiver, args)
 
 
