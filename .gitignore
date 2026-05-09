@@ -5,3 +5,5 @@ dist/
 .vercel/
 .mcp.json
 .claude/
+__pycache__/
+*.pyc
