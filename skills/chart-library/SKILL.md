@@ -1,9 +1,9 @@
 ---
 name: chart-library
-description: Anchor a (symbol, date, timeframe) and retrieve the cohort of historical analogs, regime-conditional forward returns, feature attribution, and a Layer 5 memory loop. Call `decision_brief` as your default first tool — it returns the regime-conditional read in one structured response shaped to force conditional language ("in regime X, analogs returned Y") instead of predictions.
-version: "1.1.0"
+description: Anchor a (symbol, date, timeframe) and retrieve the cohort of historical analogs, regime-conditional forward returns, feature attribution, and a Layer 5 memory loop. Call `decision_brief` as your default first tool — it returns a deterministic `summary` block of classification flags (verdict_class, edge_class, regime_alignment, swing_factors with framings) that your agent paraphrases in its own voice. No scripted prose; the agent's voice comes through.
+version: "1.2.0"
 license: MIT
-compatibility: Python 3.10+ with chartlibrary-mcp (>=5.0.4) installed via pip
+compatibility: Python 3.10+ with chartlibrary-mcp (>=5.1.0) installed via pip
 metadata:
   author: chartlibrary.io
   hermes:
@@ -44,7 +44,7 @@ Grounded historical pattern intelligence for any stock-market question. 25M+ ind
 
 | Tool | Use it for |
 |------|-----------|
-| **`decision_brief`** | **DEFAULT first call for any (symbol, date) anchor question.** Composes cohort (depth=full) + anchor context + Layer 5 memory + narrative pulse into one structured response. Returns `in_current_regime` / `outside_current_regime` / `conditional_edge` / `decision_card` / `system_prompt_excerpt`. The agent should quote `system_prompt_excerpt` verbatim. |
+| **`decision_brief`** | **DEFAULT first call for any (symbol, date) anchor question.** Composes cohort (depth=full) + anchor context + Layer 5 memory + narrative pulse into one structured response. Returns `summary` (deterministic classification flags — verdict_class, edge_class, regime_alignment, sample_quality, conviction, swing_factors with framings, caveat_flags) plus the raw structured fields (`in_current_regime` / `outside_current_regime` / `conditional_edge` / etc.). Read `summary` first and paraphrase the framings in your own voice; cite raw numbers in parentheses. |
 | `search` | Find historical analogs of a (symbol, date) anchor. Returns a `cohort_id` you chain into other tools without re-running kNN. |
 | `cohort` | Conditional-distribution analysis. `depth='basic'` (fast), `depth='full'` (Layer 3: adds feature importance + regime stratification + risk profile + tightness score), `depth='compare'` (A/B two anchors). |
 | `discover` | What's interesting today. `mode='daily_setups'` is the one-call morning brief: top picks pre-enriched with full cohort stats, top features, and yesterday's calibration recap. |
@@ -60,7 +60,21 @@ Grounded historical pattern intelligence for any stock-market question. 25M+ ind
 ```
 decision_brief(symbol='NVDA', date='2025-05-12', timeframe='1h')
 ```
-Returns the regime-conditional read in one call. Use this for any "what should the user know about this anchor?" question. The response includes a `system_prompt_excerpt` field the agent should quote verbatim — quoting it preserves the conditional language and stops the LLM from drifting into predictions.
+Returns the regime-conditional read in one call. Use this for any "what should the user know about this anchor?" question. **Read the `summary` block first** — it contains deterministic classification flags:
+
+```
+summary = {
+  verdict_class:    bullish | lean_bull | coin_flip | lean_bear | bearish | broken,
+  edge_class:       trivial | small | meaningful | large,
+  regime_alignment: tailwind | neutral | headwind,
+  sample_quality:   thin | ok | strong,
+  conviction:       low | med | high,
+  swing_factors:    [ { factor, direction, framing }, ... ],
+  caveat_flags:     [ thin_in_regime_sample, regime_was_derived, ... ],
+}
+```
+
+Paraphrase the `framing` strings in your own voice — **do not quote them verbatim**. Cite raw numbers from the structured fields (`in_current_regime`, `conditional_edge`, etc.) in parentheses for support. Lead with the verdict, then context, then swing factors as things to watch, then conviction. The conversational quality of the answer is the goal — let your model's voice come through.
 
 ### Morning brief across the market (one call)
 ```
@@ -71,9 +85,10 @@ Returns 3 fully-enriched setups with top-3 features + yesterday's calibration re
 ### Deep-dive when `decision_brief` isn't enough
 ```
 1. search(symbol='NVDA', date='2025-05-12', timeframe='1h')        → cohort_id
-2. cohort(symbol='NVDA', date='2025-05-12', depth='full')          → distribution + features + regime + risk
-3. explain(cohort_id=..., style='prose')                            → narrative summary
+2. cohort(symbol='NVDA', date='2025-05-12', depth='full')          → summary + distribution + features + regime + risk
+3. explain(cohort_id=..., style='filter_ranking')                   → which filters separated winners
 ```
+`cohort(depth='full')` also returns the same deterministic `summary` block as `decision_brief` — read it first.
 
 ### "Is this setup unusual?"
 ```
