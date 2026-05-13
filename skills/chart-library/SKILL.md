@@ -1,9 +1,9 @@
 ---
 name: chart-library
-description: Anchor a (symbol, date, timeframe) and retrieve the cohort of historical analogs, calibrated forward-return distributions, feature attribution, regime stratification, and a Layer 5 memory loop. Use when the user asks any "what happened historically after setups like this?" question so the agent stops hallucinating stock statistics.
-version: "1.0.0"
+description: Anchor a (symbol, date, timeframe) and retrieve the cohort of historical analogs, regime-conditional forward returns, feature attribution, and a Layer 5 memory loop. Call `decision_brief` as your default first tool — it returns the regime-conditional read in one structured response shaped to force conditional language ("in regime X, analogs returned Y") instead of predictions.
+version: "1.1.0"
 license: MIT
-compatibility: Python 3.10+ with chartlibrary-mcp (>=5.0.1) installed via pip
+compatibility: Python 3.10+ with chartlibrary-mcp (>=5.0.4) installed via pip
 metadata:
   author: chartlibrary.io
   hermes:
@@ -40,10 +40,11 @@ Grounded historical pattern intelligence for any stock-market question. 25M+ ind
    export CHARTLIBRARY_API_KEY=cl_...
    ```
 
-## Tool Surface (8 canonical)
+## Tool Surface (9 canonical)
 
 | Tool | Use it for |
 |------|-----------|
+| **`decision_brief`** | **DEFAULT first call for any (symbol, date) anchor question.** Composes cohort (depth=full) + anchor context + Layer 5 memory + narrative pulse into one structured response. Returns `in_current_regime` / `outside_current_regime` / `conditional_edge` / `decision_card` / `system_prompt_excerpt`. The agent should quote `system_prompt_excerpt` verbatim. |
 | `search` | Find historical analogs of a (symbol, date) anchor. Returns a `cohort_id` you chain into other tools without re-running kNN. |
 | `cohort` | Conditional-distribution analysis. `depth='basic'` (fast), `depth='full'` (Layer 3: adds feature importance + regime stratification + risk profile + tightness score), `depth='compare'` (A/B two anchors). |
 | `discover` | What's interesting today. `mode='daily_setups'` is the one-call morning brief: top picks pre-enriched with full cohort stats, top features, and yesterday's calibration recap. |
@@ -55,13 +56,19 @@ Grounded historical pattern intelligence for any stock-market question. 25M+ ind
 
 ## Chaining Patterns That Work
 
-### Morning brief (one call)
+### Single-anchor decision brief (the recommended default)
+```
+decision_brief(symbol='NVDA', date='2025-05-12', timeframe='1h')
+```
+Returns the regime-conditional read in one call. Use this for any "what should the user know about this anchor?" question. The response includes a `system_prompt_excerpt` field the agent should quote verbatim — quoting it preserves the conditional language and stops the LLM from drifting into predictions.
+
+### Morning brief across the market (one call)
 ```
 discover(mode='daily_setups', top=3, timeframe='1d')
 ```
 Returns 3 fully-enriched setups with top-3 features + yesterday's calibration recap. Don't multi-call when `daily_setups` does it in one.
 
-### Deep-dive on a name
+### Deep-dive when `decision_brief` isn't enough
 ```
 1. search(symbol='NVDA', date='2025-05-12', timeframe='1h')        → cohort_id
 2. cohort(symbol='NVDA', date='2025-05-12', depth='full')          → distribution + features + regime + risk
