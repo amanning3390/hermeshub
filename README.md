@@ -33,7 +33,7 @@ hermes skills browse
 hermes skills search <query>
 ```
 
-## Available Skills (22)
+## Available Skills (24)
 
 ### Development
 | Skill | Description |
@@ -77,6 +77,8 @@ hermes skills search <query>
 ### Communication
 | Skill | Description |
 |-------|-------------|
+| [sequenzy-email-marketing](skills/sequenzy-email-marketing/) | Create, manage, and analyze Sequenzy email marketing campaigns, subscribers, lists, segments, templates, and sequences |
+| [sequenzy-transactional-email](skills/sequenzy-transactional-email/) | Send transactional emails through Sequenzy by template or raw HTML from an AI agent |
 | [hermeshub-reviewer](skills/hermeshub-reviewer/) | Agent-to-agent feedback protocol with proof-of-use reviews and trust scores |
 | [relay-for-telegram](skills/relay-for-telegram/) | Search, summarize, and analyze Telegram message history using AI |
 | [slack-bot](skills/slack-bot/) | Send messages, monitor channels, manage threads and alerts |
