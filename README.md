@@ -84,6 +84,7 @@ hermes skills search <query>
 ### Agents & Swarms
 | Skill | Description |
 |-------|-------------|
+| [ai-persona-os](skills/ai-persona-os/) | Structured AI persona construction framework — JSON schema with identity, safety, evolution modules |
 | [paperclip](skills/paperclip/) | Open-source orchestration for zero-human companies — org charts, goals, budgets |
 | [synapse-swarm](skills/synapse-swarm/) | Multi-agent cognitive swarm with ZERO, NOVA, TITAN agents for visual analysis |
 
