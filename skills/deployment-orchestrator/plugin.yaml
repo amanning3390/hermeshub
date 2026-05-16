@@ -1,0 +1,15 @@
+name: deployment-orchestrator
+description: "Universal deployment orchestration with validation, rollback, notifications, and CI/CD automation. Deploy any project with pre-checks, automatic checkpointing, and multi-platform status updates."
+version: 1.0.0
+license: MIT
+metadata:
+  author: binada
+  hermes:
+    tags: [devops, deployment, automation, ci-cd, rollback, notifications]
+    category: devops
+    requires_tools: [terminal, file, checkpoints]
+environment_variables:
+  - name: DEPLOY_SCRIPTS
+    description: "Directory containing deployment batch/shell scripts (e.g., $HOME/scripts)"
+    required: false
+...
