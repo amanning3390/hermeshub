@@ -82,14 +82,22 @@ function verifyJWT(
 const evmAddressRegex = /^0x[0-9a-fA-F]{40}$/;
 const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
+const emptyToUndefined = z.literal("").transform(() => undefined);
+
 const walletUpdateSchema = z
   .object({
-    wallet_address: z.string().regex(evmAddressRegex, "Invalid EVM wallet address format").optional(),
+    wallet_address: z
+      .union([z.string().regex(evmAddressRegex, "Invalid EVM wallet address format"), emptyToUndefined])
+      .optional(),
     wallet_chain: z
       .enum(["base", "solana", "ethereum", "tempo"])
       .optional(),
-    solana_address: z.string().regex(solanaAddressRegex, "Invalid Solana address format").optional(),
-    tempo_address: z.string().regex(evmAddressRegex, "Invalid Tempo address format").optional(),
+    solana_address: z
+      .union([z.string().regex(solanaAddressRegex, "Invalid Solana address format"), emptyToUndefined])
+      .optional(),
+    tempo_address: z
+      .union([z.string().regex(evmAddressRegex, "Invalid Tempo address format"), emptyToUndefined])
+      .optional(),
   })
   .refine(
     (data) =>
