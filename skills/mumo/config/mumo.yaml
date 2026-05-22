@@ -7,6 +7,9 @@ mcp_servers:
     url: "https://mumo.chat/api/mcp"
     headers:
       Authorization: "Bearer mmo_live_YOUR_KEY_HERE"
+    connect_timeout: 60
+    timeout: 180
+    supports_parallel_tool_calls: true
     tools:
       include:
         - create_deliberation
