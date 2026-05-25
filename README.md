@@ -33,7 +33,7 @@ hermes skills browse
 hermes skills search <query>
 ```
 
-## Available Skills (22)
+## Available Skills (23)
 
 ### Development
 | Skill | Description |
@@ -61,6 +61,7 @@ hermes skills search <query>
 | Skill | Description |
 |-------|-------------|
 | [agent-hardening](skills/agent-hardening/) | Comprehensive security hardening — 10 threat categories aligned with OWASP LLM Top 10 |
+| [authsome](skills/authsome/) | Local credential broker. Login once via OAuth2 or API key, vault stores secrets, local proxy injects them at request time so agents never see the raw values. 45 providers bundled. |
 | [security-auditor](skills/security-auditor/) | Scan code for vulnerabilities, audit dependencies, review configurations |
 
 ### Data & Analytics
