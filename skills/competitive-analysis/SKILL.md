@@ -3,6 +3,7 @@ name: competitive-analysis
 description: Conduct competitive analysis on companies or products. Compares features, pricing, positioning, strengths, weaknesses, and market share. Creates structured comparison matrices. Trigger when user wants to compare competitors, analyze a competitive landscape, or evaluate competitive positioning.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:

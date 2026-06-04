@@ -3,6 +3,7 @@ name: task-automator
 description: Automate repetitive tasks and workflows. Creates scripts and scheduled jobs for common automation needs — file organization, data entry, report generation, notifications, and more. Trigger when user wants to automate a task, create a scheduled job, or eliminate repetitive manual work.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:

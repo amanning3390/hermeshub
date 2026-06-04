@@ -3,6 +3,7 @@ name: dependency-security-scanner
 description: Scan project dependencies for known security vulnerabilities. Supports npm, pip, cargo, go modules, and more. Integrates with OSV database and GitHub Advisory Database. Trigger when user wants to check dependencies for vulnerabilities, audit project security, or set up automated dependency scanning.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:

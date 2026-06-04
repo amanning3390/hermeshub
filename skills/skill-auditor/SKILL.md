@@ -3,6 +3,7 @@ name: skill-auditor
 description: Audit Hermes Agent skills for quality, security, and best practices. Checks SKILL.md format, frontmatter completeness, security risks, and adherence to agentskills.io spec. Trigger when user wants to audit a skill, validate a skill before submission, or check skill quality.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:
@@ -44,7 +45,7 @@ metadata:
    - [ ] No instructions to bypass security prompts or approval gates
    - [ ] No downloading and executing binaries from external URLs
    - [ ] No hidden instructions in referenced files that contradict SKILL.md
-   - [ ] No prompt injection or jailbreak attempts
+   - [ ] No prompt injection or LLM safety bypass attempts
    - [ ] No hardcoded credentials, tokens, or API keys
    - [ ] All environment variables documented with setup instructions
 

@@ -3,6 +3,7 @@ name: market-research
 description: Conduct comprehensive market research on any industry, product, or company. Gathers data from multiple sources including news, financial reports, competitor analysis, and market trends. Trigger when user wants to research a market, analyze an industry, understand market size, or evaluate market opportunities.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:

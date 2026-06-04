@@ -3,6 +3,7 @@ name: meeting-prep-assistant
 description: Prepare comprehensive briefings for upcoming meetings. Researches attendees, reviews past meeting notes, summarizes relevant documents, and creates an agenda. Trigger when user wants to prepare for a meeting, get briefed on attendees, or create a meeting agenda.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:

@@ -3,6 +3,7 @@ name: email-manager
 description: Manage email workflows — draft, send, search, and organize emails. Supports Gmail, Outlook, and IMAP. Includes templates for common email types and smart inbox organization. Trigger when user wants to draft emails, search inbox, organize messages, or automate email workflows.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:
