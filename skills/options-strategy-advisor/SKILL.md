@@ -3,11 +3,12 @@ name: options-strategy-advisor
 description: Analyze and recommend options trading strategies based on market conditions, risk tolerance, and outlook. Covers covered calls, cash-secured puts, spreads, iron condors, straddles, and more. Includes probability analysis and risk/reward calculations. Trigger when user wants options strategy ideas, help with a specific trade setup, or wants to understand options Greeks.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:
     tags: [options, trading, strategy, greeks, covered-call, put-spread, iron-condor, volatility]
-    category: finance
+    category: data
 ---
 
 # Options Strategy Advisor
@@ -34,7 +35,7 @@ metadata:
    | Outlook | Conservative | Moderate | Aggressive |
    |---------|-------------|----------|------------|
    | Bullish | Covered call | Bull call spread | Long call |
-   | Bearish | Cash-secured put | Bear put spread | Long put |
+   | Bearish | Bear put spread | Bear put spread | Long put |
    | Neutral | Iron condor | Short straddle | Calendar spread |
    | Volatile | Long straddle | Strangle | Ratio spread |
 

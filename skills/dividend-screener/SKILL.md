@@ -3,11 +3,12 @@ name: dividend-screener
 description: Screen US stocks for high-quality dividend opportunities. Filters by dividend yield, payout ratio, dividend growth streak, free cash flow coverage, and sector diversification. Trigger when user wants to find dividend stocks, build a dividend portfolio, or evaluate a stock's dividend sustainability.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:
     tags: [dividend, stocks, screening, income, investing, portfolio, yield]
-    category: finance
+    category: data
 ---
 
 # Dividend Screener

@@ -3,11 +3,12 @@ name: earnings-analyzer
 description: Analyze upcoming and recent earnings reports for US stocks. Covers earnings surprise history, revenue trends, guidance changes, and post-earnings price action patterns. Trigger when user wants to check upcoming earnings, analyze a company's earnings history, or evaluate post-earnings trading opportunities.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:
     tags: [earnings, stocks, analysis, revenue, EPS, guidance, quarterly, fundamental]
-    category: finance
+    category: data
 ---
 
 # Earnings Analyzer

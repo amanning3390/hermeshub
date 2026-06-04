@@ -3,11 +3,12 @@ name: crypto-portfolio-analyzer
 description: Analyze cryptocurrency portfolio performance, risk metrics, and allocation. Calculates Sharpe ratio, Sortino ratio, max drawdown, correlation matrix, and provides rebalancing recommendations. Trigger when user wants to review portfolio performance, assess risk, or optimize crypto allocation.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:
     tags: [crypto, portfolio, risk, analysis, sharpe, drawdown, allocation, rebalancing]
-    category: crypto-trading
+    category: data
 ---
 
 # Crypto Portfolio Analyzer

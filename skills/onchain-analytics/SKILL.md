@@ -3,11 +3,12 @@ name: onchain-analytics
 description: Analyze on-chain data for cryptocurrency tokens including whale tracking, exchange flows, holder distribution, and smart money movements. Uses public blockchain explorers and free on-chain APIs. Trigger when user wants to track whale wallets, monitor exchange inflows/outflows, analyze holder concentration, or follow smart money.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:
     tags: [onchain, blockchain, whale, analytics, defi, ethereum, solana, smart-money]
-    category: crypto-trading
+    category: data
 ---
 
 # On-Chain Analytics

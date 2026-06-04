@@ -3,11 +3,12 @@ name: crypto-arb-scanner
 description: Scan for real-time cryptocurrency arbitrage opportunities across multiple exchanges (Binance, Bybit, OKX, MEXC, Kraken). Detects price discrepancies, calculates profit after fees, and ranks opportunities by net yield. Trigger when user wants to find arb opportunities, scan for cross-exchange price differences, or set up automated arb monitoring.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:
     tags: [crypto, arbitrage, trading, binance, bybit, okx, mexc, kraken, cross-exchange]
-    category: crypto-trading
+    category: data
 ---
 
 # Crypto Arb Scanner

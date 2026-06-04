@@ -3,11 +3,12 @@ name: smc-backtester
 description: Backtest Smart Money Concepts (SMC) trading strategies across multiple crypto pairs and timeframes. Implements HTF trend analysis, Market Structure Shift (MSS), sweep detection, Fair Value Gap (FVG) filtering, and two-tier position sizing. Trigger when user wants to backtest SMC strategies, evaluate trading signals, or optimize strategy parameters.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:
     tags: [smc, smart-money, backtesting, trading, crypto, strategy, HTF, MSS, FVG]
-    category: crypto-trading
+    category: data
 ---
 
 # SMC Backtester
