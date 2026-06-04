@@ -3,6 +3,7 @@ name: sentiment-analyzer
 description: Analyze sentiment of text data from social media, news, reviews, or any text source. Uses NLP techniques to classify sentiment (positive/negative/neutral) and extract key themes. Trigger when user wants to analyze sentiment of tweets, news articles, product reviews, or any text corpus.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:

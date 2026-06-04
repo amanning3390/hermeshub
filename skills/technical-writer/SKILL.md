@@ -3,6 +3,7 @@ name: technical-writer
 description: Write technical documentation including API docs, README files, architecture guides, and tutorials. Follows documentation best practices and adapts to the target audience. Trigger when user wants to write documentation, create a README, document an API, or write a technical guide.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:

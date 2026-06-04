@@ -3,6 +3,7 @@ name: deployment-pipeline-builder
 description: Build CI/CD deployment pipelines for common project types. Supports GitHub Actions, GitLab CI, and Docker-based deployments. Covers testing, building, security scanning, and deployment to cloud platforms. Trigger when user wants to set up CI/CD, create a deployment pipeline, or automate their release process.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:

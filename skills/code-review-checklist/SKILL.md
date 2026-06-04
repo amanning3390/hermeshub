@@ -3,6 +3,7 @@ name: code-review-checklist
 description: Perform structured code reviews using a comprehensive checklist. Covers security, performance, maintainability, testing, and best practices. Works for any language. Trigger when user wants a code review, PR review, or code quality assessment.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:

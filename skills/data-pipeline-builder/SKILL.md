@@ -3,6 +3,7 @@ name: data-pipeline-builder
 description: Build automated data pipelines for ETL (Extract, Transform, Load) workflows. Supports scheduled data collection, transformation, validation, and storage. Trigger when user wants to automate data collection, build ETL pipelines, schedule data jobs, or create data workflows.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:

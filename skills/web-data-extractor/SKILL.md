@@ -3,6 +3,7 @@ name: web-data-extractor
 description: Extract structured data from web pages and APIs. Handles HTML parsing, table extraction, pagination, rate limiting, and data cleaning. Outputs to CSV, JSON, or Excel. Trigger when user wants to scrape data from websites, extract tables, collect data from multiple pages, or transform web content into structured formats.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:

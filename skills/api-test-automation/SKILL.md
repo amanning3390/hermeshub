@@ -3,6 +3,7 @@ name: api-test-automation
 description: Automate API endpoint testing with comprehensive test suites. Generates test cases for REST and GraphQL APIs, runs them, and produces detailed reports. Covers happy path, edge cases, error handling, authentication, and rate limiting. Trigger when user wants to test API endpoints, build test suites, or validate API behavior.
 version: "1.0.0"
 license: MIT
+author: andre-hermes
 metadata:
   author: andre-hermes
   hermes:
