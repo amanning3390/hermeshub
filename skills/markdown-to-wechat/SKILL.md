@@ -74,10 +74,27 @@ def md_to_wechat(md_text):
     html_parts = []
     in_code_block = False
     code_buffer = []
+    table_buffer = []  # 累积表格行，合并到一个<table>
+    in_table = False
+    
+    def flush_table():
+        nonlocal table_buffer, in_table, seen_table_header
+        if table_buffer:
+            rows_html = '\n'.join(table_buffer)
+            html_parts.append(
+                f'<table style="border-collapse: collapse; width: 100%; '
+                f'margin: 10px 0;">{rows_html}</table>'
+            )
+            table_buffer = []
+            in_table = False
+        seen_table_header = False
+    
+    seen_table_header = False  # 标记是否已处理表头
     
     for i, line in enumerate(lines):
         # 代码块
         if line.strip().startswith('```'):
+            flush_table()
             if in_code_block:
                 html_parts.append(format_code_block(code_buffer))
                 code_buffer = []
@@ -89,6 +106,7 @@ def md_to_wechat(md_text):
             code_buffer.append(line)
             continue
         if not line.strip():
+            flush_table()
             html_parts.append('<p style="margin: 8px 0;">&nbsp;</p>')
             continue
         
@@ -139,22 +157,22 @@ def md_to_wechat(md_text):
             )
         # 表格
         elif '|' in line and line.strip().startswith('|'):
-            # 处理表头分隔行
+            # 处理表头分隔行 (|---|)
             if re.match(r'^\|[\s\-:]+\|', line.strip()):
                 continue
             cells = [c.strip() for c in line.strip('|').split('|')]
-            is_header = (i > 0 and re.match(r'^\|[\s\-:]+\|', lines[i-1].strip()))
-            tag = 'th' if is_header else 'td'
-            style = ('background: #f5f5f5; font-weight: bold; ' if is_header
+            tag = 'th' if not seen_table_header else 'td'
+            style = ('background: #f5f5f5; font-weight: bold; ' if not seen_table_header
                      else '')
+            seen_table_header = True
             cells_html = ''.join(
                 f'<{tag} style="border: 1px solid #ddd; padding: 8px 10px; '
                 f'font-size: 14px; color: #3f3f3f; {style}">'
                 f'{inline_format(c)}</{tag}>'
                 for c in cells
             )
-            html_parts.append(f'<table style="border-collapse: collapse; width: 100%; '
-                              f'margin: 10px 0;"><tr>{cells_html}</tr></table>')
+            table_buffer.append(f'<tr>{cells_html}</tr>')
+            in_table = True
         # 正文
         else:
             text = inline_format(line)
@@ -163,11 +181,14 @@ def md_to_wechat(md_text):
                 f'margin: 5px 0; letter-spacing: 0.5px;">{text}</p>'
             )
     
+    flush_table()  # 刷新剩余表格
     return '\n'.join(html_parts)
 
 def inline_format(text):
     """处理行内格式：加粗、行内代码、删除线、链接"""
-    # 代码 (先处理，避免格式冲突)
+    # 先转义HTML特殊字符，再处理Markdown格式
+    text = html_module.escape(text)
+    # 行内代码 (最先处理)
     text = re.sub(
         r'`([^`]+)`',
         r'<code style="background: #f0f0f0; color: #c7254e; padding: 2px 5px; '
@@ -184,7 +205,7 @@ def inline_format(text):
         r'<a href="\2" style="color: #4078c0; text-decoration: underline;">\1</a>',
         text
     )
-    return html_module.escape(text)
+    return text
 
 def format_code_block(lines):
     """格式化代码块"""
