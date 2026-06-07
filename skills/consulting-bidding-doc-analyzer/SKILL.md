@@ -1,5 +1,5 @@
 ---
-name: bidding-doc-analyzer
+name: consulting-bidding-doc-analyzer
 title: 招标文件智能拍案
 description: 上传一份招标文件PDF，自动提取资格条件清单、评分权重表、关键时间节点、异常条款提示和投标策略建议。通用版，支持全国各省招标文件格式。
 author: 小渊
