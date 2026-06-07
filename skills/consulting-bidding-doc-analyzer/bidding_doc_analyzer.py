@@ -105,7 +105,25 @@ def download_pdf(url: str) -> str:
         return tmp_path
 
 
+def _check_ocr_deps():
+    """前置检查OCR依赖是否可用，避免跑到扫描件才报错"""
+    try:
+        import pytesseract
+        pytesseract.get_tesseract_version()
+    except (ImportError, OSError):
+        # 只是警告，不阻断——电子档PDF不需要OCR
+        import sys
+        print("[警告] Tesseract OCR 不可用，扫描件PDF将无法识别。", file=sys.stderr)
+        print("        如需处理扫描件，请安装：", file=sys.stderr)
+        print("          sudo apt-get install tesseract-ocr tesseract-ocr-chi-sim", file=sys.stderr)
+        print("          pip install pytesseract Pillow", file=sys.stderr)
+
+
 def main():
+    # ── 前置依赖检查 ──
+    # OCR依赖提前检查，避免跑到扫描件才报错
+    _check_ocr_deps()
+    
     parser = argparse.ArgumentParser(
         description="招标文件智能拍案 — PDF文本提取器（不做结构化分析）"
     )
