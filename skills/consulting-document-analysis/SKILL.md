@@ -66,12 +66,23 @@ ls -la <cache_directory>/
 - 先跑1页测速，确认速度再全量执行
 - 多页扫描件用后台运行（background + notify_on_complete）
 
+**环境安装**：
+```bash
+# Debian/Ubuntu
+apt install tesseract-ocr tesseract-ocr-chi-sim poppler-utils
+pip install pymupdf pytesseract python-docx Pillow
+
+# 验证OCR可用
+tesseract --list-langs | grep chi_sim
+# 应输出: chi_sim (Chinese - Simplified)
+```
+
 ```python
 import fitz, pytesseract
 from PIL import Image
 import io
 
-pdf_path = "/path/to/document.pdf"
+pdf_path = "<文档路径>"  # 替换为实际PDF文件路径
 doc = fitz.open(pdf_path)
 
 for page_num in range(len(doc)):
@@ -85,6 +96,12 @@ for page_num in range(len(doc)):
         ocr_text = pytesseract.image_to_string(img, lang='chi_sim')
         print(f"[Page {page_num+1} (OCR)]\n{ocr_text[:2000]}")
 ```
+
+**⚠️ OCR误差提示**：OCR识别结果可能存在以下误差：
+- 中文识别准确率约95-98%，专有名词（公司名、人名）可能出错
+- 数字识别率较高（99%+），但需注意小数点位置和千分位分隔符
+- 表格结构和印章文字OCR效果较差，建议人工核对关键数据
+- 最终回函中引用的原文，必须与原始文件逐字核对
 
 ### Step 3: 案卷重构
 
