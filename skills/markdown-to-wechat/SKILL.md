@@ -3,66 +3,72 @@ name: markdown-to-wechat
 description: Markdown转微信文章排版 — 把Markdown一键转成微信编辑器可粘贴的HTML格式。自动处理代码块、表格、图片居中、引用样式、标题层级。适合公众号运营、技术写作、知识分享。
 version: "1.0.0"
 license: MIT
-compatibility: Hermes Agent。纯文本处理，无需额外API或网络调用。
 metadata:
-  author: 小渊 (渊·工程咨询AI平台)
+  author: 小渊
   hermes:
     tags: [markdown, wechat, formatting, publishing, content-creation]
     category: productivity
     requires_tools: [terminal]
-    toolset: productivity
 ---
 
 # Markdown 转微信文章排版
 
 把 Markdown 转成微信编辑器可直接粘贴的 HTML 格式。
 
-## 适用场景
+## When to Use
 
-- 你在飞书/Notion/Obsidian里写好了文章，想发到微信公众号
-- 代码块在微信里格式乱掉、表格对不齐、行内代码看不清
-- 不想用第三方排版工具，直接在 Hermes 里搞定
-- 批量处理多篇 Markdown 文章统一风格
+- User provides a Markdown file or content and asks to convert it to WeChat article formatting.
+- User says "转成微信排版", "帮我转成公众号格式", "make this WeChat-ready", or similar.
+- User wants to publish a Markdown article (from Notion, Obsidian, Feishu, etc.) to a WeChat Official Account.
+- User wants batch processing of multiple Markdown files into WeChat-compatible HTML.
+- User reports issues with code blocks, tables, or inline code losing formatting when pasted into WeChat editor.
 
-## 使用方法
+## Procedure
 
-调用方式一（直接处理文件）：
+1. **Receive input.** Accept Markdown content either as:
+   - A file attachment (attached via `--attach article.md`)
+   - Direct pasted Markdown text in the conversation
+   - A directory path for batch processing
 
-```
-hermes run "帮我转一下这篇文章成微信排版" --attach article.md
-```
+2. **Parse and convert.** Run the `md_to_wechat()` function on the input text. The conversion handles:
+   - Headings (`#` → h1 centered 18px, `##` → h2 left 16px, `###` → h3 left 15px)
+   - Bold, inline code, strikethrough, links
+   - Code blocks (dark background `#2d2d2d`, light text `#f8f8f2`, monospace)
+   - Blockquotes (left gray border, gray text, light background)
+   - Unordered/ordered lists (bullet/number, indented, 1.75 line-height)
+   - Horizontal rules (dashed light gray line)
+   - Tables (bordered with header highlight and alternating row background)
+   - Paragraphs (15px, `#3f3f3f`, 1.75 line-height)
 
-调用方式二（粘贴内容）：
+3. **Wrap in section container.** Enclose the converted HTML in a `<section>` container (max-width: 677px) for direct WeChat editor compatibility.
 
-直接把 Markdown 内容发过来，说"转成微信排版"。
+4. **Return the result.** Present the full HTML output and instruct user to copy & paste into the WeChat editor.
 
-调用方式三（批量处理）：
+5. **Optional: Apply user preferences.** If user has previously specified a preferred style (via Hermes memory or config), apply those customizations (font size, line height, colors) from `config.yaml` under `skills.markdown-to-wechat`.
 
-```
-hermes run "把 docs/ 目录下所有 .md 文件转成微信排版，输出到 wechat_output/"
-```
+6. **Optional: Batch processing.** If user provides a directory, iterate over all `.md` files, convert each, and write output to a specified output directory (default: `wechat_output/`).
 
-## 转换规则
+## Conversion Rules
 
-| Markdown 元素 | 微信排版处理 |
-|---------------|-------------|
-| `# 标题` | 居中对齐，字号 18px，加粗，深灰色 |
-| `## 二级` | 左对齐，字号 16px，加粗，深灰色 |
-| `### 三级` | 左对齐，字号 15px，加粗，灰色 |
-| 正文段落 | 字号 15px，深灰色（#3f3f3f），1.75倍行距 |
-| `**加粗**` | 保持加粗 |
-| `` `行内代码` `` | 浅灰背景(#f0f0f0)，圆角3px，字号14px，红色字(#c7254e) |
-| 代码块 | 深色背景(#2d2d2d)，浅色文字(#f8f8f2)，14px，等宽字体，圆角5px |
-| `> 引用` | 左侧灰色竖线边框(#e0e0e0)，灰色文字(#888)，浅灰背景(#fafafa) |
-| 无序列表 | 圆点标记，缩进，1.5倍行距 |
-| 有序列表 | 数字标记，缩进，1.5倍行距 |
-| 图片 | 居中，最大宽度100%，圆角4px，底部留白 |
-| 表格 | 边框线，浅灰表头(#f5f5f5)，交替行背景 |
-| `---` 分割线 | 浅灰虚线，居中，上下留白 |
-| `~~删除线~~` | 带删除线文字 |
-| 链接 | 蓝色(#4078c0)，下划线 |
+| Markdown Element | WeChat Formatting |
+|---|---|
+| `# 标题` | Center-aligned, 18px, bold, dark gray (#333) |
+| `## 二级` | Left-aligned, 16px, bold, dark gray (#3f3f3f) |
+| `### 三级` | Left-aligned, 15px, bold, gray (#666) |
+| 正文段落 | 15px, #3f3f3f, 1.75 line-height, letter-spacing 0.5px |
+| `**加粗**` | `<strong>` tag |
+| `` `行内代码` `` | Light gray bg (#f0f0f0), red text (#c7254e), 3px radius, 14px |
+| 代码块 | Dark bg (#2d2d2d), light text (#f8f8f2), 14px, monospace, 5px radius |
+| `> 引用` | Left gray border (#e0e0e0), gray text (#888), light bg (#fafafa) |
+| 无序列表 | Bullet point, indented, 1.75 line-height |
+| 有序列表 | Numbered, indented, 1.75 line-height |
+| 图片 | Centered, max-width 100%, 4px radius, bottom margin |
+| 表格 | Border lines, light gray header (#f5f5f5), alternating rows |
+| `---` 分割线 | Dashed light gray line, centered, top/bottom margin |
+| `~~删除线~~` | `<del>` tag |
+| 链接 | Blue (#4078c0), underlined |
 
-## 核心转换脚本
+## Core Conversion Script
 
 ```python
 import re
@@ -237,9 +243,29 @@ def process_file(input_path, output_path=None):
     return full_html
 ```
 
-## 使用示例
+## Output Format
 
-**输入（Markdown）：**
+The output is a complete HTML snippet wrapped in a `<section>` container. The user copies this HTML and pastes directly into the WeChat Official Account editor.
+
+```html
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 15px;">
+  <!-- Converted content with inline styles -->
+  <h1 style="text-align: center; font-size: 18px; font-weight: bold; color: #333; margin: 25px 0 15px 0;">文章标题</h1>
+  <p style="font-size: 15px; color: #3f3f3f; line-height: 1.75; margin: 5px 0; letter-spacing: 0.5px;">正文内容...</p>
+  <!-- ... more elements ... -->
+</section>
+```
+
+**Key output characteristics:**
+- All styles are inline (WeChat strips `<style>` blocks and external CSS)
+- Base font size: 15px (optimized for mobile reading)
+- Paragraph spacing: moderate, comfortable readability
+- Code blocks: prioritize readability with dark theme
+- Outer container max-width: 677px (WeChat default)
+
+## Usage Examples
+
+**Input (Markdown):**
 ```markdown
 # 工程咨询行业趋势分析
 
@@ -261,7 +287,7 @@ def process_file(input_path, output_path=None):
 | 绩效审计 | 31% | 政策驱动 |
 ```
 
-**输出（微信HTML）：**
+**Output (WeChat HTML):**
 ```html
 <section style="max-width: 677px; margin: 0 auto; padding: 10px 15px;">
 <h1 style="...">工程咨询行业趋势分析</h1>
@@ -271,23 +297,22 @@ def process_file(input_path, output_path=None):
 </section>
 ```
 
-**使用方式**：复制HTML内容 → 打开微信编辑器 → 粘贴 → 完成排版。
+**Usage**: Copy the HTML content → Open WeChat editor → Paste → Done.
 
-## 与Hermes记忆系统配合
+## Pitfalls
 
-- 常用排版风格偏好自动记录（字号、配色、间距）
-- 如果你有固定的公众号风格，记得说"保持这个风格"，以后自动沿用
+- **Forgetting the section wrapper.** The output MUST include the outer `<section>` container. Without it, WeChat may not apply the max-width constraint, causing content to stretch across the full screen.
+- **Using unsupported HTML tags.** WeChat editor does not support `<div>` with complex CSS layouts, flexbox, or grid. Stick to inline styles on `<p>`, `<h1>`–`<h3>`, `<pre>`, `<code>`, `<blockquote>`, `<table>`, `<hr>`, `<strong>`, `<del>`, `<a>`.
+- **Nested Markdown inside code blocks.** The converter treats ` ``` ` as code block delimiters. If there are nested backticks or code fences inside a code block, the conversion may break.
+- **Tables with too many columns.** WeChat editor handles tables poorly beyond 5 columns. Warn the user if the table exceeds this limit.
+- **Base64 images.** WeChat does not support base64-encoded images in HTML paste. All images must be uploaded separately via the WeChat media manager.
+- **Empty lines producing extra whitespace.** Empty lines in Markdown become `<p>&nbsp;</p>` which may create unintended spacing. Advise users to review the output before publishing.
+- **Style conflicts with WeChat editor.** WeChat's editor may strip or override some CSS properties (e.g., certain `margin`/`padding` values). Test the paste result and adjust if needed.
+- **Code block overflow.** Very long code lines may overflow on mobile. Suggest users split long code blocks into smaller sections.
 
-## 输出规范
+## Local Configuration
 
-- 默认输出完整HTML（含外层section容器），直接粘贴到微信编辑器
-- 字号以15px为基础，适配手机阅读
-- 段落间距适中，不拥挤不松散
-- 代码块优先可读性
-
-## 本地化配置
-
-在 Hermes 的 config.yaml 中自定义样式：
+In Hermes `config.yaml`, customize styles under:
 
 ```yaml
 skills:
@@ -299,20 +324,37 @@ skills:
     max_width: 677              # 最大宽度(微信默认)
 ```
 
-## 已知限制
+## Hermes Memory Integration
 
-- 微信编辑器对复杂表格支持有限（不建议超过5列）
-- 微信图片需单独上传，不支持base64内嵌
-- 微信编辑器清除部分CSS属性（如部分margin/padding）
-- 极长代码块建议分开展示
+- User's preferred styling (font size, colors, spacing) is automatically remembered across sessions via Hermes memory system.
+- If user says "保持这个风格" (keep this style), the current output's styling parameters are persisted as defaults for future conversions.
 
-## 参考
+## Known Limitations
 
-- 本Skill参照微信官方编辑器HTML规范
-- 输入标准CommonMark规范，输出微信兼容的HTML子集
+- WeChat editor has limited support for complex tables (recommend no more than 5 columns).
+- Images must be uploaded separately in WeChat; base64 embedding is not supported.
+- WeChat editor strips some CSS properties (e.g., some `margin`/`padding` values).
+- Very long code blocks should be split into smaller sections for readability.
 
-## 维护
+## Verification
 
-- 版本: 1.0.0
-- 作者: 小渊 (渊·工程咨询AI平台)
-- 更新日志: GitHub
+Before delivering the output, confirm the following checklist:
+
+- [ ] Does the output include the outer `<section>` wrapper with `max-width: 677px`?
+- [ ] Are all styles inline? (No `<style>` blocks or external CSS references.)
+- [ ] Are code blocks properly formatted with dark background (`#2d2d2d`) and light text (`#f8f8f2`)?
+- [ ] Are inline code elements styled with red text (`#c7254e`) on light gray background (`#f0f0f0`)?
+- [ ] Are tables wrapped in proper `<table>` tags with `border-collapse: collapse`?
+- [ ] Are blockquotes formatted with left border, gray text, and light background?
+- [ ] Are headings correctly styled (h1 centered 18px, h2 left 16px, h3 left 15px)?
+- [ ] Are links colored blue (`#4078c0`) with underline?
+- [ ] Is the HTML syntactically valid? (Tags closed, properly nested.)
+- [ ] If batch processing: are all output files written to the target directory?
+- [ ] If user specified custom config: have the config values been applied to the output styles?
+
+## References
+
+- This Skill follows WeChat Official Account editor's HTML compatibility specification.
+- Input follows CommonMark specification; output is a subset of HTML compatible with WeChat.
+- Version: 1.0.0
+- Updates: GitHub
