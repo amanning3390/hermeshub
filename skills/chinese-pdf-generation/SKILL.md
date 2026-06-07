@@ -5,7 +5,7 @@ version: "1.0.0"
 license: MIT
 compatibility: Python 3.8+ with weasyprint, markdown
 metadata:
-  author: yuanengineering
+  author: 小渊 (渊·工程咨询AI平台)
   hermes:
     tags: [pdf, chinese, document, report, cjk-fonts, feishu]
     category: productivity
@@ -119,14 +119,23 @@ print(f"PDF generated: {output_path}")
 ```
 
 ### Step 5: Deliver to Feishu/Lark
-Use the `send_message` tool with `MEDIA:` prefix:
 
-```python
+用Hermes的 `send_message` 工具发送：
+
+```text
 send_message(
-    message="📄 Document Title\n\nMEDIA:/path/to/output.pdf",
-    target="feishu:oc_chat_id"
+    message="📄 报告标题\n\n内容摘要\n\nMEDIA:/path/to/output.pdf",
+    target="feishu:oc_群聊ID"
 )
 ```
+
+如果飞书没有文件上传权限，可改用 `MEDIA:` 前缀直接发送（文件会作为附件发送）。
+
+## 安全注意事项
+
+- **输入净化**：Markdown内容如果来自不可信来源（用户上传、网页采集），必须先做HTML转义，避免XSS注入
+- **文件路径**：PDF输出路径建议用临时目录（如 `/tmp/`），避免覆盖重要文件
+- **权限控制**：飞书推送前确认目标群ID正确，防止信息泄露
 
 ## Available CJK Fonts
 Check available fonts on the system:
