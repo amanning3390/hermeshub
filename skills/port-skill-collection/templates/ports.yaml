@@ -1,0 +1,18 @@
+version: 1
+updated_at: "YYYY-MM-DD"
+ports:
+  - source_repo: "https://github.com/example/skills"
+    checkout_path: "$HERMES_HOME/external-skill-repos/example-skills"
+    pinned_sha: "0123456789abcdef0123456789abcdef01234567"
+    pinned_short_sha: "0123456"
+    installed_at: "YYYY-MM-DD"
+    install_method: copy
+    adaptations: true
+    skills:
+      - name: example-skill
+        category: productivity
+        source_path: "skills/example-skill"
+        installed_path: "productivity/example-skill"
+        original_skill_path: "productivity/example-skill/references/original-SKILL.md"
+        support_files: []
+        notes: "Describe Hermes adaptations or leave empty."
