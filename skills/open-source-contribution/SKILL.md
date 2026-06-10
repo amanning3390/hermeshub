@@ -1,179 +1,154 @@
 ---
 name: open-source-contribution
-description: "Workflow for contributing to external open-source repositories. Covers discovery, scoping, writing, tool discipline, PR process, and post-PR follow-up. Use when the user wants to contribute to an open-source project, submit a PR, improve community documentation, or share skills with a community repo."
-version: "2.0.0"
+description: "Contribute to external open-source repos and publish across platforms. Covers discovery, scoping, writing, PR process, and multi-platform publishing (Dev.to, GitHub, LinkedIn). Use when the user wants to contribute to a repo, submit a PR, publish an article, share content, or distribute a skill to HermesHub."
+version: "3.0.0"
 license: MIT
-compatibility: Hermes Agent 1.0+. Requires git and gh CLI.
+compatibility: Hermes Agent 1.0+. Requires git, gh CLI, Python 3.8+.
 metadata:
   author: Alex Bogle (github.com/SaintChris)
   hermes:
-    tags: [open-source, contribution, workflow, devops, github, documentation, pr, review]
+    tags: [open-source, contribution, workflow, devops, github, publishing, devto, linkedin, pr, documentation]
     category: devops
     requires_tools: [terminal]
-allowed-tools: Bash(git:*) Bash(gh:*) Read Write
+allowed-tools: Bash(git:*) Bash(gh:*) Bash(python3:*) Read Write
+required_environment_variables:
+  - name: DEVTO_API_KEY
+    prompt: "Enter your Dev.to API key (optional — only needed for publishing)"
+    help: "Get one at https://dev.to/settings/extended"
+    required_for: "Publishing articles to Dev.to"
+  - name: GITHUB_PAT
+    prompt: "Enter your GitHub PAT (optional — only needed for gist creation)"
+    help: "Create at https://github.com/settings/tokens (needs gist scope)"
+    required_for: "Creating GitHub gists"
 ---
 
-# Open Source Contribution Workflow
+# Open Source Contribution + Publishing
 
-Standard process for contributing to external open-source repositories. Ensures quality, consistency, no sensitive data leaks, and genuine improvement over documentation.
-
-**Core principle:** A profile page alone is documentation, not improvement. Real improvement means setup guides people can actually follow, example workflows that show tools interacting, comparison pages that help readers decide, and cross-references that wire new content into existing decision paths.
+Contribute to external open-source repos and publish your work across platforms. One workflow from discovery to published article.
 
 ## When to Use
 
-- User wants to contribute to an open-source repo
-- User found a gap in documentation or a missing feature
-- User wants to submit a PR to a community project
-- User asks "how do I contribute to X?"
-- User wants to share a skill or tool with a community
-- User says "I want to improve this repo" or "I found something missing"
+- "I want to contribute to [repo]"
+- "I found a gap in [project]'s documentation"
+- "Submit a PR to [repo]"
+- "Publish this article to Dev.to"
+- "Share this across platforms"
+- "I want to contribute and write about it"
+- "Distribute my skill to HermesHub"
 
 ## Procedure
 
-### Phase 1: Discovery
+### Phase 1: Discover
 
-1. **Check recent activity** — `git log --oneline -20` on the target repo. Look at recent commits, merged PRs, open issues. Dead repos waste your time.
-2. **Find the gap** — scan for missing content, outdated pages, or "good first issue" labels. Don't duplicate what exists.
-3. **Check for community** — Discord, Slack, or discussion boards. Ask if the contribution is wanted before building something large.
-4. **Read the room** — study the repo's tone, style, and quality bar. Read 3-5 existing pages before writing yours.
+1. Check repo activity: `git log --oneline -20` or check GitHub Insights
+2. Find the gap — scan issues, outdated pages, missing content
+3. Read CONTRIBUTING.md and templates
+4. Study 3-5 existing pages to match style
 
-### Phase 2: Pre-Contribution
+### Phase 2: Scope
 
-1. **Read CONTRIBUTING.md** — every repo has one. Follow it exactly.
-2. **Read the repo's templates** — use their templates, don't invent your own format.
-3. **Scope check** — are you adding a distinct option or duplicating existing content?
+1. Confirm you're adding something distinct (not duplicating)
+2. Pick the right contribution type:
+   - **Watchlist entry** — track a project
+   - **Capability update** — focused addition
+   - **Example** — workflow scenario
+   - **Setup guide** — verified instructions
+   - **Core profile** — full solution profile
+3. For core profiles, plan all required files upfront
 
-### Phase 3: Contribution Types
+### Phase 3: Write
 
-Ranked simplest to most complex:
+1. Use the repo's template exactly
+2. Write factual, sourced content — no guessing
+3. Include concrete examples with input/output
+4. Document pitfalls and verification steps
+5. Run `grep -n '^||' file.md` to catch double-pipe markdown issues
 
-| Type | Location | When |
-|------|----------|------|
-| Watchlist entry | `watchlist.md` | Track a project not yet fully evaluated |
-| Capability update | `comparisons/`, `capabilities/` | Focused addition to existing decision path |
-| Example | `examples/` | Concrete workflow scenario |
-| Setup guide | `setup-guides/` | Verified setup path |
-| Core solution profile | `solutions/` | Full product/project profile |
+### Phase 4: Submit
 
-### Phase 4: Core Profile Requirements
+1. `git checkout -b add-<name>`
+2. Commit with descriptive messages
+3. `gh pr create --repo <upstream> --head <fork>:add-<name>`
+4. PR body: what's new, what's updated, verification evidence
 
-A full solution profile MUST include:
+### Phase 5: Publish (optional)
 
-- `solutions/<name>.md` using the repo's template
-- Entry in `solutions/README.md`
-- Row in `comparisons/capability-matrix.md`
-- Row in `comparisons/solution-layers.md`
-- Rows in relevant comparison pages (local-vs-cloud, personal-vs-team, setup-burden, agent-access)
-- Links from `README.md` lifecycle chooser and solution snapshot
+After merging, share your work:
 
-### Phase 5: Writing Rules
+```bash
+# Publish article to Dev.to
+python3 ~/.hermes/scripts/platform_picker.py publish --file article.md --platform devto
 
-- **Factual and specific** — no fluff, no promotional language
-- **Use primary sources** — official docs, repos, hands-on testing
-- **Mark unknowns as `Unknown`** — never guess
-- **Conservative wording** — "maintainer-published benchmarks report..." not "best in class"
-- **No sensitive data** — never include API keys, credentials, personal identifiers
-- **Verify commands** — test all setup steps against live deployment
-- **Link, don't duplicate** — point to official docs instead of copying instructions
+# Cross-post to multiple platforms
+python3 ~/.hermes/scripts/platform_picker.py publish --file article.md --platform devto --platform linkedin
 
-### Phase 6: Tool Discipline
+# Check what's configured
+python3 ~/.hermes/scripts/platform_picker.py status
+```
 
-**Markdown tables:** Single `|` at line start, never `||`. After bulk edits, verify with `grep -n '^||' file.md`.
+**Platform picker setup (one-time):**
+```bash
+python3 ~/.hermes/scripts/platform_picker.py setup devto --api-key YOUR_KEY
+python3 ~/.hermes/scripts/platform_picker.py setup github --token YOUR_PAT
+```
 
-**File writing:** `write_file` has ~8K token limit. For files over ~100 lines, use Python via `execute_code`.
+**Supported platforms:** Dev.to (articles), GitHub (gists), LinkedIn (posts), HermesHub (skills via web).
 
-**Verification:** Test all commands against live deployment. Verify file content after every large write.
-
-### Phase 7: PR Process
-
-1. Create a feature branch: `git checkout -b add-<skill-name>`
-2. Make changes, commit with descriptive messages
-3. Push branch: `git push -u origin add-<skill-name>`
-4. Open PR against upstream: `gh pr create --repo <upstream> --head <your-fork>:add-<skill-name>`
-5. PR body must include: what's new, what's updated, verification evidence
-6. One contribution per PR — don't bundle unrelated changes
-
-### Phase 8: Post-PR
-
-- Respond to reviews promptly, don't take feedback personally
-- If no response in 7-14 days, a polite follow-up is fine
-- Handle rejection gracefully — your fork stays public, the work isn't lost
-- Update your portfolio with the PR link (merged or not)
+For detailed platform docs, see `references/platform-picker.md`.
 
 ## Examples
 
-### Example 1: Contributing a solution profile
+### Example 1: Contribute a solution profile
 ```
-Input: "I want to contribute my Hermes + Obsidian + Honcho stack to awesome-second-brain"
-Expected behavior:
-1. Fork the repo, read CONTRIBUTING.md and templates
-2. Study 5+ existing solution profiles
-3. Write solutions/hermes-obsidian-honcho.md using their template
-4. Update README.md, capability-matrix.md, solution-layers.md
+Input: "Contribute my Hermes+Obsidian+Honcho stack to awesome-second-brain"
+Steps:
+1. Fork repo, read CONTRIBUTING.md + templates
+2. Study 5 existing profiles
+3. Write solutions/hermes-obsidian-honcho.md
+4. Update README, capability-matrix, solution-layers
 5. Open PR with verification evidence
 ```
 
-### Example 2: Submitting a skill to HermesHub
+### Example 2: Publish an article
 ```
-Input: "Submit my open-source-contribution skill to HermesHub"
-Expected behavior:
-1. Fork amanning3390/hermeshub
-2. Add skills/open-source-contribution/SKILL.md in hermeshub format
-3. Ensure no hardcoded credentials, proper frontmatter, allowed-tools declared
-4. Open PR — automated security scan runs
-5. After passing scan + review, skill goes live on hermeshub.xyz
+Input: "Publish my contribution article to Dev.to"
+Steps:
+1. Write article.md with YAML frontmatter (title, tags)
+2. python3 platform_picker.py publish --file article.md --platform devto
+3. Verify URL returned and article is live
 ```
 
-### Example 3: Fixing a documentation gap
+### Example 3: Cross-post after merging
 ```
-Input: "The awesome-second-brain Hermes page is outdated, last reviewed May 31"
-Expected behavior:
-1. Check the current page content
-2. Update last reviewed date and evidence
-3. Add any new capabilities discovered
-4. Open a focused PR with just the update
+Input: "Share this on Dev.to and LinkedIn"
+Steps:
+1. Write one markdown file with frontmatter
+2. python3 platform_picker.py publish --file article.md --platform devto --platform linkedin
+3. Verify both URLs
 ```
 
 ## Pitfalls
 
-- **Double-pipe markdown** — bulk patching introduces `||` at line starts. Always verify with `grep`.
-- **Stream timeouts** — large `write_file` calls fail silently. Use Python for big files.
-- **Guessing commands** — never write a setup step you haven't tested. "It should work" doesn't count.
-- **Scope creep** — one contribution per PR. Don't bundle unrelated changes.
-- **Forgetting cross-references** — a profile without links to comparison pages is incomplete.
-- **Missing allowed-tools** — HermesHub requires declared tool access for security review.
+- **Double-pipe markdown** — bulk patching introduces `||`. Verify with `grep`.
+- **Stream timeouts** — files >100 lines need Python (`execute_code`), not `write_file`
+- **Guessing commands** — test all setup steps against live deployment
+- **Scope creep** — one contribution per PR
+- **Missing cross-references** — profile pages need links to comparison pages
+- **Wrong format** — each repo has its own SKILL.md format. Match existing style.
+- **Forgetting allowed-tools** — HermesHub requires declared tool access
 
 ## Verification
 
-After contributing:
-
-- [ ] PR opened against upstream repo
-- [ ] PR body includes what's new, what's updated, verification evidence
-- [ ] No hardcoded credentials or personal data in any files
+- [ ] PR opened with evidence of testing
+- [ ] No hardcoded credentials in any files
 - [ ] All commands tested against live deployment
-- [ ] Cross-references added to relevant comparison/index pages
-- [ ] Markdown tables render correctly (no `||` at line starts)
-- [ ] Frontmatter matches repo template format
-
-## Repo-Specific Notes
-
-### awesome-second-brain (aristoapp/awesome-second-brain)
-- Has Korean mirrors (`ko/` directory) — don't touch unless asked
-- Uses `templates/system-profile.md` for solutions
-- Style: landscape comparison, not tutorial. Decision-oriented, not instructional.
-- Quality bar is high — read 5+ existing profiles before writing
-- PRs: #18 (solution profile), #19 (setup guide + examples + comparison)
-
-### HermesHub (amanning3390/hermeshub)
-- Skills directory: `skills/<skill-name>/SKILL.md`
-- Requires `allowed-tools` field for security review
-- Automated security scan: 65+ threat rules, critical findings block merge
-- PR #119: open-source-contribution + platform-picker skills
-
-### chroma (chroma-core/chroma)
-- Technical documentation (vector DB)
-- Audience: developers integrating Chroma into applications
+- [ ] Cross-references added to comparison/index pages
+- [ ] Markdown renders correctly (no `||`)
+- [ ] If published: article URL is live and correct
 
 ## Sources
 
-Created by Alex Bogle (github.com/SaintChris) based on real contributions to awesome-second-brain (2 PRs, 15+ files) and chroma (Haystack docs). Tested against Hermes Agent v0.16.0 on macOS M1.
+- Created by Alex Bogle (github.com/SaintChris)
+- Tested against Hermes Agent v0.16.0 on macOS M1
+- HermesHub submission: PR #119 (amanning3390/hermeshub)
+- Dev.to article: https://dev.to/saintchris_21/i-built-a-multi-platform-publishing-cli-for-ai-agents-2cji
