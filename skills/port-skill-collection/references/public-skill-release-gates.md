@@ -14,9 +14,9 @@ Expected checks:
 - `skill_view(<name>, file_path=...)` loads every required support file;
 - the parsed frontmatter has populated `name`, `description`, tags/category, and the intended `version`.
 
-## SKILL.md version-bump gate
+## Full skill-package version-bump gate
 
-A public skill repo should make unversioned `SKILL.md` drift unrepresentable in CI.
+A public skill repo should make unversioned installable-package drift unrepresentable in CI. The package is the full skill directory, not only `SKILL.md`: `references/`, `templates/`, `scripts/`, and `assets/` are installed and can materially change behavior or guidance.
 
 Validator pattern:
 
@@ -27,25 +27,27 @@ Validator pattern:
        fetch-depth: 0
    ```
 2. Select the semver-highest release tag, not the graph-nearest tag. `git describe --tags --abbrev=0` is graph-nearest and can compare against a stale baseline on release branches.
-3. Load the tagged baseline with:
+3. Compare the full installable skill directory against that tag:
    ```bash
-   git show <tag>:skills/<skill-name>/SKILL.md
+   git diff --quiet <tag> HEAD -- skills/<skill-name>/
    ```
-4. If working-tree `SKILL.md` content is unchanged from that tag, pass.
-5. If content changed, parse both `version:` values as semver tuples and require `current > tagged`.
+   In local pre-release validation, also check untracked files under `skills/<skill-name>/` so newly added support files cannot be missed before commit.
+4. If the working-tree skill directory is unchanged from that tag, pass.
+5. If any packaged file changed, load the tagged `SKILL.md`, parse both `version:` values as semver tuples, and require `current > tagged`.
 6. If `current <= tagged`, fail with exactly:
    ```text
-   SKILL.md changed without a version bump.
+   Skill package changed without a version bump.
    ```
 
-This catches both same-version edits and typo downgrades such as `2.2.4 -> 2.2.3`.
+This catches same-version edits, typo downgrades such as `2.2.4 -> 2.2.3`, and reference/template-only changes that would otherwise alter the installed package without a new release version.
 
 ## Synthetic validator tests
 
 Before committing the gate, verify all three cases locally:
 
-- unchanged `SKILL.md`: pass;
-- changed content with the same version: fail with `SKILL.md changed without a version bump.`;
+- unchanged skill directory: pass;
+- changed `SKILL.md` with the same version: fail with `Skill package changed without a version bump.`;
+- changed support file (`references/`, `templates/`, `scripts/`, or `assets/`) with the same version: fail with the same message;
 - changed content with a lower version: fail with the same message;
 - changed content with a higher version: pass and report the version transition.
 
@@ -58,6 +60,6 @@ After release-worthy changes:
 3. tag the exact commit with the new version;
 4. push `main` and the tag;
 5. wait for CI;
-6. inspect CI logs for the version-bump gate and any privacy-scrub visibility counts.
+6. inspect CI logs for the full-package version-bump gate and any privacy-scrub visibility counts.
 
 Do not claim release readiness from git cleanliness or a previous CI run; use fresh CI evidence on the release commit.

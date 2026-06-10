@@ -1,7 +1,7 @@
 ---
 name: port-skill-collection
 description: Port a Claude Code plugin or external skill collection (a GitHub repo of SKILL.md directories) into Hermes Agent. Use when installing, importing, adapting, refreshing, or auditing existing skills from Claude Code, Codex, Cursor, OpenCode, or agentskills-style repos — e.g. "port this skill repo into Hermes", "add the skills from github.com/x/y", "refresh the ported skills from upstream", or "audit this skill collection before install". For authoring new skills from scratch, use skill-creator instead; this skill is only for migrating existing ones.
-version: 2.2.6
+version: 2.2.7
 author: vcolombo + Hermes Agent
 repository: https://github.com/vcolombo/port-skill-collection
 category: migration
@@ -118,7 +118,7 @@ Read `references/refresh-mode.md` before doing refresh work.
   ```
 - Raw `SKILL.md` URLs install only that one file and cannot bring support files. Do not split critical instructions into `references/` while advertising only a raw-file install path.
 - For public skill repositories, add CI safety gates before relying on the repo as an install source: repository-specific structure/frontmatter validation, Hermes `tools.skills_guard` scanning, secret scanning such as Gitleaks, GitHub CodeQL when scripts are present, and Dependabot for GitHub Actions updates. GitHub has useful code/secret/dependency scanners, but no Hermes-skill-specific native scanner; use Hermes' scanner in Actions for that layer.
-- Add a `SKILL.md` version-bump gate for public releases: with full tag history (`fetch-depth: 0`), compare the working-tree `SKILL.md` to the same file at the semver-highest release tag, and if content changed require the current `version:` to be greater than the tagged version. See `references/public-skill-release-gates.md`.
+- Add a full skill-package version-bump gate for public releases: with full tag history (`fetch-depth: 0`), compare the working-tree installable directory (`skills/<skill-name>/`) to the same directory at the semver-highest release tag, and if any packaged file changed require the current `version:` to be greater than the tagged version. See `references/public-skill-release-gates.md`.
 - Keep public-facing repositories generic: remove deployment-specific paths, personal names, hostnames, private project names, chat-thread details, and private operational notes.
 - Before making a repo public, scan the working tree and reachable Git history for internal strings or credential patterns.
 - For public-repo privacy scrub CI, keep private denylist terms out of the repo, source them from CI secrets, print `Private scrub patterns loaded: N`, and redact private-match details. See `references/public-repo-privacy-scrub.md`.
@@ -135,7 +135,7 @@ Read `references/refresh-mode.md` before doing refresh work.
 - GitHub API rate limits and web `tree/` pages can break source acquisition. Authenticate repeated GitHub requests and clone/fetch repositories instead of scraping `tree/` URLs.
 - Do not enable optional shell-execution features just because a ported skill contains shell snippets; surface that to the user as a trust decision.
 - Never embed private scrub terms in a public validator; the denylist is itself a disclosure. Source them from CI secrets, print a loaded-pattern count so empty secrets are visible, and make failure output say only that a private pattern matched. See `references/public-repo-privacy-scrub.md`.
-- Do not allow public `SKILL.md` content to drift without a release bump. Compare against the semver-highest tag (not graph-nearest `git describe`), and if content changed require `current_version > tagged_version`; same-version edits and downgrades must fail. See `references/public-skill-release-gates.md`.
+- Do not allow any public installable package content (`SKILL.md`, `references/`, `templates/`, `scripts/`, or `assets/`) to drift without a release bump. Compare the full skill directory against the semver-highest tag (not graph-nearest `git describe`), and if anything changed require `current_version > tagged_version`; same-version edits and downgrades must fail. See `references/public-skill-release-gates.md`.
 - Do not split this skill's future critical workflow docs into support files unless the documented install path fetches a full skill directory.
 
 ## Done means
