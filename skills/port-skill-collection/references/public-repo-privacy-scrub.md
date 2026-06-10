@@ -35,6 +35,9 @@ A scrub validator can become the disclosure if it hardcodes private denylist ter
 ## Validator sketch
 
 ```python
+from collections.abc import Mapping
+
+
 GENERIC_FORBIDDEN_PUBLIC_PATTERNS = [
     r"ghp_[A-Za-z0-9_]+",
     r"sk-[A-Za-z0-9_-]{12,}",
@@ -49,8 +52,8 @@ def load_private_scrub_patterns(env: Mapping[str, str]) -> list[str]:
     return [line.strip() for line in raw.splitlines() if line.strip() and not line.lstrip().startswith("#")]
 
 
-def scan_public_strings() -> None:
-    private_patterns = load_private_scrub_patterns()
+def scan_public_strings(env: Mapping[str, str]) -> None:
+    private_patterns = load_private_scrub_patterns(env)
     print(f"Private scrub patterns loaded: {len(private_patterns)}")
     pattern_sources = [(p, "generic") for p in GENERIC_FORBIDDEN_PUBLIC_PATTERNS]
     pattern_sources.extend((p, "private") for p in private_patterns)
