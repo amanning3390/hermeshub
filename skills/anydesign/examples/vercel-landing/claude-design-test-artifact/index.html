@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AnyDesign Claude Design Artifact Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-background-100: #FFFFFF;
+      --color-background-200: #FAFAFA;
+      --color-gray-100: #F2F2F2;
+      --color-gray-200: #EBEBEB;
+      --color-gray-500: #C9C9C9;
+      --color-gray-700: #8F8F8F;
+      --color-gray-900: #4D4D4D;
+      --color-gray-1000: #171717;
+      --color-gray-alpha-100: #0000000d;
+      --color-blue-700: #0070F7;
+      --color-green-700: #28A948;
+      --color-amber-600: #FFAA00;
+      --color-red-700: #FC0035;
+      --typography-font-family-sans: ui-sans-serif, system-ui, "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --typography-font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Noto Sans Mono CJK SC", "PingFang SC", monospace;
+      --spacing-2x: 8px;
+      --spacing-3x: 12px;
+      --spacing-4x: 16px;
+      --spacing-6x: 24px;
+      --spacing-8x: 32px;
+      --radius-default: 6px;
+      --radius-marketing: 8px;
+      --shadow-large: 0px 2px 2px #0000000a, 0px 8px 16px -4px #0000000a;
+      --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 4px #0070F7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--color-background-200);
+      color: var(--color-gray-1000);
+      font-family: var(--typography-font-family-sans);
+      letter-spacing: 0;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 0;
+      box-shadow: var(--focus-ring);
+    }
+
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 236px 1fr;
+      background: linear-gradient(180deg, #fff 0%, var(--color-background-200) 100%);
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--color-gray-200);
+      background: rgba(255, 255, 255, 0.82);
+      padding: var(--spacing-6x);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-6x);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3x);
+      font-weight: 700;
+    }
+
+    .mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: conic-gradient(from 225deg, #000, #333, #000);
+      position: relative;
+    }
+
+    .mark::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .nav {
+      display: grid;
+      gap: 4px;
+    }
+
+    .nav button {
+      border: 0;
+      border-radius: var(--radius-default);
+      background: transparent;
+      color: var(--color-gray-900);
+      min-height: 36px;
+      padding: 0 var(--spacing-3x);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .nav button[aria-current="page"] {
+      background: var(--color-gray-alpha-100);
+      color: var(--color-gray-1000);
+      font-weight: 500;
+    }
+
+    .main {
+      min-width: 0;
+      padding: var(--spacing-6x);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--spacing-4x);
+      margin-bottom: var(--spacing-6x);
+    }
+
+    .search {
+      width: min(420px, 100%);
+      height: 36px;
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-default);
+      background: #fff;
+      padding: 0 var(--spacing-3x);
+      color: var(--color-gray-1000);
+    }
+
+    .actions {
+      display: flex;
+      gap: var(--spacing-2x);
+      align-items: center;
+    }
+
+    .btn {
+      height: 36px;
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-default);
+      background: #fff;
+      padding: 0 var(--spacing-4x);
+      color: var(--color-gray-1000);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn.primary {
+      border-color: var(--color-gray-1000);
+      background: var(--color-gray-1000);
+      color: #fff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(300px, 0.9fr);
+      gap: var(--spacing-6x);
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-marketing);
+      background: #fff;
+      box-shadow: var(--shadow-large);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--spacing-4x);
+      border-bottom: 1px solid var(--color-gray-200);
+      padding: var(--spacing-4x);
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      line-height: 1.05;
+      letter-spacing: -0.025em;
+      max-width: 760px;
+    }
+
+    h2 {
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .muted {
+      color: var(--color-gray-900);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .hero {
+      padding: var(--spacing-8x);
+      display: grid;
+      gap: var(--spacing-6x);
+      min-height: 420px;
+    }
+
+    .hero-copy {
+      display: grid;
+      gap: var(--spacing-4x);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--spacing-3x);
+    }
+
+    .metric {
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-default);
+      padding: var(--spacing-4x);
+      background: linear-gradient(180deg, #fff, #fafafa);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 28px;
+      letter-spacing: -0.025em;
+    }
+
+    .metric span {
+      color: var(--color-gray-900);
+      font-size: 13px;
+    }
+
+    .deploy-list {
+      display: grid;
+    }
+
+    .deploy-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--spacing-4x);
+      padding: var(--spacing-4x);
+      border-bottom: 1px solid var(--color-gray-200);
+    }
+
+    .deploy-row:last-child {
+      border-bottom: 0;
+    }
+
+    .repo {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .repo code {
+      font-family: var(--typography-font-family-mono);
+      font-size: 13px;
+      color: var(--color-gray-900);
+      overflow-wrap: anywhere;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 24px;
+      border-radius: 999px;
+      padding: 0 10px;
+      background: var(--color-gray-100);
+      color: var(--color-gray-900);
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--color-green-700);
+    }
+
+    .dot.warn {
+      background: var(--color-amber-600);
+    }
+
+    .dot.fail {
+      background: var(--color-red-700);
+    }
+
+    .stack {
+      display: grid;
+      gap: var(--spacing-4x);
+      padding: var(--spacing-4x);
+    }
+
+    .token-line {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: var(--spacing-3x);
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .swatches {
+      display: flex;
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-default);
+      border: 1px solid var(--color-gray-200);
+    }
+
+    .log {
+      border-top: 1px solid var(--color-gray-200);
+      background: #0a0a0a;
+      color: #ededed;
+      font-family: var(--typography-font-family-mono);
+      font-size: 12px;
+      line-height: 1.7;
+      padding: var(--spacing-4x);
+      overflow: auto;
+    }
+
+    @media (max-width: 860px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--color-gray-200);
+        padding: var(--spacing-4x);
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .topbar,
+      .grid {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .actions,
+      .metrics {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .hero {
+        padding: var(--spacing-6x);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="mark" aria-hidden="true"></span>
+        <span>AnyDesign Cloud</span>
+      </div>
+      <nav class="nav" aria-label="主导航">
+        <button aria-current="page">部署总览</button>
+        <button>设计令牌</button>
+        <button>访问日志</button>
+        <button>团队设置</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <input class="search" aria-label="搜索项目" placeholder="搜索项目、域名或提交哈希">
+        <div class="actions">
+          <button class="btn">预览</button>
+          <button class="btn primary">新建部署</button>
+        </div>
+      </header>
+
+      <section class="grid" aria-label="部署控制台">
+        <div class="panel hero">
+          <div class="hero-copy">
+            <p class="muted">设计系统已连接 · Vercel Geist tokens · CJK fallback active</p>
+            <h1>把设计分析结果直接变成可用的产品界面。</h1>
+            <p class="muted">这个测试页使用 anydesign 导出的颜色、间距、圆角、阴影和字体栈，并包含简体中文文案来验证 Noto Sans SC fallback。</p>
+          </div>
+
+          <div class="metrics">
+            <div class="metric">
+              <strong>5</strong>
+              <span>bundle 文件已生成</span>
+            </div>
+            <div class="metric">
+              <strong>120</strong>
+              <span>核心 token 已发布</span>
+            </div>
+            <div class="metric">
+              <strong>6/6</strong>
+              <span>design.md lint 通过</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <div class="panel-head">
+            <h2>运行状态</h2>
+            <span class="status"><span class="dot"></span>正常</span>
+          </div>
+          <div class="deploy-list">
+            <div class="deploy-row">
+              <div class="repo">
+                <strong>tokens.css</strong>
+                <code>font-family: Noto Sans SC</code>
+              </div>
+              <span class="status"><span class="dot"></span>已加载</span>
+            </div>
+            <div class="deploy-row">
+              <div class="repo">
+                <strong>tailwind.config.ts</strong>
+                <code>theme.extend.fontFamily.sans</code>
+              </div>
+              <span class="status"><span class="dot"></span>已映射</span>
+            </div>
+            <div class="deploy-row">
+              <div class="repo">
+                <strong>Claude CLI</strong>
+                <code>local auth check</code>
+              </div>
+              <span class="status"><span class="dot warn"></span>需登录</span>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="token-line">
+              <span class="muted">Palette</span>
+              <div class="swatches" aria-label="导出色板">
+                <span class="swatch" style="background:#171717"></span>
+                <span class="swatch" style="background:#FAFAFA"></span>
+                <span class="swatch" style="background:#0070F7"></span>
+                <span class="swatch" style="background:#28A948"></span>
+              </div>
+            </div>
+            <div class="token-line">
+              <span class="muted">Radius</span>
+              <strong>6px / 8px</strong>
+            </div>
+          </div>
+          <pre class="log">deploy: artifact-ready
+font: Noto Sans SC, PingFang SC, Microsoft YaHei
+copy: 简体中文字体回退验证通过
+source: claude-design-bundle</pre>
+        </aside>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
