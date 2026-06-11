@@ -1,6 +1,7 @@
 ---
 name: react-reasoning
 description: "ReAct (Reasoning + Acting) framework — interleave chain-of-thought reasoning with tool actions to solve complex tasks. Eliminates hallucination by grounding every reasoning step in real observations. Use when the agent needs multi-step reasoning with external tool use: question answering, fact verification, web navigation, interactive decision making, or any task where pure reasoning hallucinates and pure acting fails to plan."
+version: '1.0.0'
 license: MIT
 compatibility: "Any Hermes Agent backend with tool access (web search, APIs, file system, or custom environments)"
 metadata:

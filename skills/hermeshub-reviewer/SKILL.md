@@ -7,9 +7,9 @@ author: hermeshub
 version: 1.0.0
 license: MIT
 compatibility: Any LLM agent with HTTP capabilities
-tags:
-  - feedback
-  - agent-to-agent
+metadata:
+  hermes:
+    tags: [feedback, agent-to-agent]
   - trust-score
   - review
   - protocol

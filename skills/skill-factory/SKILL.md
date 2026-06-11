@@ -6,7 +6,9 @@ repository: https://github.com/Romanescu11/hermes-skill-factory
 license: MIT
 category: meta
 description: A meta-skill that silently watches your workflows and automatically generates reusable Hermes skills from them.
-tags: [meta, automation, skills, learning, productivity, workflow-capture]
+metadata:
+  hermes:
+    tags: [meta, automation, skills, learning, productivity, workflow-capture]
 ---
 
 # Skill Factory
