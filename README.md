@@ -33,7 +33,7 @@ hermes skills browse
 hermes skills search <query>
 ```
 
-## Available Skills (22)
+## Available Skills (24)
 
 ### Development
 | Skill | Description |
@@ -86,6 +86,12 @@ hermes skills search <query>
 |-------|-------------|
 | [paperclip](skills/paperclip/) | Open-source orchestration for zero-human companies — org charts, goals, budgets |
 | [synapse-swarm](skills/synapse-swarm/) | Multi-agent cognitive swarm with ZERO, NOVA, TITAN agents for visual analysis |
+
+### Personas & Roleplay
+| Skill | Description |
+|-------|-------------|
+| [hersona](skills/hersona/) | Attach anime-style character attributes (personality, speech, archetype) to a session with four modes — single, multi, persistent, reset |
+| [hersona-initializer](skills/hersona-initializer/) | Auto-apply a default hersona persona when a profile is used for the first time; pairs with Hermes Agent's Profile Builder |
 
 ### Documentation
 | Skill | Description |
