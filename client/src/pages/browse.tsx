@@ -34,6 +34,21 @@ export interface PremiumSkill {
 type TypeFilter = "all" | "free" | "premium";
 type SortOption = "newest" | "price-asc" | "price-desc" | "popular";
 
+type MarketplaceSkillsResponse = PremiumSkill[] | {
+  skills?: PremiumSkill[];
+  items?: PremiumSkill[];
+  data?: PremiumSkill[];
+  error?: string;
+};
+
+function getMarketplaceSkills(data: MarketplaceSkillsResponse | undefined): PremiumSkill[] {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.skills)) return data.skills;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+}
+
 // ─── Unified card shape ───────────────────────────────────────────────────────
 
 interface UnifiedSkill {
@@ -122,7 +137,10 @@ export default function BrowsePage() {
   const freeSkills = getSkills();
 
   // Premium skills from API
-  const { data: premiumSkillsRaw = [] } = useQuery<PremiumSkill[]>({
+  const {
+    data: marketplaceResponse,
+    isError: premiumSkillsError,
+  } = useQuery<MarketplaceSkillsResponse>({
     queryKey: ["/api/v1/skills/marketplace"],
     queryFn: async () => {
       const res = await fetch("/api/v1/skills/marketplace");
@@ -132,13 +150,14 @@ export default function BrowsePage() {
     staleTime: 60_000,
     retry: 1,
   });
+  const premiumSkills = getMarketplaceSkills(marketplaceResponse);
 
   // Merge into unified list
   const allUnified = useMemo<UnifiedSkill[]>(() => {
     const free = freeSkills.map(freeToUnified);
-    const premium = premiumSkillsRaw.map(premiumToUnified);
+    const premium = premiumSkills.map(premiumToUnified);
     return [...free, ...premium];
-  }, [freeSkills, premiumSkillsRaw]);
+  }, [freeSkills, premiumSkills]);
 
   // Category counts (across all types)
   const categoryCounts = useMemo(() => {
@@ -276,6 +295,13 @@ export default function BrowsePage() {
           );
         })}
       </div>
+
+      {/* API status */}
+      {premiumSkillsError ? (
+        <div className="mb-5 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-700 dark:text-yellow-200">
+          Premium marketplace skills are temporarily unavailable. Showing free skills only.
+        </div>
+      ) : null}
 
       {/* Results */}
       {filtered.length === 0 ? (
