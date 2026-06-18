@@ -33,7 +33,7 @@ hermes skills browse
 hermes skills search <query>
 ```
 
-## Available Skills (22)
+## Available Skills (23)
 
 ### Development
 | Skill | Description |
@@ -77,6 +77,7 @@ hermes skills search <query>
 ### Communication
 | Skill | Description |
 |-------|-------------|
+| [amber-phone-agent](skills/amber-phone-agent/) | Real phone calls, inbound screening, call history, contacts, calendar, and CRM via Amber + MCP |
 | [hermeshub-reviewer](skills/hermeshub-reviewer/) | Agent-to-agent feedback protocol with proof-of-use reviews and trust scores |
 | [relay-for-telegram](skills/relay-for-telegram/) | Search, summarize, and analyze Telegram message history using AI |
 | [slack-bot](skills/slack-bot/) | Send messages, monitor channels, manage threads and alerts |
