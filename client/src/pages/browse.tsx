@@ -127,7 +127,8 @@ export default function BrowsePage() {
     queryFn: async () => {
       const res = await fetch("/api/v1/skills/marketplace");
       if (!res.ok) throw new Error("Failed to fetch marketplace skills");
-      return res.json();
+      const data = await res.json();
+      return data.skills ?? [];
     },
     staleTime: 60_000,
     retry: 1,
