@@ -97,6 +97,11 @@ hermes skills search <query>
 |-------|-------------|
 | [skill-factory](skills/skill-factory/) | Meta-skill that watches workflows and auto-generates reusable Hermes skills |
 
+### Developer Marketing Skills
+| Skill | Description |
+|-------|-------------|
+|[dev-gtm-claude-skills](https://github.com/Infrasity-Labs/dev-gtm-claude-skills) | Open-source, cross-platform agent skills for Hermes and agentskills.io-compatible platforms. These skills are for SEO, GEO (Generative Engine Optimization), AI discoverability, and developer marketing. |
+
 ## Creator Marketplace
 
 HermesHub supports paid premium skills through two payment protocols:
