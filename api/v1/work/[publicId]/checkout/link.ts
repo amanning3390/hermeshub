@@ -36,7 +36,9 @@ export default withHandler({
       destinationAccountId: ctx.workerStripeAccountId,
       currency: ctx.currency,
       idempotencyKey,
-      successUrl: absoluteUrl(`/#/checkout/success?session_id={CHECKOUT_SESSION_ID}`),
+      successUrl: absoluteUrl(
+        `/#/checkout/success?session_id={CHECKOUT_SESSION_ID}&work=${work.publicId}`,
+      ),
       cancelUrl: absoluteUrl(`/#/checkout/cancel`),
       workPublicId: work.publicId,
       description: work.title,
