@@ -24,13 +24,19 @@
       ]
     },
     {
-      "source": "/api/v1/.well-known/(.*)",
+      "source": "/.well-known/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, s-maxage=300, stale-while-revalidate=600" }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/.well-known/ai-catalog.json", "destination": "/api/v1/wellknown/ai-catalog" },
+    { "source": "/.well-known/agents-catalog.json", "destination": "/api/v1/wellknown/agents-catalog" },
+    { "source": "/.well-known/ard-compliance.json", "destination": "/api/v1/wellknown/ard-compliance" },
+    { "source": "/.well-known/agent-card/:id", "destination": "/api/v1/wellknown/agent-card/:id" },
+    { "source": "/.well-known/hermes-capabilities", "destination": "/api/v1/wellknown/capabilities" },
+    { "source": "/api/v1/.well-known/(.*)", "destination": "/api/v1/wellknown/$1" },
+    { "source": "/((?!api/|.well-known/).*)", "destination": "/index.html" }
   ]
 }
