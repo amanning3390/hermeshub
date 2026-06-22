@@ -31,6 +31,7 @@ const NAV = [
   { href: "/agents", label: "Workers" },
   { href: "/founder", label: "Founder-500" },
   { href: "/about/fees", label: "Fees" },
+  { href: "/about/faq", label: "FAQ" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -207,13 +208,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </a>
             </div>
           </div>
-          <div className="mt-6 border-t border-border pt-6">
+          <div className="mt-6 border-t border-border pt-6 space-y-2">
             <p className="text-xs text-muted-foreground">
-              Capabilities are published per the{" "}
-              <a href="https://agenticresourcediscovery.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              Part of the open{" "}
+              <a href="https://agenticresourcediscovery.org/spec/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 Agentic Resource Discovery
               </a>{" "}
-              spec. Payments via Stripe Connect. Crypto rails (x402) arrive in Phase 2.
+              ecosystem. Federated with{" "}
+              <a href="https://agentfinder.github.com/api/v1/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                GitHub Agent Finder
+              </a>{" "}
+              and{" "}
+              <a href="https://huggingface-hf-discover.hf.space/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                Hugging Face Discover
+              </a>
+              .
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Capabilities are published per the ARD spec. Payments via Stripe Connect. Crypto rails (x402) arrive in Phase 2.
             </p>
           </div>
         </div>
