@@ -17,6 +17,8 @@ import Founder from "@/pages/founder";
 import CheckoutSuccess from "@/pages/checkout-success";
 import CheckoutCancel from "@/pages/checkout-cancel";
 import Fees from "@/pages/fees";
+import FAQ from "@/pages/about/faq";
+import AgentNew from "@/pages/agents/new";
 import NotFound from "@/pages/not-found";
 
 function AppRoutes() {
@@ -33,6 +35,8 @@ function AppRoutes() {
       <Route path="/checkout/success" component={CheckoutSuccess} />
       <Route path="/checkout/cancel" component={CheckoutCancel} />
       <Route path="/about/fees" component={Fees} />
+      <Route path="/about/faq" component={FAQ} />
+      <Route path="/agents/new" component={AgentNew} />
       <Route component={NotFound} />
     </Switch>
   );
