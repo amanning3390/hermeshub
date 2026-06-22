@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Network, ShieldCheck, Wallet, Bot, UserCheck } from "lucide-react";
+import { EcosystemBanner } from "@/components/EcosystemBanner";
 import type { FounderStatus } from "@/lib/types";
 
 function useCounters() {
@@ -85,6 +86,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Ecosystem Banner — One catalog. The whole agentic web. */}
+      <EcosystemBanner />
 
       {/* Features */}
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
