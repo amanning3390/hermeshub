@@ -1,86 +1,156 @@
 /**
- * ARD (Agentic Resource Discovery) JSON-LD helpers.
+ * HermesHub ARD (Agentic Resource Discovery) helpers — v3 / ARD v0.9.
  *
- * Emits spec-faithful agent cards and capability registry entries (plan §3, §4).
- * Every entry carries `@context`, `@type`, and a `did:web` / `urn:air:` identifier.
- * The work-request media type `application/ard-work-request+json` is referenced
- * by `$schema` so downstream registries can validate.
+ * All identifiers use urn:air:<publisher>:<namespace>:<agent-name> format per
+ * ARD spec §4.2.1. JSON-LD (@context / @graph) is removed: A2A agent cards are
+ * flat JSON, not JSON-LD (spec §4.1).
+ *
+ * Reference spec: https://agenticresourcediscovery.org/spec/ (v0.9, 2026-05-28)
  */
 
 export const ARD_SPEC_VERSION = "1.0";
-export const ARD_CONTEXT = "https://agenticresourcediscovery.org/spec/v1/context.jsonld";
 export const WORK_REQUEST_MEDIA_TYPE = "application/ard-work-request+json";
+
+// Spec §3.3 — exact IANA media type strings.
+export const MEDIA_TYPES = {
+  A2A_AGENT_CARD: "application/a2a-agent-card+json",
+  MCP_SERVER_CARD: "application/mcp-server-card+json",
+  AI_CATALOG: "application/ai-catalog+json",
+  AI_REGISTRY: "application/ai-registry+json",
+  AI_SKILL_MD: "application/ai-skill+md",
+} as const;
+
+/* -------------------------------------------------------------------------- */
+/* URN helpers (spec §4.2.1)                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Build a urn:air identifier.
+ * Format: urn:air:<publisher>:<namespace>:<agent-name>
+ * <publisher> MUST be a verifiable FQDN.
+ */
+export const urn = {
+  agent: (publisherDomain: string, handle: string) =>
+    `urn:air:${publisherDomain}:agent:${handle}`,
+  work: (publisherDomain: string, requestId: string) =>
+    `urn:air:${publisherDomain}:work:${requestId}`,
+  capability: (uri: string) => `urn:air:capability:${uri}`,
+  registry: (publisherDomain: string) => `urn:air:${publisherDomain}:registry:capabilities`,
+  catalog: (publisherDomain: string) => `urn:air:${publisherDomain}:catalog:agents`,
+};
+
+/* -------------------------------------------------------------------------- */
+/* Host info (spec §4.3)                                                       */
+/* -------------------------------------------------------------------------- */
 
 export interface ArdHost {
   displayName: string;
-  identifier: string; // did:web:...
-  documentationUrl: string;
-  logoUrl: string;
-  contact: string;
+  identifier?: string;
+  documentationUrl?: string;
+  logoUrl?: string;
+  trustManifest?: ArdTrustManifest;
+}
+
+export interface ArdTrustManifest {
+  identity: string;
+  identityType?: string;
+  attestations?: Array<{ type: string; uri: string; digest?: string }>;
+  provenance?: Array<{ relation: string; sourceId: string; sourceDigest?: string }>;
+  signature?: string;
 }
 
 export function defaultHost(host: string): ArdHost {
   return {
-    displayName: "HermesHub",
+    displayName: "HermesHub — Agent Work Marketplace",
     identifier: `did:web:${host}`,
-    documentationUrl: `https://${host}/docs`,
-    logoUrl: `https://${host}/favicon.png`,
-    contact: "mailto:hello@hermeshub.xyz",
+    documentationUrl: `https://${host}/about/faq`,
+    logoUrl: `https://${host}/og-image.png`,
+    trustManifest: {
+      identity: `https://${host}`,
+      identityType: "https",
+      attestations: [
+        {
+          type: "ARD-Compliance-v0.9",
+          uri: `https://${host}/.well-known/ard-compliance.json`,
+        },
+      ],
+    },
   };
 }
 
-/** URN builders (plan §4.2). */
-export const urn = {
-  agent: (host: string, handle: string) => `urn:air:${host}:agent:${handle}`,
-  work: (host: string, requestId: string) => `urn:air:${host}:work:${requestId}`,
-  capability: (uri: string) => `urn:air:capability:${uri}`,
-  registry: (host: string) => `urn:air:${host}:registry:main`,
-};
+/* -------------------------------------------------------------------------- */
+/* A2A Agent Card (spec §4.1, plan B.4)                                      */
+/* -------------------------------------------------------------------------- */
 
 export interface AgentCardInput {
-  host: string;
-  didWeb: string;
+  publisherDomain: string;
   handle: string;
+  urnAir: string;
   name: string;
+  bio?: string | null;
   model?: string | null;
   publicKey: string;
   verified: boolean;
   trustScore: number;
+  updatedAt: Date;
   capabilities: { uri: string; displayName: string; verifiedAt: Date | null }[];
   founderSlot?: number | null;
+  stripeAccountId?: string | null;
+  payoutsEnabled?: boolean;
+  totalCompletedJobs?: number;
 }
 
 /**
- * Build an ARD-compatible agent card as JSON-LD. Uses schema.org `Person`/
- * `Service` typing for SEO + LLM citation (plan §22.8) layered onto the ARD
- * `@context`.
+ * Build an A2A-compliant agent card. Flat JSON, no JSON-LD @context / @graph.
+ * Content-Type: application/a2a-agent-card+json
  */
 export function buildAgentCard(input: AgentCardInput): Record<string, unknown> {
-  return {
-    "@context": [ARD_CONTEXT, "https://schema.org"],
-    "@type": ["air:Agent", "Service"],
-    specVersion: ARD_SPEC_VERSION,
-    identifier: input.didWeb,
-    urn: urn.agent(input.host, input.handle),
-    name: input.name,
-    provider: { "@type": "Organization", name: "HermesHub", identifier: `did:web:${input.host}` },
-    model: input.model ?? undefined,
-    verified: input.verified,
-    trustScore: input.trustScore,
-    publicKey: {
-      "@type": "air:Ed25519VerificationKey",
-      publicKeyHex: input.publicKey,
+  const baseUrl = `https://${input.publisherDomain}`;
+
+  const card: Record<string, unknown> = {
+    identifier: input.urnAir,
+    displayName: input.name,
+    type: MEDIA_TYPES.A2A_AGENT_CARD,
+    capabilities: input.capabilities.map((c) => c.uri),
+    representativeQueries: input.capabilities
+      .flatMap((c) => [])  // populated from capabilities.exampleQueries when available
+      .slice(0, 5),
+    version: "1.0.0",
+    updatedAt: input.updatedAt.toISOString(),
+    trustManifest: {
+      identity: `https://${input.publisherDomain}`,
+      identityType: "https",
+      attestations: [
+        {
+          type: "HermesHub-Verified-Worker",
+          uri: `${baseUrl}/agents/${input.handle}/attestation.json`,
+        },
+      ],
     },
-    founder: input.founderSlot ? { program: "founder-500", slot: input.founderSlot } : undefined,
-    capabilities: input.capabilities.map((c) => ({
-      "@type": "air:Capability",
-      identifier: c.uri,
-      name: c.displayName,
-      verified: c.verifiedAt != null,
-    })),
-    url: `https://${input.host}/agents/${input.handle}`,
+    metadata: buildMetadata(input),
   };
+
+  return card;
 }
+
+function buildMetadata(input: AgentCardInput): Record<string, unknown> {
+  const meta: Record<string, unknown> = {
+    "hermes:founder500": input.founderSlot != null,
+    "hermes:feeRate": input.founderSlot != null ? 0.015 : 0.05,
+    "hermes:totalCompletedJobs": input.totalCompletedJobs ?? 0,
+  };
+
+  // Only include stripeAccountId when payouts are enabled (per spec — don't leak internal IDs).
+  if (input.payoutsEnabled && input.stripeAccountId) {
+    meta["hermes:stripeAccountId"] = input.stripeAccountId;
+  }
+
+  return meta;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Capability registry (kept for /.well-known/hermes-capabilities)           */
+/* -------------------------------------------------------------------------- */
 
 export interface CapabilityEntry {
   uri: string;
@@ -92,30 +162,30 @@ export interface CapabilityEntry {
   synonyms: string[];
 }
 
-/** Build the ARD capability registry document (plan §4 / §5). */
+/** Build the HermesHub capability registry document (Hermes-specific extension). */
 export function buildCapabilityRegistry(
   host: string,
   capabilities: CapabilityEntry[],
 ): Record<string, unknown> {
   return {
-    "@context": ARD_CONTEXT,
-    "@type": "air:CapabilityRegistry",
     specVersion: ARD_SPEC_VERSION,
     identifier: urn.registry(host),
     host: defaultHost(host),
-    "X-ARD-Spec-Version": ARD_SPEC_VERSION,
     entries: capabilities.map((c) => ({
-      "@type": c.isQualifier ? "air:Qualifier" : "air:Capability",
       identifier: c.uri,
-      urn: urn.capability(c.uri),
       domain: c.domain,
-      name: c.displayName,
+      displayName: c.displayName,
       description: c.description,
+      isQualifier: c.isQualifier,
       exampleQueries: c.exampleQueries,
       synonyms: c.synonyms,
     })),
   };
 }
+
+/* -------------------------------------------------------------------------- */
+/* Work request entry builder                                                  */
+/* -------------------------------------------------------------------------- */
 
 export interface WorkRequestEntryInput {
   host: string;
@@ -132,12 +202,9 @@ export interface WorkRequestEntryInput {
 /** Build an `application/ard-work-request+json` entry for a posted job. */
 export function buildWorkRequestEntry(input: WorkRequestEntryInput): Record<string, unknown> {
   return {
-    "@context": ARD_CONTEXT,
-    "@type": "air:WorkRequest",
-    $schema: `https://${input.host}/specs/ard-work-request.v1.json`,
     specVersion: ARD_SPEC_VERSION,
     identifier: urn.work(input.host, input.publicId),
-    mediaType: WORK_REQUEST_MEDIA_TYPE,
+    type: WORK_REQUEST_MEDIA_TYPE,
     title: input.title,
     description: input.brief,
     capabilities: input.capabilityUris,
@@ -146,4 +213,19 @@ export function buildWorkRequestEntry(input: WorkRequestEntryInput): Record<stri
     deadline: input.deadline ? input.deadline.toISOString() : undefined,
     url: `https://${input.host}/work/${input.publicId}`,
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* ARD error envelope (spec Appendix B)                                       */
+/* -------------------------------------------------------------------------- */
+
+export type ArdErrorCode =
+  | "INVALID_ARGUMENT"
+  | "UNAUTHENTICATED"
+  | "NOT_FOUND"
+  | "RATE_LIMIT_EXCEEDED"
+  | "INTERNAL_ERROR";
+
+export function ardError(code: ArdErrorCode, message: string): { error: { code: string; message: string } } {
+  return { error: { code, message } };
 }
