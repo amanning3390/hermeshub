@@ -1,42 +1,36 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import crypto from "crypto";
+/**
+ * POST /api/v1/auth/github — begin the GitHub OAuth flow.
+ *
+ * Returns the GitHub authorize URL with a CSRF `state` we persist in a session.
+ * If `GITHUB_CLIENT_ID` is not configured, returns 503 with a stable code so the
+ * frontend can hide the GitHub button (GitHub login is optional per the brief).
+ */
+import { randomBytes } from "node:crypto";
+import { withHandler, sendOk, ApiError } from "../../_lib/http.js";
+import { createSession, buildSessionCookie } from "../../_lib/auth.js";
+import { absoluteUrl } from "../../_lib/url.js";
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") return res.status(204).end();
+export default withHandler({
+  POST: async ({ res }) => {
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    if (!clientId) {
+      throw new ApiError("GITHUB_OAUTH_NOT_CONFIGURED", "GitHub OAuth is not configured");
+    }
 
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+    const state = randomBytes(16).toString("hex");
+    const { id, expires } = await createSession(`oauth-state:${state}`, {
+      kind: "oauth_state",
+      state,
+    });
 
-  const clientId = process.env.GITHUB_CLIENT_ID;
-  if (!clientId) {
-    return res.status(500).json({ error: "GitHub Client ID not configured" });
-  }
+    const redirectUri = absoluteUrl("/api/v1/auth/callback");
+    const authorizeUrl = new URL("https://github.com/login/oauth/authorize");
+    authorizeUrl.searchParams.set("client_id", clientId);
+    authorizeUrl.searchParams.set("redirect_uri", redirectUri);
+    authorizeUrl.searchParams.set("scope", "read:user");
+    authorizeUrl.searchParams.set("state", state);
 
-  // Generate a cryptographically random state for CSRF protection
-  const state = crypto.randomBytes(16).toString("hex");
-
-  // Set state as a cookie (HttpOnly, SameSite=Lax, short-lived)
-  res.setHeader(
-    "Set-Cookie",
-    `oauth_state=${state}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/; Secure`
-  );
-
-  const redirectUri = "https://hermeshub.xyz/api/v1/auth/callback";
-  const scope = "read:user,user:email";
-
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    scope,
-    state,
-  });
-
-  const githubAuthUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
-
-  return res.redirect(302, githubAuthUrl);
-}
+    res.setHeader("Set-Cookie", buildSessionCookie(id, expires, "hh_oauth"));
+    sendOk(res, { authorize_url: authorizeUrl.toString(), state });
+  },
+});

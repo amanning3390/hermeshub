@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
 
+Agentmap: https://hermeshub.xyz/.well-known/ai-catalog.json
+
 Sitemap: https://hermeshub.xyz/sitemap.xml
