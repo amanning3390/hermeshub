@@ -11,9 +11,9 @@
  * Keys expire via `ttlAt`; a periodic job (or lazy cleanup) prunes stale rows.
  */
 import { eq } from "drizzle-orm";
-import { getDb } from "./db";
-import { idempotency_keys } from "../../shared/schema";
-import { sha256Hex } from "./auth";
+import { getDb } from "./db.js";
+import { idempotency_keys } from "../../shared/schema.js";
+import { sha256Hex } from "./auth.js";
 
 const DEFAULT_TTL_MS = 1000 * 60 * 60 * 24; // 24h
 

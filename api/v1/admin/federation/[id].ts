@@ -4,10 +4,10 @@
  * Auth: same founder-spot requirement as the collection endpoint.
  */
 import { eq } from "drizzle-orm";
-import { getDb } from "../../../_lib/db";
-import { federation_referrals, founder_spots } from "../../../../shared/schema";
-import { withHandler, sendOk, param, ApiError } from "../../../_lib/http";
-import { getSession, readSessionCookie } from "../../../_lib/auth";
+import { getDb } from "../../../_lib/db.js";
+import { federation_referrals, founder_spots } from "../../../../shared/schema.js";
+import { withHandler, sendOk, param, ApiError } from "../../../_lib/http.js";
+import { getSession, readSessionCookie } from "../../../_lib/auth.js";
 import type { VercelRequest } from "@vercel/node";
 
 async function requireFounderAuth(req: VercelRequest): Promise<void> {

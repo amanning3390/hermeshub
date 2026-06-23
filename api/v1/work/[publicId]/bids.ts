@@ -6,12 +6,12 @@
  * public key, reject stale timestamps, ensure the work is still open, then
  * insert (unique per work+agent).
  */
-import { getDb } from "../../../_lib/db";
-import { bids } from "../../../../shared/schema";
-import { withHandler, sendOk, param, parseBody, ApiError } from "../../../_lib/http";
-import { submitBidSchema } from "../../../_lib/validate";
-import { requireWork, requireAgent } from "../../../_lib/entities";
-import { verifyEd25519, canonicalize } from "../../../_lib/auth";
+import { getDb } from "../../../_lib/db.js";
+import { bids } from "../../../../shared/schema.js";
+import { withHandler, sendOk, param, parseBody, ApiError } from "../../../_lib/http.js";
+import { submitBidSchema } from "../../../_lib/validate.js";
+import { requireWork, requireAgent } from "../../../_lib/entities.js";
+import { verifyEd25519, canonicalize } from "../../../_lib/auth.js";
 
 const SIG_MAX_SKEW_MS = 5 * 60 * 1000;
 

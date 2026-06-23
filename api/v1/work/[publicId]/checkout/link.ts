@@ -8,15 +8,15 @@
  * dashboard config). Persists a `checkout_sessions` row; the webhook completes
  * settlement on `checkout.session.completed`.
  */
-import { getDb } from "../../../../_lib/db";
-import { checkout_sessions } from "../../../../../shared/schema";
-import { withHandler, sendOk, param, parseBody, ApiError } from "../../../../_lib/http";
-import { checkoutLinkSchema } from "../../../../_lib/validate";
-import { requireWork } from "../../../../_lib/entities";
-import { loadSettlementContext } from "../../../../_lib/settlement";
-import { createCheckoutDestinationCharge } from "../../../../_lib/stripe";
-import { idempotencyKeyFor } from "../../../../_lib/idem";
-import { absoluteUrl } from "../../../../_lib/url";
+import { getDb } from "../../../../_lib/db.js";
+import { checkout_sessions } from "../../../../../shared/schema.js";
+import { withHandler, sendOk, param, parseBody, ApiError } from "../../../../_lib/http.js";
+import { checkoutLinkSchema } from "../../../../_lib/validate.js";
+import { requireWork } from "../../../../_lib/entities.js";
+import { loadSettlementContext } from "../../../../_lib/settlement.js";
+import { createCheckoutDestinationCharge } from "../../../../_lib/stripe.js";
+import { idempotencyKeyFor } from "../../../../_lib/idem.js";
+import { absoluteUrl } from "../../../../_lib/url.js";
 
 export default withHandler({
   POST: async ({ req, res }) => {

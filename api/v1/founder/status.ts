@@ -6,10 +6,10 @@
  * tier is slots 401-500.
  */
 import { eq, sql } from "drizzle-orm";
-import { getDb } from "../../_lib/db";
-import { founder_spots, founder_waitlist } from "../../../shared/schema";
-import { withHandler, sendOk, param } from "../../_lib/http";
-import { findAgent } from "../../_lib/entities";
+import { getDb } from "../../_lib/db.js";
+import { founder_spots, founder_waitlist } from "../../../shared/schema.js";
+import { withHandler, sendOk, param } from "../../_lib/http.js";
+import { findAgent } from "../../_lib/entities.js";
 
 const OPEN_TIER_MAX = 400;
 const TOTAL_SLOTS = 500;

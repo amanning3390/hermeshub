@@ -6,7 +6,7 @@
  * Returns a self-described attestation JSON documenting which ARD v0.9 features
  * this registry implements. Referenced from the root ai-catalog.json trustManifest.
  */
-import { withHandler } from "../../_lib/http";
+import { withHandler } from "../../_lib/http.js";
 
 const LAST_AUDITED = new Date().toISOString();
 

@@ -6,11 +6,11 @@
  * UI can show "processing" vs "paid" without waiting on the async webhook.
  */
 import { eq, and } from "drizzle-orm";
-import { getDb } from "../../../../../_lib/db";
-import { checkout_sessions } from "../../../../../../shared/schema";
-import { withHandler, sendOk, param, ApiError } from "../../../../../_lib/http";
-import { requireWork } from "../../../../../_lib/entities";
-import { getStripe } from "../../../../../_lib/stripe";
+import { getDb } from "../../../../../_lib/db.js";
+import { checkout_sessions } from "../../../../../../shared/schema.js";
+import { withHandler, sendOk, param, ApiError } from "../../../../../_lib/http.js";
+import { requireWork } from "../../../../../_lib/entities.js";
+import { getStripe } from "../../../../../_lib/stripe.js";
 
 export default withHandler({
   GET: async ({ req, res }) => {

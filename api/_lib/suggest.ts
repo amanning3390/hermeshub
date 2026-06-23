@@ -7,8 +7,8 @@
  * capability URIs for the requester to confirm.
  */
 import { eq } from "drizzle-orm";
-import { getDb } from "./db";
-import { capabilities } from "../../shared/schema";
+import { getDb } from "./db.js";
+import { capabilities } from "../../shared/schema.js";
 
 const STOPWORDS = new Set([
   "the", "a", "an", "and", "or", "for", "to", "of", "in", "on", "with", "my", "our",

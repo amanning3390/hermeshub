@@ -11,16 +11,16 @@
  * 404 errors use the ARD error envelope per spec Appendix B.
  */
 import { eq } from "drizzle-orm";
-import { getDb } from "../../../_lib/db";
+import { getDb } from "../../../_lib/db.js";
 import {
   agentCapabilities,
   capabilities,
   founder_spots,
   stripe_accounts,
-} from "../../../../shared/schema";
-import { withHandler, param } from "../../../_lib/http";
-import { findAgent } from "../../../_lib/entities";
-import { buildAgentCard, ardError, MEDIA_TYPES } from "../../../_lib/ard";
+} from "../../../../shared/schema.js";
+import { withHandler, param } from "../../../_lib/http.js";
+import { findAgent } from "../../../_lib/entities.js";
+import { buildAgentCard, ardError, MEDIA_TYPES } from "../../../_lib/ard.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export default withHandler({

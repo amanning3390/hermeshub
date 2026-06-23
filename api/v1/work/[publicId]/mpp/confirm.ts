@@ -7,12 +7,12 @@
  * (`payment_intent.succeeded`) finalize settlement + payout records.
  */
 import { eq, and } from "drizzle-orm";
-import { getDb } from "../../../../_lib/db";
-import { mpp_sessions } from "../../../../../shared/schema";
-import { withHandler, sendOk, param, parseBody, ApiError } from "../../../../_lib/http";
-import { mppConfirmSchema } from "../../../../_lib/validate";
-import { requireWork } from "../../../../_lib/entities";
-import { getStripe } from "../../../../_lib/stripe";
+import { getDb } from "../../../../_lib/db.js";
+import { mpp_sessions } from "../../../../../shared/schema.js";
+import { withHandler, sendOk, param, parseBody, ApiError } from "../../../../_lib/http.js";
+import { mppConfirmSchema } from "../../../../_lib/validate.js";
+import { requireWork } from "../../../../_lib/entities.js";
+import { getStripe } from "../../../../_lib/stripe.js";
 
 /** Map a Stripe PaymentIntent status to our session status vocabulary. */
 function sessionStatusFor(piStatus: string): string {

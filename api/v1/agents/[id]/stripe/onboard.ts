@@ -7,16 +7,16 @@
  * and persist it. Either way we always mint a *fresh* AccountLink — links are
  * single-use and short-lived, so re-onboarding must return a new URL.
  */
-import { getDb } from "../../../../_lib/db";
-import { withHandler, sendOk, param, parseBody, ApiError } from "../../../../_lib/http";
-import { stripeOnboardSchema } from "../../../../_lib/validate";
-import { requireAgent } from "../../../../_lib/entities";
-import { createExpressAccount, createAccountLink } from "../../../../_lib/stripe";
+import { getDb } from "../../../../_lib/db.js";
+import { withHandler, sendOk, param, parseBody, ApiError } from "../../../../_lib/http.js";
+import { stripeOnboardSchema } from "../../../../_lib/validate.js";
+import { requireAgent } from "../../../../_lib/entities.js";
+import { createExpressAccount, createAccountLink } from "../../../../_lib/stripe.js";
 import {
   getStripeAccountForAgent,
   insertStripeAccount,
-} from "../../../../_lib/stripe-accounts";
-import { absoluteUrl } from "../../../../_lib/url";
+} from "../../../../_lib/stripe-accounts.js";
+import { absoluteUrl } from "../../../../_lib/url.js";
 
 export default withHandler({
   POST: async ({ req, res }) => {

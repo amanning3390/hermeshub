@@ -6,9 +6,9 @@
  * only). Paginated via `?limit=` (default 100, max 500) + `?offset=`.
  */
 import { and, eq, or, ilike, sql } from "drizzle-orm";
-import { getDb } from "../../_lib/db";
-import { capabilities } from "../../../shared/schema";
-import { withHandler, sendOk, param, intParam } from "../../_lib/http";
+import { getDb } from "../../_lib/db.js";
+import { capabilities } from "../../../shared/schema.js";
+import { withHandler, sendOk, param, intParam } from "../../_lib/http.js";
 
 export default withHandler({
   GET: async ({ req, res }) => {

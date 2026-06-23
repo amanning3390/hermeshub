@@ -10,9 +10,9 @@
  *
  * The host base URL is read from env (BASE_URL) via defaultBaseHost().
  */
-import { withHandler } from "../../_lib/http";
-import { defaultBaseHost } from "../../_lib/url";
-import { ARD_SPEC_VERSION, MEDIA_TYPES } from "../../_lib/ard";
+import { withHandler } from "../../_lib/http.js";
+import { defaultBaseHost } from "../../_lib/url.js";
+import { ARD_SPEC_VERSION, MEDIA_TYPES } from "../../_lib/ard.js";
 
 export default withHandler({
   GET: async ({ res }) => {

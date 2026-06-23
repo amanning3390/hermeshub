@@ -7,11 +7,11 @@
  * all of that and rejects with the right error if any piece is missing.
  */
 import { eq } from "drizzle-orm";
-import { getDb } from "./db";
-import { bids, work_requests, type WorkRequest } from "../../shared/schema";
-import { feeFromSnapshot } from "./fee";
-import { getStripeAccountForAgent } from "./stripe-accounts";
-import { ApiError } from "./http";
+import { getDb } from "./db.js";
+import { bids, work_requests, type WorkRequest } from "../../shared/schema.js";
+import { feeFromSnapshot } from "./fee.js";
+import { getStripeAccountForAgent } from "./stripe-accounts.js";
+import { ApiError } from "./http.js";
 
 export interface SettlementContext {
   work: WorkRequest;

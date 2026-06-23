@@ -7,7 +7,7 @@
  * charset-bounded to limit abuse.
  */
 import { z } from "zod";
-import { WORK_STATUSES, PRICING_TYPES } from "../../shared/schema";
+import { WORK_STATUSES, PRICING_TYPES } from "../../shared/schema.js";
 
 const hex = z.string().regex(/^(0x)?[0-9a-fA-F]+$/, "must be hex");
 const capabilityUri = z

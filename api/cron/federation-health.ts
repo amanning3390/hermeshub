@@ -14,11 +14,11 @@
  * (Vercel also sends x-vercel-cron-signature but Bearer is simpler to validate.)
  */
 import { eq, and } from "drizzle-orm";
-import { getDb } from "../_lib/db";
+import { getDb } from "../_lib/db.js";
 import {
   federation_referrals,
   referral_health_log,
-} from "../../shared/schema";
+} from "../../shared/schema.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 const HEALTH_CHECK_TIMEOUT_MS = 5000;

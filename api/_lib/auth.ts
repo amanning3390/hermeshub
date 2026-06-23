@@ -13,8 +13,8 @@
 import { randomBytes, createHash } from "node:crypto";
 import * as ed25519 from "@noble/ed25519";
 import { eq } from "drizzle-orm";
-import { getDb } from "./db";
-import { sessions } from "../../shared/schema";
+import { getDb } from "./db.js";
+import { sessions } from "../../shared/schema.js";
 
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 

@@ -6,7 +6,7 @@
  * request therefore reuses the same Stripe idempotency key, so Stripe collapses
  * retries to a single charge (brief requirement #1).
  */
-import { sha256Hex } from "./auth";
+import { sha256Hex } from "./auth.js";
 
 export function idempotencyKeyFor(...parts: (string | number)[]): string {
   return `hh_${sha256Hex(parts.join(":")).slice(0, 48)}`;

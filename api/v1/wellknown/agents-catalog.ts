@@ -11,11 +11,11 @@
  *     url (well-known card URL), capabilities[], description, version, updatedAt }
  */
 import { eq } from "drizzle-orm";
-import { getDb } from "../../_lib/db";
-import { agents, agentCapabilities } from "../../../shared/schema";
-import { withHandler } from "../../_lib/http";
-import { defaultBaseHost } from "../../_lib/url";
-import { ARD_SPEC_VERSION, MEDIA_TYPES } from "../../_lib/ard";
+import { getDb } from "../../_lib/db.js";
+import { agents, agentCapabilities } from "../../../shared/schema.js";
+import { withHandler } from "../../_lib/http.js";
+import { defaultBaseHost } from "../../_lib/url.js";
+import { ARD_SPEC_VERSION, MEDIA_TYPES } from "../../_lib/ard.js";
 
 export default withHandler({
   GET: async ({ res }) => {

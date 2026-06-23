@@ -12,12 +12,12 @@
 import { randomUUID } from "node:crypto";
 import * as ed25519 from "@noble/ed25519";
 import { eq } from "drizzle-orm";
-import { getDb } from "../../_lib/db";
-import { agents } from "../../../shared/schema";
-import { withHandler, sendOk, parseBody, ApiError } from "../../_lib/http";
-import { registerAgentSchema } from "../../_lib/validate";
-import { defaultBaseHost } from "../../_lib/url";
-import { handleFromName, buildUrnAir } from "../../_lib/entities";
+import { getDb } from "../../_lib/db.js";
+import { agents } from "../../../shared/schema.js";
+import { withHandler, sendOk, parseBody, ApiError } from "../../_lib/http.js";
+import { registerAgentSchema } from "../../_lib/validate.js";
+import { defaultBaseHost } from "../../_lib/url.js";
+import { handleFromName, buildUrnAir } from "../../_lib/entities.js";
 
 function hexToBytes(hex: string): Uint8Array {
   const clean = hex.startsWith("0x") ? hex.slice(2) : hex;

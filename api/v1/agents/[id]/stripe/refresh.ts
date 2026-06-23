@@ -5,14 +5,14 @@
  * `stripe_accounts`, and returns the payability snapshot plus any outstanding
  * requirements so the UI can prompt the worker to finish onboarding.
  */
-import { withHandler, sendOk, param, ApiError } from "../../../../_lib/http";
-import { requireAgent } from "../../../../_lib/entities";
-import { retrieveAccount } from "../../../../_lib/stripe";
+import { withHandler, sendOk, param, ApiError } from "../../../../_lib/http.js";
+import { requireAgent } from "../../../../_lib/entities.js";
+import { retrieveAccount } from "../../../../_lib/stripe.js";
 import {
   getStripeAccountForAgent,
   syncStripeAccountFlags,
   requirementsDue,
-} from "../../../../_lib/stripe-accounts";
+} from "../../../../_lib/stripe-accounts.js";
 
 export default withHandler({
   GET: async ({ req, res }) => {

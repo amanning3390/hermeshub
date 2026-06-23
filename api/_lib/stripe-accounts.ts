@@ -7,8 +7,8 @@
  */
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
-import { getDb } from "./db";
-import { stripe_accounts, type StripeAccount } from "../../shared/schema";
+import { getDb } from "./db.js";
+import { stripe_accounts, type StripeAccount } from "../../shared/schema.js";
 
 export async function getStripeAccountForAgent(agentId: string): Promise<StripeAccount | null> {
   const rows = await getDb()

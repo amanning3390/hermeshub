@@ -8,18 +8,18 @@
  * the `client_secret` and confirms via `/mpp/confirm`. We record the session in
  * `mpp_sessions` and ledger the idempotency key (brief requirement #1, #7).
  */
-import { getDb } from "../../../../_lib/db";
-import { mpp_sessions } from "../../../../../shared/schema";
-import { withHandler, sendOk, param, parseBody, ApiError } from "../../../../_lib/http";
-import { checkoutMppSchema } from "../../../../_lib/validate";
-import { requireWork, findAgent } from "../../../../_lib/entities";
-import { loadSettlementContext } from "../../../../_lib/settlement";
-import { createPaymentIntentDestinationCharge } from "../../../../_lib/stripe";
+import { getDb } from "../../../../_lib/db.js";
+import { mpp_sessions } from "../../../../../shared/schema.js";
+import { withHandler, sendOk, param, parseBody, ApiError } from "../../../../_lib/http.js";
+import { checkoutMppSchema } from "../../../../_lib/validate.js";
+import { requireWork, findAgent } from "../../../../_lib/entities.js";
+import { loadSettlementContext } from "../../../../_lib/settlement.js";
+import { createPaymentIntentDestinationCharge } from "../../../../_lib/stripe.js";
 import {
   claimIdempotencyKey,
   storeIdempotentResponse,
   releaseIdempotencyKey,
-} from "../../../../_lib/idempotency";
+} from "../../../../_lib/idempotency.js";
 
 export default withHandler({
   POST: async ({ req, res }) => {

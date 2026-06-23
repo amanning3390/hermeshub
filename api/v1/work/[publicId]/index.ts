@@ -2,10 +2,10 @@
  * GET /api/v1/work/[publicId] — work detail with bids + scoping summary.
  */
 import { eq, sql } from "drizzle-orm";
-import { getDb } from "../../../_lib/db";
-import { bids, agents, scoping_threads } from "../../../../shared/schema";
-import { withHandler, sendOk, param, ApiError } from "../../../_lib/http";
-import { requireWork } from "../../../_lib/entities";
+import { getDb } from "../../../_lib/db.js";
+import { bids, agents, scoping_threads } from "../../../../shared/schema.js";
+import { withHandler, sendOk, param, ApiError } from "../../../_lib/http.js";
+import { requireWork } from "../../../_lib/entities.js";
 
 export default withHandler({
   GET: async ({ req, res }) => {

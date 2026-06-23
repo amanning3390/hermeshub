@@ -6,9 +6,9 @@
  * frontend can hide the GitHub button (GitHub login is optional per the brief).
  */
 import { randomBytes } from "node:crypto";
-import { withHandler, sendOk, ApiError } from "../../_lib/http";
-import { createSession, buildSessionCookie } from "../../_lib/auth";
-import { absoluteUrl } from "../../_lib/url";
+import { withHandler, sendOk, ApiError } from "../../_lib/http.js";
+import { createSession, buildSessionCookie } from "../../_lib/auth.js";
+import { absoluteUrl } from "../../_lib/url.js";
 
 export default withHandler({
   POST: async ({ res }) => {

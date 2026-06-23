@@ -11,19 +11,19 @@
  * retroactively, flip status to `awarded`, and record the winning bid.
  */
 import { eq, and } from "drizzle-orm";
-import { getDb } from "../../../_lib/db";
-import { bids, work_requests } from "../../../../shared/schema";
-import { withHandler, sendOk, param, parseBody, ApiError } from "../../../_lib/http";
-import { awardSchema } from "../../../_lib/validate";
-import { requireWork } from "../../../_lib/entities";
-import { resolveFee } from "../../../_lib/fee";
+import { getDb } from "../../../_lib/db.js";
+import { bids, work_requests } from "../../../../shared/schema.js";
+import { withHandler, sendOk, param, parseBody, ApiError } from "../../../_lib/http.js";
+import { awardSchema } from "../../../_lib/validate.js";
+import { requireWork } from "../../../_lib/entities.js";
+import { resolveFee } from "../../../_lib/fee.js";
 import {
   getStripeAccountForAgent,
   syncStripeAccountFlags,
   requirementsDue,
-} from "../../../_lib/stripe-accounts";
-import { retrieveAccount, createAccountLink } from "../../../_lib/stripe";
-import { absoluteUrl } from "../../../_lib/url";
+} from "../../../_lib/stripe-accounts.js";
+import { retrieveAccount, createAccountLink } from "../../../_lib/stripe.js";
+import { absoluteUrl } from "../../../_lib/url.js";
 
 export default withHandler({
   POST: async ({ req, res }) => {

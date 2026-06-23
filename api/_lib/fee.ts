@@ -9,8 +9,8 @@
  * so later fee changes never apply retroactively.
  */
 import { eq, and } from "drizzle-orm";
-import { getDb } from "./db";
-import { founder_spots, agents } from "../../shared/schema";
+import { getDb } from "./db.js";
+import { founder_spots, agents } from "../../shared/schema.js";
 
 export const STANDARD_FEE_BPS = 500; // 5.00%
 export const FOUNDER_FEE_BPS = 150; // 1.50%

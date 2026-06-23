@@ -12,9 +12,9 @@
  * Per ARD spec §7.4, orderBy defaults to name ASC.
  */
 import { and, eq, or, ilike, inArray, sql } from "drizzle-orm";
-import { getDb } from "../../_lib/db";
-import { agents, agentCapabilities, capabilities } from "../../../shared/schema";
-import { withHandler, sendOk, param, intParam } from "../../_lib/http";
+import { getDb } from "../../_lib/db.js";
+import { agents, agentCapabilities, capabilities } from "../../../shared/schema.js";
+import { withHandler, sendOk, param, intParam } from "../../_lib/http.js";
 
 function decodePageToken(token: string | null | undefined): number {
   if (!token) return 0;
