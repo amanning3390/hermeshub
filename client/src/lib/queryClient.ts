@@ -1,52 +1,95 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient, type QueryFunction } from "@tanstack/react-query";
 
-const API_BASE = "__PORT_5000__".startsWith("__") ? "" : "__PORT_5000__";
+/**
+ * API client for the HermesHub v1 endpoints. Every endpoint returns the
+ * envelope `{ ok: true, data }` or `{ ok: false, error: { code, message,
+ * details } }`. `apiRequest`/`getQueryFn` unwrap the envelope and surface a
+ * typed `ApiError` so callers always work with `data` directly.
+ */
 
-async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+export interface ApiErrorShape {
+  code: string;
+  message: string;
+  details?: unknown;
+}
+
+export class ApiError extends Error {
+  readonly code: string;
+  readonly status: number;
+  readonly details?: unknown;
+  constructor(status: number, error: ApiErrorShape) {
+    super(error.message);
+    this.name = "ApiError";
+    this.code = error.code;
+    this.status = status;
+    this.details = error.details;
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(`${API_BASE}${url}`, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-  });
+type Envelope<T> = { ok: true; data: T } | { ok: false; error: ApiErrorShape };
 
-  await throwIfResNotOk(res);
-  return res;
+async function parseEnvelope<T>(res: Response): Promise<T> {
+  let body: Envelope<T> | null = null;
+  try {
+    body = (await res.json()) as Envelope<T>;
+  } catch {
+    body = null;
+  }
+  if (body && body.ok === false) {
+    throw new ApiError(res.status, body.error);
+  }
+  if (!res.ok || !body || body.ok !== true) {
+    throw new ApiError(res.status, {
+      code: "HTTP_ERROR",
+      message: `Request failed with status ${res.status}`,
+    });
+  }
+  return body.data;
 }
 
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
+/** Perform a mutation against the API and return the unwrapped `data`. */
+export async function apiRequest<T = unknown>(
+  method: string,
+  url: string,
+  data?: unknown,
+): Promise<T> {
+  const res = await fetch(url, {
+    method,
+    headers: data !== undefined ? { "Content-Type": "application/json" } : {},
+    body: data !== undefined ? JSON.stringify(data) : undefined,
+    credentials: "include",
+  });
+  return parseEnvelope<T>(res);
+}
+
+/**
+ * Default query function. The query key's first element is the URL; any
+ * additional object element is serialized into query-string params.
+ */
+export const getQueryFn: <T>() => QueryFunction<T> =
+  () =>
   async ({ queryKey }) => {
-    const res = await fetch(`${API_BASE}${queryKey.join("/")}`);
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    const [url, params] = queryKey as [string, Record<string, unknown>?];
+    let fullUrl = url;
+    if (params && typeof params === "object") {
+      const search = new URLSearchParams();
+      for (const [k, v] of Object.entries(params)) {
+        if (v !== undefined && v !== null && v !== "") search.set(k, String(v));
+      }
+      const qs = search.toString();
+      if (qs) fullUrl += `?${qs}`;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
+    const res = await fetch(fullUrl, { credentials: "include" });
+    return parseEnvelope(res);
   };
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      queryFn: getQueryFn(),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      staleTime: 30_000,
       retry: false,
     },
     mutations: {

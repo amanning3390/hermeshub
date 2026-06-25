@@ -1,93 +1,139 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+/**
+ * Auth context for HermesHub.
+ *
+ * On mount we read the current session from `GET /api/v1/auth/me`. Two identity
+ * paths exist: GitHub OAuth (handled server-side) and anonymous browser
+ * keypairs. `loginAnonymous()` mints a server keypair; the private key is
+ * returned once and stored locally so the holder can sign bids/declarations.
+ * GitHub OAuth UI is intentionally omitted for the demo (anonymous is enough).
+ */
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react";
+import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 
-interface Creator {
-  id: string;
-  github_username: string;
-  email: string | null;
-  avatar_url: string | null;
-  wallet_address: string | null;
-  wallet_chain: string | null;
-  solana_address: string | null;
-  stripe_account_id: string | null;
-  verified: boolean;
-  created_at: string;
+export interface SessionUser {
+  kind: string;
+  didWeb: string | null;
+  githubId: string | null;
+  login: string | null;
+  name: string | null;
+  avatarUrl: string | null;
 }
 
-interface AuthContextType {
-  creator: Creator | null;
-  token: string | null;
-  isLoading: boolean;
-  login: () => void;
-  logout: () => void;
+/** Local identity material for the anonymous keypair (never leaves the browser). */
+export interface LocalIdentity {
+  didWeb: string;
+  publicKey: string;
+  privateKey: string;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const IDENTITY_KEY = "hh_identity";
+const AGENTS_KEY = "hh_owned_agents";
+
+function readIdentity(): LocalIdentity | null {
+  try {
+    const raw = localStorage.getItem(IDENTITY_KEY);
+    return raw ? (JSON.parse(raw) as LocalIdentity) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function readOwnedAgentIds(): string[] {
+  try {
+    const raw = localStorage.getItem(AGENTS_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function rememberOwnedAgent(agentId: string): void {
+  const ids = readOwnedAgentIds();
+  if (!ids.includes(agentId)) {
+    localStorage.setItem(AGENTS_KEY, JSON.stringify([...ids, agentId]));
+  }
+}
+
+interface AuthContextValue {
+  user: SessionUser | null;
+  identity: LocalIdentity | null;
+  loading: boolean;
+  loginAnonymous: () => Promise<LocalIdentity>;
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue>({
+  user: null,
+  identity: null,
+  loading: true,
+  loginAnonymous: async () => {
+    throw new Error("AuthProvider not mounted");
+  },
+  logout: async () => {},
+  refresh: async () => {},
+});
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [creator, setCreator] = useState<Creator | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<SessionUser | null>(null);
+  const [identity, setIdentity] = useState<LocalIdentity | null>(() => readIdentity());
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for token in URL params (from OAuth callback)
-    const hash = window.location.hash;
-    const params = new URLSearchParams(hash.split("?")[1] || "");
-    const urlToken = params.get("token");
-
-    if (urlToken) {
-      localStorage.setItem("hermeshub_token", urlToken);
-      setToken(urlToken);
-      // Clean up URL
-      const cleanHash = hash.split("?")[0];
-      window.location.hash = cleanHash;
-    } else {
-      // Try to load token from localStorage
-      const stored = localStorage.getItem("hermeshub_token");
-      if (stored) setToken(stored);
+  const refresh = useCallback(async () => {
+    try {
+      const data = await apiRequest<{ user: SessionUser | null }>("GET", "/api/v1/auth/me");
+      setUser(data.user);
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   useEffect(() => {
-    if (!token) {
-      setCreator(null);
-      return;
+    void refresh();
+  }, [refresh]);
+
+  const loginAnonymous = useCallback(async () => {
+    const data = await apiRequest<{ did_web: string; public_key: string; private_key: string }>(
+      "POST",
+      "/api/v1/auth/anonymous",
+    );
+    const next: LocalIdentity = {
+      didWeb: data.did_web,
+      publicKey: data.public_key,
+      privateKey: data.private_key,
+    };
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify(next));
+    setIdentity(next);
+    await refresh();
+    return next;
+  }, [refresh]);
+
+  const logout = useCallback(async () => {
+    try {
+      await apiRequest("POST", "/api/v1/auth/logout");
+    } finally {
+      setUser(null);
+      void queryClient.invalidateQueries();
     }
-    // Fetch creator profile
-    fetch("/api/v1/auth/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Unauthorized");
-        return res.json();
-      })
-      .then((data) => setCreator(data))
-      .catch(() => {
-        localStorage.removeItem("hermeshub_token");
-        setToken(null);
-        setCreator(null);
-      });
-  }, [token]);
-
-  const login = () => {
-    window.location.href = "/api/v1/auth/github";
-  };
-
-  const logout = () => {
-    localStorage.removeItem("hermeshub_token");
-    setToken(null);
-    setCreator(null);
-  };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ creator, token, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, identity, loading, loginAnonymous, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
+export function useAuth(): AuthContextValue {
+  return useContext(AuthContext);
 }

@@ -1,118 +1,107 @@
 /**
- * POST /api/v1/agents/register
- * Register a new agent identity with an Ed25519 public key.
+ * POST /api/v1/agents/register — create a worker agent.
+ *
+ * Body: { name, bio?, model?, public_key, owner_github? }. The public key
+ * must be a valid 32-byte Ed25519 key. A handle is derived from the name and
+ * made unique with a short random suffix if needed. The urn_air identifier is
+ * built as urn:air:hermeshub.xyz:agent:<handle>.
+ *
+ * `did_web` in the body is accepted but silently ignored (deprecated, removed
+ * in schema v3 ARD hard cutover).
  */
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { randomUUID } from "crypto";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { randomUUID } from "node:crypto";
+import * as ed25519 from "@noble/ed25519";
 import { eq } from "drizzle-orm";
-import { pgTable, text, serial, integer, boolean, timestamp, real } from "drizzle-orm/pg-core";
-import { z } from "zod";
+import { getDb } from "../../_lib/db.js";
+import { agents } from "../../../shared/schema.js";
+import { withHandler, sendOk, parseBody, ApiError } from "../../_lib/http.js";
+import { registerAgentSchema } from "../../_lib/validate.js";
+import { defaultBaseHost } from "../../_lib/url.js";
+import { handleFromName, buildUrnAir } from "../../_lib/entities.js";
 
-// ─── Inline DB ──────────────────────────────────────────────────────────────
-let _db: ReturnType<typeof drizzle> | null = null;
-function getDb() {
-  if (_db) return _db;
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL environment variable is not set");
-  _db = drizzle(neon(url));
-  return _db;
+function hexToBytes(hex: string): Uint8Array {
+  const clean = hex.startsWith("0x") ? hex.slice(2) : hex;
+  const out = new Uint8Array(clean.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.slice(i * 2, i * 2 + 2), 16);
+  return out;
 }
 
-// ─── Inline Schema ──────────────────────────────────────────────────────────
-const agents = pgTable("agents", {
-  id: serial("id").primaryKey(),
-  agentId: text("agent_id").notNull().unique(),
-  name: text("name").notNull(),
-  model: text("model"),
-  ownerHash: text("owner_hash"),
-  ownerGithub: text("owner_github"),
-  publicKey: text("public_key").notNull(),
-  verified: boolean("verified").notNull().default(false),
-  trustScore: real("trust_score").notNull().default(50),
-  feedbackCount: integer("feedback_count").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-const agentRegistrationSchema = z.object({
-  name: z.string().min(2).max(50),
-  model: z.string().max(50).optional(),
-  owner_hash: z.string().max(64).optional(),
-  public_key: z.string().min(1),
-});
-
-// ─── Inline CORS ────────────────────────────────────────────────────────────
-const ALLOWED_ORIGINS = [
-  "https://hermeshub.xyz",
-  "https://www.hermeshub.xyz",
-  "http://localhost:5000",
-  "http://localhost:5173",
-];
-
-function setCors(req: VercelRequest, res: VercelResponse): boolean {
-  const origin = req.headers.origin || "";
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  } else {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-  }
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Max-Age", "86400");
-  if (req.method === "OPTIONS") { res.status(204).end(); return true; }
-  return false;
-}
-
-// ─── Handler ────────────────────────────────────────────────────────────────
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (setCors(req, res)) return;
-
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "method_not_allowed" });
-  }
-
+/** A valid Ed25519 public key is 32 bytes and decompresses to a curve point. */
+function isValidEd25519PublicKey(hex: string): boolean {
   try {
-    const parsed = agentRegistrationSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({
-        error: "invalid_request",
-        details: parsed.error.flatten().fieldErrors,
-      });
+    if (hexToBytes(hex).length !== 32) return false;
+    ed25519.Point.fromHex(hex.startsWith("0x") ? hex.slice(2) : hex);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Ensure handle uniqueness by appending -2, -3, ... if collisions exist. */
+async function resolveUniqueHandle(baseHandle: string): Promise<string> {
+  const db = getDb();
+  const existing = await db
+    .select({ handle: agents.handle })
+    .from(agents)
+    .where(eq(agents.handle, baseHandle))
+    .limit(1);
+  if (!existing[0]) return baseHandle;
+
+  // Try with a short random suffix.
+  const candidate = `${baseHandle.slice(0, 90)}-${randomUUID().slice(0, 8)}`;
+  return candidate;
+}
+
+export default withHandler({
+  POST: async ({ req, res }) => {
+    const input = await parseBody(req, registerAgentSchema);
+
+    if (!isValidEd25519PublicKey(input.publicKey)) {
+      throw new ApiError("VALIDATION", "public_key is not a valid Ed25519 public key");
     }
+
+    const publisherDomain = defaultBaseHost();
+    const baseHandle = handleFromName(input.name);
+    const handle = await resolveUniqueHandle(baseHandle);
+    const urnAir = buildUrnAir(handle, publisherDomain);
 
     const db = getDb();
-    const { name, model, owner_hash, public_key } = parsed.data;
+    try {
+      const inserted = await db
+        .insert(agents)
+        .values({
+          urnAir,
+          handle,
+          publisherDomain,
+          name: input.name,
+          bio: input.bio,
+          model: input.model,
+          ownerGithub: input.ownerGithub,
+          publicKey: input.publicKey,
+        })
+        .returning();
 
-    // Check for duplicate public key
-    const [existing] = await db.select().from(agents).where(eq(agents.publicKey, public_key));
-    if (existing) {
-      return res.status(409).json({
-        error: "agent_already_registered",
-        agent_id: existing.agentId,
-        message: "An agent with this public key is already registered.",
-      });
+      const agent = inserted[0];
+      sendOk(res, {
+        agent: {
+          id: agent.id,
+          agentId: agent.agentId,
+          urnAir: agent.urnAir,
+          handle: agent.handle,
+          name: agent.name,
+          bio: agent.bio,
+          model: agent.model,
+          ownerGithub: agent.ownerGithub,
+          verified: agent.verified,
+          trustScore: agent.trustScore,
+          createdAt: agent.createdAt,
+        },
+      }, 201);
+    } catch (err) {
+      if (err instanceof Error && /unique|duplicate/i.test(err.message)) {
+        throw new ApiError("CONFLICT", "an agent with this identifier already exists");
+      }
+      throw err;
     }
-
-    const agentId = randomUUID();
-    const [agent] = await db.insert(agents).values({
-      agentId,
-      name,
-      model: model ?? null,
-      ownerHash: owner_hash ?? null,
-      ownerGithub: null,
-      publicKey: public_key,
-    }).returning();
-
-    res.status(201).json({
-      success: true,
-      agent_id: agent.agentId,
-      name: agent.name,
-      verified: agent.verified,
-      message: "Agent registered. Verify ownership by linking your GitHub account.",
-    });
-  } catch (e: any) {
-    console.error("Agent registration error:", e);
-    res.status(500).json({ error: "internal_error", message: "Registration failed." });
-  }
-}
+  },
+});
