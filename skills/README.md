@@ -32,6 +32,7 @@ our federation referrals.
 
 | Skill | Purpose |
 |-------|---------|
+| agentline | Telephony for AI agents — phone numbers, voice calls, SMS, MCP server |
 | agent-hardening | Security best practices for agent deployments |
 | api-builder | REST/GraphQL API scaffolding |
 | arxiv-watcher | Research paper monitoring + summarization |
