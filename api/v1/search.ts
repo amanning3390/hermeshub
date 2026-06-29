@@ -207,13 +207,17 @@ export default withHandler({
     if (qText) {
       // Use Postgres full-text ts_rank over agents.name, agents.bio, and joined
       // capability display_name / description. Rank 0–1 normalized to 0–100.
-      const textQuery = (qText as string)
+      // Build ts_query: use plainto_tsquery for robust user input handling.
+      // plainto_tsquery strips punctuation and joins tokens with &, avoiding
+      // syntax errors from special characters in user input.
+      const sanitizedText = (qText as string)
         .split(/\s+/)
         .filter(Boolean)
-        .map((t: string) => t.replace(/[^a-zA-Z0-9]/g, "") + ":*")
-        .join(" & ");
+        .map((t: string) => t.replace(/[^a-zA-Z0-9]/g, ""))
+        .filter(Boolean)
+        .join(" ");
 
-      if (!textQuery) {
+      if (!sanitizedText) {
         res.setHeader("Content-Type", "application/json; charset=utf-8");
         res.status(400).send(JSON.stringify(ardError("INVALID_ARGUMENT", "query.text is empty after sanitization")));
         return;
@@ -254,12 +258,12 @@ export default withHandler({
           GREATEST(
             ts_rank(
               to_tsvector('english', coalesce(a.name, '') || ' ' || coalesce(a.bio, '')),
-              to_tsquery('english', ${textQuery})
+              plainto_tsquery('english', ${sanitizedText})
             ),
             COALESCE((
               SELECT MAX(ts_rank(
                 to_tsvector('english', coalesce(c.display_name, '') || ' ' || coalesce(c.description, '')),
-                to_tsquery('english', ${textQuery})
+                plainto_tsquery('english', ${sanitizedText})
               ))
               FROM agent_capabilities ac
               JOIN capabilities c ON c.uri = ac.capability_uri
