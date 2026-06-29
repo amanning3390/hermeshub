@@ -12,11 +12,12 @@
  */
 import { eq, and } from "drizzle-orm";
 import { getDb } from "../../../_lib/db.js";
-import { bids, work_requests } from "../../../../shared/schema.js";
+import { bids, work_requests, requesters } from "../../../../shared/schema.js";
 import { withHandler, sendOk, param, parseBody, ApiError } from "../../../_lib/http.js";
 import { awardSchema } from "../../../_lib/validate.js";
 import { requireWork } from "../../../_lib/entities.js";
 import { resolveFee } from "../../../_lib/fee.js";
+import { readSessionCookie, getSession } from "../../../_lib/auth.js";
 import {
   getStripeAccountForAgent,
   syncStripeAccountFlags,
@@ -36,7 +37,41 @@ export default withHandler({
       throw new ApiError("CONFLICT", `work already ${work.status}`);
     }
 
+    // --- Authorization: verify the caller owns this work ---------------------
+    const sid = readSessionCookie(req.headers.cookie);
+    const session = sid ? await getSession(sid) : null;
+    if (!session) {
+      throw new ApiError("UNAUTHORIZED", "sign in to award a bid");
+    }
+    const sessionData = (session.data ?? {}) as Record<string, unknown>;
+    const sessionUrnAir = sessionData.urnAir as string | undefined;
+    if (!sessionUrnAir) {
+      throw new ApiError("UNAUTHORIZED", "session has no identity");
+    }
+
+    // Look up the requester for this work and compare against the session identity.
     const db = getDb();
+    const requesterRows = await db
+      .select()
+      .from(requesters)
+      .where(eq(requesters.id, work.requesterId))
+      .limit(1);
+    const requester = requesterRows[0];
+    if (!requester) {
+      throw new ApiError("NOT_FOUND", "requester not found for this work");
+    }
+
+    // For anonymous sessions, the requester's name column stores the urn:air
+    // identifier used at work-creation time (via upsertRequesterByDid).
+    // For GitHub sessions, the requester is matched by githubId.
+    const requesterIdentity = requester.name ?? "";
+    const sessionGithubId = sessionData.githubId as string | undefined;
+    const isOwner =
+      requesterIdentity === sessionUrnAir ||
+      (sessionGithubId && requester.githubId === sessionGithubId);
+    if (!isOwner) {
+      throw new ApiError("FORBIDDEN", "only the work requester can award bids");
+    }
     const bidRows = await db
       .select()
       .from(bids)

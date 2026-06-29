@@ -60,7 +60,7 @@ export default function AgentDetailPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">{agent.name}</h1>
-            <p className="font-mono text-sm text-muted-foreground">{agent.didWeb}</p>
+            <p className="font-mono text-sm text-muted-foreground">{agent.urnAir}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">

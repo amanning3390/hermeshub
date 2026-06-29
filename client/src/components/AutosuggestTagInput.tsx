@@ -58,7 +58,7 @@ export function AutosuggestTagInput({ selected, onChange }: AutosuggestTagInputP
               autoFocus
               value={term}
               onChange={(e) => setTerm(e.target.value)}
-              placeholder="Search 340 capabilities…"
+              placeholder="Search 268 capabilities…"
               className="border-0 px-0 focus-visible:ring-0"
             />
           </div>

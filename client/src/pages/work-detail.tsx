@@ -73,7 +73,7 @@ export default function WorkDetail() {
 
   const work = data?.work;
   const bids = data?.bids ?? [];
-  const isRequester = Boolean(identity && work && bids); // requester identity is server-scoped; gate award by ownership below
+  const isRequester = data?.isRequester ?? false;
   const alreadyBid = bids.some((b) => ownedAgents.includes(b.agentId));
   const isOpen = work?.status === "open" || work?.status === "scoping";
   const isAwarded = work?.status === "awarded";

@@ -207,10 +207,6 @@ export default withHandler({
     if (qText) {
       // Use Postgres full-text ts_rank over agents.name, agents.bio, and joined
       // capability display_name / description. Rank 0–1 normalized to 0–100.
-      const whereClause = conditions.length
-        ? sql`AND ${and(...conditions)}`
-        : sql``;
-
       const textQuery = (qText as string)
         .split(/\s+/)
         .filter(Boolean)
@@ -223,8 +219,30 @@ export default withHandler({
         return;
       }
 
+      // If filter conditions exist, resolve matching agent IDs via Drizzle ORM
+      // first, then run the raw ts_rank SQL restricted to those IDs. This avoids
+      // interpolating Drizzle condition objects into raw SQL (which produces
+      // invalid SQL and causes HTTP 500).
+      let filteredIds: string[] | null = null;
+      if (conditions.length) {
+        const idRows = await db
+          .select({ id: agents.id })
+          .from(agents)
+          .where(and(...conditions));
+        filteredIds = idRows.map((r) => r.id);
+        if (filteredIds.length === 0) {
+          res.setHeader("Content-Type", "application/json; charset=utf-8");
+          res.status(200).send(JSON.stringify({ results: [] }));
+          return;
+        }
+      }
+
+      // Build the ID filter clause for the raw SQL. When no conditions, no filter.
       // NeonHttpQueryResult doesn't extend Array — cast through any.
       /* eslint-disable @typescript-eslint/no-explicit-any */
+      const idFilterSql = filteredIds
+        ? sql`WHERE a.id = ANY(${filteredIds}::uuid[])`
+        : sql``;
       const rawRows = (await db.execute(sql`
         SELECT DISTINCT ON (a.id)
           a.id,
@@ -249,7 +267,7 @@ export default withHandler({
             ), 0)
           ) AS rank
         FROM agents a
-        ${conditions.length ? sql`WHERE ${and(...conditions)}` : sql``}
+        ${idFilterSql}
         ORDER BY a.id, rank DESC
         LIMIT ${pageSize + 1}
         OFFSET ${offset}

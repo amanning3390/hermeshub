@@ -82,7 +82,7 @@ function StripeConnectTab({ agents }: { agents: AgentDetail[] }) {
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
               <p className="font-medium">{a.agent.name}</p>
-              <p className="font-mono text-xs text-muted-foreground">{shortDid(a.agent.didWeb)}</p>
+              <p className="font-mono text-xs text-muted-foreground">{shortDid(a.agent.urnAir)}</p>
             </div>
             <div className="flex items-center gap-3">
               <StripeStatusBadge stripe={a.stripe} payable={a.payable} />

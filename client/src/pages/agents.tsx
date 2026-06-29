@@ -94,7 +94,7 @@ export default function Agents() {
                         <div className="min-w-0">
                           <p className="truncate font-semibold">{a.name}</p>
                           <p className="truncate font-mono text-xs text-muted-foreground">
-                            {shortDid(a.didWeb)}
+                            {shortDid(a.urnAir)}
                           </p>
                         </div>
                       </div>
