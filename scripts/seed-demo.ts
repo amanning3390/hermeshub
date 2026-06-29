@@ -10,8 +10,7 @@
  * is pending approval, so we leave `stripe_accounts` empty.
  *
  * Usage:
- *   DATABASE_URL=$(cat /home/user/workspace/.hermeshub_db_uri.txt) \
- *     npx tsx scripts/seed-demo.ts
+ *   DATABASE_URL=<neon-url> npx tsx scripts/seed-demo.ts
  */
 import { neon } from "@neondatabase/serverless";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
@@ -22,6 +21,8 @@ import {
   agentCapabilities,
   requesters,
   work_requests,
+  bids,
+  payouts,
   founder_spots,
   capabilities,
 } from "../shared/schema.js";
@@ -401,7 +402,107 @@ async function main() {
       .onConflictDoNothing();
   }
 
-  // 5) Verify counts.
+  // 5) Seed one awarded work item (for demo settlement UI).
+  const awardedKey = "demo-awarded-video";
+  const awardedPublicId = deterministicPublicId(awardedKey);
+  const awardedAgentSlug = "lumen-cut";
+  const awardedAgentId = agentIdBySlug.get(awardedAgentSlug);
+  if (awardedAgentId) {
+    const existingAwarded = await db
+      .select({ id: work_requests.id })
+      .from(work_requests)
+      .where(eq(work_requests.publicId, awardedPublicId))
+      .limit(1);
+    if (!existingAwarded[0]) {
+      const awardedWork = await db
+        .insert(work_requests)
+        .values({
+          publicId: awardedPublicId,
+          requesterId,
+          title: "Edit a 60-second social media ad spot",
+          brief:
+            "Raw footage and a script. Need a polished 60-second cut with motion graphics, color correction, and captions. Deliver as 1080p MP4 + vertical 9:16.",
+          capabilityUris: ["hct:video:edit:short-form", "hct:video:edit:color-grade"].filter((u) => allUris.has(u)),
+          budgetCents: 35000,
+          currency: "usd",
+          status: "awarded",
+          pricingType: "fixed",
+          awardedAgentId: awardedAgentId,
+          feePctSnapshot: "5.0000",
+          feeFloorCentsSnapshot: 0,
+          awardedAt: new Date(),
+        })
+        .returning({ id: work_requests.id, publicId: work_requests.publicId });
+
+      if (awardedWork[0]) {
+        // Insert the winning bid.
+        await db.insert(bids).values({
+          workRequestId: awardedWork[0].id,
+          agentId: awardedAgentId,
+          priceCents: 32000,
+          etaHours: 48,
+          message: "Can deliver in 2 days. Includes 2 revision rounds.",
+          status: "awarded",
+        });
+      }
+    }
+  }
+
+  // 6) Seed one confirmed/paid work item (for demo end-state).
+  const confirmedKey = "demo-confirmed-seo";
+  const confirmedPublicId = deterministicPublicId(confirmedKey);
+  const confirmedAgentSlug = "rank-rise";
+  const confirmedAgentId = agentIdBySlug.get(confirmedAgentSlug);
+  if (confirmedAgentId) {
+    const existingConfirmed = await db
+      .select({ id: work_requests.id })
+      .from(work_requests)
+      .where(eq(work_requests.publicId, confirmedPublicId))
+      .limit(1);
+    if (!existingConfirmed[0]) {
+      const confirmedWork = await db
+        .insert(work_requests)
+        .values({
+          publicId: confirmedPublicId,
+          requesterId,
+          title: "SEO audit and optimization plan",
+          brief:
+            "Comprehensive technical SEO audit of a 50-page SaaS site. Deliver a prioritized action plan with estimated impact.",
+          capabilityUris: ["hct:seo:audit:technical"].filter((u) => allUris.has(u)),
+          budgetCents: 28000,
+          currency: "usd",
+          status: "confirmed",
+          pricingType: "fixed",
+          awardedAgentId: confirmedAgentId,
+          feePctSnapshot: "5.0000",
+          feeFloorCentsSnapshot: 0,
+          awardedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        })
+        .returning({ id: work_requests.id });
+
+      if (confirmedWork[0]) {
+        await db.insert(bids).values({
+          workRequestId: confirmedWork[0].id,
+          agentId: confirmedAgentId,
+          priceCents: 26000,
+          etaHours: 72,
+          message: "Full audit with prioritized fixes. 3 years of SEO experience.",
+          status: "awarded",
+        });
+        // Seed a completed payout row.
+        await db.insert(payouts).values({
+          workRequestId: confirmedWork[0].id,
+          workerAgentId: confirmedAgentId,
+          grossCents: 26000,
+          feeCents: 1300,
+          netCents: 24700,
+          status: "paid",
+        });
+      }
+    }
+  }
+
+  // 7) Verify counts.
   const [agentN, capN, workN, founderN] = await Promise.all([
     db.select({ n: sql<number>`count(*)::int` }).from(agents),
     db.select({ n: sql<number>`count(*)::int` }).from(agentCapabilities),

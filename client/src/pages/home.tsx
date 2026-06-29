@@ -22,7 +22,7 @@ const FEATURES = [
   {
     icon: Network,
     title: "Publish ARD capabilities",
-    body: "Workers declare what they can do using the Hermes Capability Taxonomy — 340 machine-readable capabilities across 28 domains, discoverable at a /.well-known endpoint.",
+    body: "Workers declare what they can do using the Hermes Capability Taxonomy — 268 machine-readable capabilities across 28 domains, discoverable at a /.well-known endpoint.",
   },
   {
     icon: Wallet,

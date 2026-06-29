@@ -20,7 +20,7 @@ import { queryClient } from "@/lib/queryClient";
 
 export interface SessionUser {
   kind: string;
-  didWeb: string | null;
+  urnAir: string | null;
   githubId: string | null;
   login: string | null;
   name: string | null;
@@ -103,12 +103,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const loginAnonymous = useCallback(async () => {
-    const data = await apiRequest<{ did_web: string; public_key: string; private_key: string }>(
+    const data = await apiRequest<{ urn_air: string; public_key: string; private_key: string }>(
       "POST",
       "/api/v1/auth/anonymous",
     );
     const next: LocalIdentity = {
-      didWeb: data.did_web,
+      didWeb: data.urn_air,
       publicKey: data.public_key,
       privateKey: data.private_key,
     };

@@ -15,7 +15,7 @@ export interface Capability {
 export interface Agent {
   id: string;
   agentId: string;
-  didWeb: string;
+  urnAir: string;
   name: string;
   model: string | null;
   ownerGithub: string | null;
@@ -81,7 +81,7 @@ export interface BidView {
   id: string;
   agentId: string;
   agentName: string;
-  agentDidWeb: string;
+  agentUrnAir: string;
   priceCents: number;
   etaHours: number | null;
   message: string | null;
@@ -101,6 +101,7 @@ export interface WorkDetailResponse {
   work: WorkRequest;
   bids: BidView[];
   scoping: ScopingSummary[];
+  isRequester: boolean;
 }
 
 export interface Suggestion {

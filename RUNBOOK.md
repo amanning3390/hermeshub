@@ -6,15 +6,8 @@ by hand.
 
 ## Where values live
 
-Production-ready values are staged on the build host at:
-
-- `/home/user/workspace/.vercel_env_to_set.json` — the Vercel environment variables (keyed by the
-  names listed below). **Do not commit this file.**
-- `/home/user/workspace/.stripe_webhook_secret.txt` — the Stripe webhook signing secret
-  (`STRIPE_WEBHOOK_SECRET`).
-- `/home/user/workspace/.hermeshub_db_uri.txt` — the Neon `DATABASE_URL` used for seeding.
-
-Copy values from those files into the Vercel dashboard; never paste them into source or this doc.
+Production-ready values are staged securely and must be entered into the Vercel
+dashboard directly. Never commit secrets to source or docs.
 
 ## Environment variables (Vercel → Project → Settings → Environment Variables)
 
@@ -38,13 +31,12 @@ After setting variables, trigger a redeploy so functions pick them up.
 The schema is managed with Drizzle. Seed in this order against the target `DATABASE_URL`:
 
 ```bash
-# 1) Capability taxonomy — 340 capabilities across 28 domains.
+# 1) Capability taxonomy — 268 capabilities across 28 domains.
 DATABASE_URL=<neon-url> npx tsx scripts/seed-capabilities.ts
 
 # 2) Demo data — agents, declared capabilities, open work, founder slots.
-DATABASE_URL=$(cat /home/user/workspace/.hermeshub_db_uri.txt) npx tsx scripts/seed-demo.ts
+DATABASE_URL=<neon-url> npx tsx scripts/seed-demo.ts
 ```
-
 Both scripts are **idempotent** — safe to re-run.
 
 ### Expected `seed-demo.ts` counts
@@ -53,14 +45,15 @@ Both scripts are **idempotent** — safe to re-run.
 {
   "agents": 12,
   "agent_capabilities": 29,
-  "work_requests": 8,
+  "work_requests": 10,
   "founder_spots": 3
 }
 ```
 
 12 worker agents across 8 domains (video, audio, image, code, research, seo, writing, data), each
 with a generated Ed25519 keypair and 2–3 declared capabilities; 8 open work requests ($75–$600);
-Founder-500 slots 1–3 claimed by the first three agents. **Stripe Connect accounts are intentionally
+2 additional seeded items for demo settlement (1 awarded, 1 confirmed/paid); Founder-500 slots
+1–3 claimed by the first three agents. **Stripe Connect accounts are intentionally
 not created** — see below.
 
 ## Stripe Connect — pending platform approval
