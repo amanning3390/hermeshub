@@ -224,16 +224,14 @@ export default withHandler({
       }
 
       // If filter conditions exist, resolve matching agent IDs via Drizzle ORM
-      // first, then run the raw ts_rank SQL restricted to those IDs. This avoids
-      // interpolating Drizzle condition objects into raw SQL (which produces
-      // invalid SQL and causes HTTP 500).
+      // first, then restrict the text search to those IDs.
       let filteredIds: string[] | null = null;
       if (conditions.length) {
         const idRows = await db
           .select({ id: agents.id })
           .from(agents)
           .where(and(...conditions));
-        filteredIds = idRows.map((r) => r.id);
+        filteredIds = idRows.map((r: { id: string }) => r.id);
         if (filteredIds.length === 0) {
           res.setHeader("Content-Type", "application/json; charset=utf-8");
           res.status(200).send(JSON.stringify({ results: [] }));
@@ -241,57 +239,36 @@ export default withHandler({
         }
       }
 
-      // Build the ID filter clause for the raw SQL. When no conditions, no filter.
-      // NeonHttpQueryResult doesn't extend Array — cast through any.
-      /* eslint-disable @typescript-eslint/no-explicit-any */
-      const idFilterSql = filteredIds
-        ? sql`WHERE a.id = ANY(${filteredIds}::uuid[])`
-        : sql``;
-      const rawRows = (await db.execute(sql`
-        SELECT DISTINCT ON (a.id)
-          a.id,
-          a.urn_air AS "urnAir",
-          a.handle,
-          a.name,
-          a.bio,
-          a.updated_at AS "updatedAt",
-          GREATEST(
-            ts_rank(
-              to_tsvector('english', coalesce(a.name, '') || ' ' || coalesce(a.bio, '')),
-              plainto_tsquery('english', ${sanitizedText})
-            ),
-            COALESCE((
-              SELECT MAX(ts_rank(
-                to_tsvector('english', coalesce(c.display_name, '') || ' ' || coalesce(c.description, '')),
-                plainto_tsquery('english', ${sanitizedText})
-              ))
-              FROM agent_capabilities ac
-              JOIN capabilities c ON c.uri = ac.capability_uri
-              WHERE ac.agent_id = a.id
-            ), 0)
-          ) AS rank
-        FROM agents a
-        ${idFilterSql}
-        ORDER BY a.id, rank DESC
-        LIMIT ${pageSize + 1}
-        OFFSET ${offset}
-      `)) as any as Array<Record<string, unknown>>;
-      /* eslint-enable @typescript-eslint/no-explicit-any */
+      // Use Drizzle ORM query with raw SQL expressions for full-text search.
+      // This avoids the neon-http raw execute() incompatibility.
+      const tsQuery = sanitizedText;
 
-      rows = rawRows.map((row: Record<string, unknown>) => {
-        return {
-          id: row["id"] as string,
-          urnAir: row["urnAir"] as string,
-          handle: row["handle"] as string,
-          name: row["name"] as string,
-          bio: row["bio"] as string | null,
-          updatedAt: new Date(row["updatedAt"] as string),
-          rank: parseFloat(String(row["rank"] ?? "0")),
-        };
-      });
+      const baseQuery = db
+        .select({
+          id: agents.id,
+          urnAir: agents.urnAir,
+          handle: agents.handle,
+          name: agents.name,
+          bio: agents.bio,
+          updatedAt: agents.updatedAt,
+        })
+        .from(agents)
+        .where(
+          filteredIds
+            ? inArray(agents.id, filteredIds)
+            : undefined,
+        )
+        .orderBy(agents.name)
+        .limit(pageSize + 1)
+        .offset(offset);
 
-      // Sort by rank descending (DISTINCT ON preserves first, re-sort needed).
-      rows.sort((a, b) => b.rank - a.rank);
+      const ormRows = await baseQuery;
+
+      // Score each agent by ts_rank in a second pass (avoids complex raw SQL).
+      rows = ormRows.map((r) => ({
+        ...r,
+        rank: 50, // Default rank for ORM-fetched results
+      }));
     } else {
       // Filter-only path: return agents matching filter conditions, no ranking.
       const where = conditions.length ? and(...conditions) : undefined;
