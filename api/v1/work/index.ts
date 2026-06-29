@@ -10,7 +10,7 @@ import { randomBytes } from "node:crypto";
 import { and, eq, or, ilike, sql, lt } from "drizzle-orm";
 import { getDb } from "../../_lib/db.js";
 import { work_requests, requesters } from "../../../shared/schema.js";
-import { withHandler, sendOk, param, intParam, parseBody, ApiError } from "../../_lib/http.js";
+import { withHandler, sendOk, param, intParam, parseBody } from "../../_lib/http.js";
 import { createWorkSchema } from "../../_lib/validate.js";
 import { upsertRequesterByDid } from "../../_lib/entities.js";
 import { suggestCapabilities } from "../../_lib/suggest.js";
