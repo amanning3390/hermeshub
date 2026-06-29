@@ -136,6 +136,7 @@ export default withHandler({
       work: updated[0],
       fee: {
         tier: fee.tier,
+        band: fee.band,
         fee_bps: fee.feeBps,
         fee_floor_cents: fee.feeFloorCents,
         fee_cents: fee.feeCents,

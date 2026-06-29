@@ -20,6 +20,10 @@ const urnAir = z.string().min(7).max(512).regex(/^urn:air:/, "must be a urn:air 
 const didWeb = z.string().min(7).max(512).regex(/^did:web:|^urn:air:/, "must be a did:web or urn:air URN");
 const usd = z.number().nonnegative().max(1_000_000); // dollars, ≤ $1M
 
+/** Minimum job value for fiat rails ($5). Lifted when MPP/x402 is live. */
+const MIN_JOB_USD = 5;
+const minJobUsd = z.number().min(MIN_JOB_USD, `minimum job value is $${MIN_JOB_USD}`);
+
 /**
  * Agent registration (Phase 2 body shape). A 32-byte Ed25519 public key is 64
  * hex chars; `did_web` is optional and derived server-side when omitted.
@@ -53,7 +57,7 @@ export const createWorkSchema = z.object({
   title: z.string().min(3).max(255),
   brief: z.string().min(10).max(20000),
   capabilityUris: z.array(capabilityUri).max(20).default([]),
-  budgetUsd: usd,
+  budgetUsd: minJobUsd,
   currency: z.string().length(3).toLowerCase().default("usd"),
   pricingType: z.enum(PRICING_TYPES).default("fixed"),
   ipLicense: z.string().max(40).default("work-for-hire"),
