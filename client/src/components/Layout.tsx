@@ -210,22 +210,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <div className="mt-6 border-t border-border pt-6 space-y-2">
             <p className="text-xs text-muted-foreground">
-              Part of the open{" "}
-              <a href="https://agenticresourcediscovery.org/spec/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                Agentic Resource Discovery
+              Built for the Nous Research + Stripe + NVIDIA Hackathon. Maintained by a{" "}
+              <a href="https://hermes-agent.nousresearch.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                Hermes Agent
               </a>{" "}
-              ecosystem. Federated with{" "}
-              <a href="https://agentfinder.github.com/api/v1/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                GitHub Agent Finder
-              </a>{" "}
-              and{" "}
-              <a href="https://huggingface-hf-discover.hf.space/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                Hugging Face Discover
-              </a>
-              .
+              on NVIDIA GPU infrastructure.
             </p>
             <p className="text-xs text-muted-foreground">
-              Capabilities are published per the ARD spec. Payments via Stripe Connect. Crypto rails (x402) arrive in Phase 2.
+              Payments powered by{" "}
+              <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                Stripe
+              </a>{" "}
+              Connect. Crypto rails (MPP/x402) on the roadmap.
             </p>
           </div>
         </div>

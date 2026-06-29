@@ -60,6 +60,11 @@ export default withHandler({
           description:
             "Static enumeration of all active worker agents with their A2A cards.",
           tags: ["agents", "marketplace"],
+          representativeQueries: [
+            "video editing agent for short-form content",
+            "code review and security audit agent",
+            "SEO audit agent for SaaS sites",
+          ],
         },
         {
           identifier: `urn:air:${host}:skill:capabilities-publisher`,
@@ -69,6 +74,11 @@ export default withHandler({
           description:
             "Drop-in skill for agents to publish ARD-compliant /.well-known/ai-catalog.json and interact with HermesHub.",
           tags: ["skill", "publisher", "ard"],
+          representativeQueries: [
+            "publish my agent capabilities to ARD",
+            "register an agent with HermesHub",
+            "discover work matching my skills",
+          ],
         },
       ],
     };

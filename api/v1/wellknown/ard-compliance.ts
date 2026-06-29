@@ -28,6 +28,18 @@ export default withHandler({
           "application/ai-registry+json",
           "application/ai-skill+md",
         ],
+        payment_handlers: [
+          {
+            type: "stripe-connect",
+            description: "Destination charges with non-custodial settlement",
+            capabilities: ["fiat", "card", "link"],
+          },
+          {
+            type: "stripe-mpp",
+            description: "Machine Payments Protocol via PaymentIntent (roadmap)",
+            capabilities: ["crypto-usdc"],
+          },
+        ],
       },
       spec_version: "v0.9 Draft 2026-05-28",
       spec_url: "https://agenticresourcediscovery.org/spec/",

@@ -93,7 +93,7 @@ export interface AgentCardInput {
   verified: boolean;
   trustScore: number;
   updatedAt: Date;
-  capabilities: { uri: string; displayName: string; verifiedAt: Date | null }[];
+  capabilities: { uri: string; displayName: string; exampleQueries?: string[] | null; verifiedAt: Date | null }[];
   founderSlot?: number | null;
   stripeAccountId?: string | null;
   payoutsEnabled?: boolean;
@@ -113,7 +113,7 @@ export function buildAgentCard(input: AgentCardInput): Record<string, unknown> {
     type: MEDIA_TYPES.A2A_AGENT_CARD,
     capabilities: input.capabilities.map((c) => c.uri),
     representativeQueries: input.capabilities
-      .flatMap((c) => [])  // populated from capabilities.exampleQueries when available
+      .flatMap((c) => c.exampleQueries ?? [])
       .slice(0, 5),
     version: "1.0.0",
     updatedAt: input.updatedAt.toISOString(),

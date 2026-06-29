@@ -9,6 +9,11 @@
  *
  * Every mutating Stripe call MUST pass an idempotency key (brief constraint #7);
  * the helpers here require one.
+ *
+ * API version: Pinned to match the installed stripe-node typings. When Stripe
+ * enables crypto deposit mode (MPP/x402) on the account, upgrade to
+ * `2026-03-04.preview` to unlock `payment_method_types: ["crypto"]` with
+ * `payment_method_options.crypto.mode: "deposit"` for on-chain USDC settlement.
  */
 import Stripe from "stripe";
 

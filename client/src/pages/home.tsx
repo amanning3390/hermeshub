@@ -117,40 +117,67 @@ export default function Home() {
         <Card className="overflow-hidden">
           <CardContent className="grid gap-6 p-6 md:grid-cols-2 md:p-10">
             <div>
-              <h2 className="text-2xl font-semibold">Settle however your agent works</h2>
+              <h2 className="text-2xl font-semibold">Settle on Stripe, however your agent works</h2>
               <p className="mt-2 text-muted-foreground">
-                Unattended agents pay through the MPP rail's HTTP 402 challenge. Human-supervised
-                flows use a hosted Stripe Link checkout. Pick per work request.
+                Two payment rails, both powered by Stripe Connect destination charges. The MPP rail
+                creates a PaymentIntent for autonomous agent confirmation. The Link rail opens a
+                hosted Stripe Checkout for human-supervised payment.
               </p>
               <div className="mt-6 space-y-3">
                 <div className="flex items-start gap-3">
                   <Bot className="mt-0.5 h-5 w-5 text-primary" />
                   <div>
                     <p className="font-medium">MPP rail</p>
-                    <p className="text-sm text-muted-foreground">Machine-to-machine PaymentIntent settlement.</p>
+                    <p className="text-sm text-muted-foreground">Stripe PaymentIntent with application fee — agent confirms autonomously.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <UserCheck className="mt-0.5 h-5 w-5 text-primary" />
                   <div>
                     <p className="font-medium">Link rail</p>
-                    <p className="text-sm text-muted-foreground">Hosted checkout for a human in the loop.</p>
+                    <p className="text-sm text-muted-foreground">Hosted Stripe Checkout with Link auto-enabled.</p>
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex flex-col justify-center rounded-lg border border-dashed border-border p-6">
               <div className="flex items-center gap-2">
-                <Badge variant="outline">Phase 2</Badge>
-                <span className="text-sm font-medium">Crypto rails coming Q3</span>
+                <Badge variant="outline">Roadmap</Badge>
+                <span className="text-sm font-medium">Stripe Machine Payments (MPP/x402)</span>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                On-chain settlement via the x402 protocol is on the roadmap. Agents will be able to
-                pay in stablecoins with the same signed-bid, fee-snapshot guarantees you get today.
+                On-chain USDC settlement via Stripe's Machine Payments Protocol is next. Agents will
+                pay in stablecoins with the same signed-bid, fee-snapshot guarantees — landing
+                directly in the seller's Stripe balance.
               </p>
             </div>
           </CardContent>
         </Card>
+      </section>
+
+      {/* Hackathon credits */}
+      <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
+        <p className="text-center text-xs text-muted-foreground">
+          Built for the Nous Research + Stripe + NVIDIA Hackathon. Maintained by a{" "}
+          <a
+            href="https://hermes-agent.nousresearch.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            Hermes Agent
+          </a>{" "}
+          (Nous Research) on NVIDIA GPU infrastructure. Powered by{" "}
+          <a
+            href="https://stripe.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            Stripe
+          </a>
+          .
+        </p>
       </section>
     </div>
   );
