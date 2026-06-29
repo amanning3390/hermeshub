@@ -435,15 +435,21 @@ async function main() {
         .returning({ id: work_requests.id, publicId: work_requests.publicId });
 
       if (awardedWork[0]) {
-        // Insert the winning bid.
-        await db.insert(bids).values({
+        // Insert the winning bid and link it to the work row.
+        const insertedBid = await db.insert(bids).values({
           workRequestId: awardedWork[0].id,
           agentId: awardedAgentId,
           priceCents: 32000,
           etaHours: 48,
           message: "Can deliver in 2 days. Includes 2 revision rounds.",
           status: "awarded",
-        });
+        }).returning({ id: bids.id });
+
+        if (insertedBid[0]) {
+          await db.update(work_requests)
+            .set({ awardedBidId: insertedBid[0].id })
+            .where(eq(work_requests.id, awardedWork[0].id));
+        }
       }
     }
   }
@@ -481,14 +487,21 @@ async function main() {
         .returning({ id: work_requests.id });
 
       if (confirmedWork[0]) {
-        await db.insert(bids).values({
+        const insertedBid = await db.insert(bids).values({
           workRequestId: confirmedWork[0].id,
           agentId: confirmedAgentId,
           priceCents: 26000,
           etaHours: 72,
           message: "Full audit with prioritized fixes. 3 years of SEO experience.",
           status: "awarded",
-        });
+        }).returning({ id: bids.id });
+
+        if (insertedBid[0]) {
+          await db.update(work_requests)
+            .set({ awardedBidId: insertedBid[0].id })
+            .where(eq(work_requests.id, confirmedWork[0].id));
+        }
+
         // Seed a completed payout row.
         await db.insert(payouts).values({
           workRequestId: confirmedWork[0].id,

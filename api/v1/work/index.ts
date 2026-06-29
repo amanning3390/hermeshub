@@ -9,11 +9,12 @@
 import { randomBytes } from "node:crypto";
 import { and, eq, or, ilike, sql, lt } from "drizzle-orm";
 import { getDb } from "../../_lib/db.js";
-import { work_requests } from "../../../shared/schema.js";
+import { work_requests, requesters } from "../../../shared/schema.js";
 import { withHandler, sendOk, param, intParam, parseBody, ApiError } from "../../_lib/http.js";
 import { createWorkSchema } from "../../_lib/validate.js";
 import { upsertRequesterByDid } from "../../_lib/entities.js";
 import { suggestCapabilities } from "../../_lib/suggest.js";
+import { readSessionCookie, getSession } from "../../_lib/auth.js";
 
 function newPublicId(): string {
   // 12 url-safe chars, base32-ish from random bytes.
@@ -31,8 +32,31 @@ export default withHandler({
       return;
     }
 
+    // Derive the requester identity from the session when available so the
+    // award endpoint can later verify ownership. Fall back to the client-
+    // supplied requesterDid for CLI/agent callers without a browser session.
+    let requesterDid = input.requesterDid;
+    const sid = readSessionCookie(req.headers.cookie);
+    const session = sid ? await getSession(sid) : null;
+    if (session) {
+      const sessionData = (session.data ?? {}) as Record<string, unknown>;
+      const sessionUrnAir = sessionData.urnAir as string | undefined;
+      const sessionGithubId = sessionData.githubId as string | undefined;
+      if (sessionUrnAir) {
+        requesterDid = sessionUrnAir;
+      } else if (sessionGithubId) {
+        // GitHub-authenticated user — look up their requester by githubId.
+        const db0 = getDb();
+        const ghRows = await db0
+          .select({ name: requesters.name })
+          .from(requesters)
+          .where(eq(requesters.githubId, sessionGithubId))
+          .limit(1);
+        if (ghRows[0]?.name) requesterDid = ghRows[0].name;
+      }
+    }
 
-    const requester = await upsertRequesterByDid(input.requesterDid);
+    const requester = await upsertRequesterByDid(requesterDid);
     const db = getDb();
 
     const inserted = await db
