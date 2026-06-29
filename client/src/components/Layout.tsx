@@ -200,6 +200,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground sm:gap-6">
               <Link href="/about/fees" className="transition-colors hover:text-foreground">Fees</Link>
+              <Link href="/about/terms" className="transition-colors hover:text-foreground">Terms</Link>
               <a href="/api/v1/.well-known/capabilities" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-foreground">
                 Capability Registry
               </a>
