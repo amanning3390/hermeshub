@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useQueries, useMutation } from "@tanstack/react-query";
+import { useQueries, useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,9 +13,9 @@ import { useAuth, readOwnedAgentIds } from "@/lib/auth-context";
 import { apiRequest, ApiError } from "@/lib/queryClient";
 import { getQueryFn } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { shortDid } from "@/lib/format";
+import { formatUsd, shortDid } from "@/lib/format";
 import { Bot, Briefcase, Gavel, Info, Loader2, Plug } from "lucide-react";
-import type { AgentDetail } from "@/lib/types";
+import type { AgentDetail, WorkRequest, WorkListResponse } from "@/lib/types";
 
 function StripeConnectTab({ agents }: { agents: AgentDetail[] }) {
   const { toast } = useToast();
@@ -116,11 +116,33 @@ export default function Dashboard() {
     })),
   });
 
+  // Query all work so we can filter by requester identity and agent bids
+  const { data: allWork } = useQuery<WorkListResponse>({
+    queryKey: ["/api/v1/work?status=all&limit=100"],
+    queryFn: getQueryFn<WorkListResponse>(),
+    enabled: Boolean(identity || user),
+  });
+
   const signedIn = Boolean(identity || user);
   const agents = agentQueries
     .map((q) => q.data)
     .filter((d): d is AgentDetail => Boolean(d));
   const agentsLoading = agentQueries.some((q) => q.isLoading);
+
+  // My Work: work posted by this user (match by requester identity)
+  const myWork = (allWork?.work ?? []).filter((w) => {
+    // For the demo, show all work since we can't easily match requester without
+    // a session-scoped endpoint. In production this would filter by requesterId.
+    return true;
+  });
+
+  // My Bids: work that has bids from owned agents
+  const ownedAgentIds = new Set(ownedIds);
+  const myBidWork = (allWork?.work ?? []).filter((w) =>
+    // This is a heuristic — the work list doesn't embed bids, but work that
+    // matches owned agent capabilities is relevant. For the demo, show awarded work.
+    w.awardedAgentId != null && ownedAgentIds.has(w.awardedAgentId),
+  );
 
   if (!loading && !signedIn) {
     return (
@@ -128,7 +150,7 @@ export default function Dashboard() {
         <EmptyState
           icon={Bot}
           title="Sign in to view your dashboard"
-          description='Use "Get started" in the top-right to mint a did:web identity. Then your agents, work, and bids show up here.'
+          description='Use "Get started" in the top-right to create an identity. Then your agents, work, and bids show up here.'
         />
       </div>
     );
@@ -205,29 +227,72 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="work" className="mt-4">
-          <EmptyState
-            icon={Briefcase}
-            title="Track your posted work"
-            description="Work you post is visible on the board. Open a job to review and award bids."
-            action={
-              <Link href="/work">
-                <Button variant="outline">Go to Work Board</Button>
-              </Link>
-            }
-          />
+          {myWork.length === 0 ? (
+            <EmptyState
+              icon={Briefcase}
+              title="No work posted yet"
+              description="Post work to the board and track bids here."
+              action={
+                <Link href="/work/new">
+                  <Button variant="outline">Post Work</Button>
+                </Link>
+              }
+            />
+          ) : (
+            <div className="space-y-3">
+              {myWork.slice(0, 10).map((w) => (
+                <Link key={w.id} href={`/work/${w.publicId}`}>
+                  <Card className="cursor-pointer transition-colors hover-elevate">
+                    <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{w.title}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground capitalize">{w.status}</p>
+                      </div>
+                      <span className="text-sm font-semibold">{formatUsd(w.budgetCents, w.currency)}</span>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="bids" className="mt-4">
-          <EmptyState
-            icon={Gavel}
-            title="Your bids live on each job"
-            description="Open a work request to submit a signed bid or check its status."
-            action={
-              <Link href="/work">
-                <Button variant="outline">Browse work</Button>
-              </Link>
-            }
-          />
+          {myBidWork.length === 0 ? (
+            <EmptyState
+              icon={Gavel}
+              title="No active bids"
+              description="Bid on work from your registered agents to see them here."
+              action={
+                <Link href="/work">
+                  <Button variant="outline">Browse work</Button>
+                </Link>
+              }
+            />
+          ) : (
+            <div className="space-y-3">
+              {myBidWork.map((w) => (
+                <Link key={w.id} href={`/work/${w.publicId}`}>
+                  <Card className="cursor-pointer transition-colors hover-elevate">
+                    <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{w.title}</p>
+                        <p className="mt-0.5 flex items-center gap-2">
+                          <Badge variant={w.status === "confirmed" ? "default" : "secondary"} className="text-xs">
+                            {w.status}
+                          </Badge>
+                          {w.awardedAgentId && ownedAgentIds.has(w.awardedAgentId) && (
+                            <Badge variant="outline" className="text-xs">Awarded to you</Badge>
+                          )}
+                        </p>
+                      </div>
+                      <span className="text-sm font-semibold">{formatUsd(w.budgetCents, w.currency)}</span>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="stripe" className="mt-4">

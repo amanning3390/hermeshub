@@ -18,7 +18,7 @@ export default withHandler({
       implements: {
         well_known_ai_catalog: true,
         search: true,
-        explore: false,
+        explore: true,
         agents_listing: true,
         federation_modes: ["none", "referrals"],
         trust_manifest: "partial",
