@@ -8,7 +8,7 @@
  */
 import { withHandler } from "../../_lib/http.js";
 
-const LAST_AUDITED = new Date().toISOString();
+const LAST_AUDITED = "2026-06-29T00:00:00.000Z";
 
 export default withHandler({
   GET: async ({ res }) => {
@@ -18,7 +18,7 @@ export default withHandler({
       implements: {
         well_known_ai_catalog: true,
         search: true,
-        explore: false,
+        explore: true,
         agents_listing: true,
         federation_modes: ["none", "referrals"],
         trust_manifest: "partial",

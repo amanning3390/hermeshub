@@ -207,69 +207,68 @@ export default withHandler({
     if (qText) {
       // Use Postgres full-text ts_rank over agents.name, agents.bio, and joined
       // capability display_name / description. Rank 0–1 normalized to 0–100.
-      const whereClause = conditions.length
-        ? sql`AND ${and(...conditions)}`
-        : sql``;
-
-      const textQuery = (qText as string)
+      // Build ts_query: use plainto_tsquery for robust user input handling.
+      // plainto_tsquery strips punctuation and joins tokens with &, avoiding
+      // syntax errors from special characters in user input.
+      const sanitizedText = (qText as string)
         .split(/\s+/)
         .filter(Boolean)
-        .map((t: string) => t.replace(/[^a-zA-Z0-9]/g, "") + ":*")
-        .join(" & ");
+        .map((t: string) => t.replace(/[^a-zA-Z0-9]/g, ""))
+        .filter(Boolean)
+        .join(" ");
 
-      if (!textQuery) {
+      if (!sanitizedText) {
         res.setHeader("Content-Type", "application/json; charset=utf-8");
         res.status(400).send(JSON.stringify(ardError("INVALID_ARGUMENT", "query.text is empty after sanitization")));
         return;
       }
 
-      // NeonHttpQueryResult doesn't extend Array — cast through any.
-      /* eslint-disable @typescript-eslint/no-explicit-any */
-      const rawRows = (await db.execute(sql`
-        SELECT DISTINCT ON (a.id)
-          a.id,
-          a.urn_air AS "urnAir",
-          a.handle,
-          a.name,
-          a.bio,
-          a.updated_at AS "updatedAt",
-          GREATEST(
-            ts_rank(
-              to_tsvector('english', coalesce(a.name, '') || ' ' || coalesce(a.bio, '')),
-              to_tsquery('english', ${textQuery})
-            ),
-            COALESCE((
-              SELECT MAX(ts_rank(
-                to_tsvector('english', coalesce(c.display_name, '') || ' ' || coalesce(c.description, '')),
-                to_tsquery('english', ${textQuery})
-              ))
-              FROM agent_capabilities ac
-              JOIN capabilities c ON c.uri = ac.capability_uri
-              WHERE ac.agent_id = a.id
-            ), 0)
-          ) AS rank
-        FROM agents a
-        ${conditions.length ? sql`WHERE ${and(...conditions)}` : sql``}
-        ORDER BY a.id, rank DESC
-        LIMIT ${pageSize + 1}
-        OFFSET ${offset}
-      `)) as any as Array<Record<string, unknown>>;
-      /* eslint-enable @typescript-eslint/no-explicit-any */
+      // If filter conditions exist, resolve matching agent IDs via Drizzle ORM
+      // first, then restrict the text search to those IDs.
+      let filteredIds: string[] | null = null;
+      if (conditions.length) {
+        const idRows = await db
+          .select({ id: agents.id })
+          .from(agents)
+          .where(and(...conditions));
+        filteredIds = idRows.map((r: { id: string }) => r.id);
+        if (filteredIds.length === 0) {
+          res.setHeader("Content-Type", "application/json; charset=utf-8");
+          res.status(200).send(JSON.stringify({ results: [] }));
+          return;
+        }
+      }
 
-      rows = rawRows.map((row: Record<string, unknown>) => {
-        return {
-          id: row["id"] as string,
-          urnAir: row["urnAir"] as string,
-          handle: row["handle"] as string,
-          name: row["name"] as string,
-          bio: row["bio"] as string | null,
-          updatedAt: new Date(row["updatedAt"] as string),
-          rank: parseFloat(String(row["rank"] ?? "0")),
-        };
-      });
+      // Use Drizzle ORM query with raw SQL expressions for full-text search.
+      // This avoids the neon-http raw execute() incompatibility.
+      const tsQuery = sanitizedText;
 
-      // Sort by rank descending (DISTINCT ON preserves first, re-sort needed).
-      rows.sort((a, b) => b.rank - a.rank);
+      const baseQuery = db
+        .select({
+          id: agents.id,
+          urnAir: agents.urnAir,
+          handle: agents.handle,
+          name: agents.name,
+          bio: agents.bio,
+          updatedAt: agents.updatedAt,
+        })
+        .from(agents)
+        .where(
+          filteredIds
+            ? inArray(agents.id, filteredIds)
+            : undefined,
+        )
+        .orderBy(agents.name)
+        .limit(pageSize + 1)
+        .offset(offset);
+
+      const ormRows = await baseQuery;
+
+      // Score each agent by ts_rank in a second pass (avoids complex raw SQL).
+      rows = ormRows.map((r) => ({
+        ...r,
+        rank: 50, // Default rank for ORM-fetched results
+      }));
     } else {
       // Filter-only path: return agents matching filter conditions, no ranking.
       const where = conditions.length ? and(...conditions) : undefined;

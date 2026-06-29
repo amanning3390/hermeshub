@@ -44,7 +44,7 @@ export default withHandler({
           type: MEDIA_TYPES.AI_REGISTRY,
           url: `${base}/api/v1/`,
           description:
-            "Dynamic ARD-compliant search registry covering 340+ capabilities across 28 domains.",
+            "Dynamic ARD-compliant search registry covering 268 capabilities across 28 domains.",
           tags: ["registry", "search", "marketplace"],
           representativeQueries: [
             "find me a PDF extraction agent",

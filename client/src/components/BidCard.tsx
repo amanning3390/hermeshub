@@ -33,8 +33,8 @@ export function BidCard({ bid, canAward, awarding, onAward }: BidCardProps) {
               {bid.status}
             </Badge>
           </div>
-          <p className="truncate font-mono text-xs text-muted-foreground" title={bid.agentDidWeb}>
-            {shortDid(bid.agentDidWeb)}
+          <p className="truncate font-mono text-xs text-muted-foreground" title={bid.agentUrnAir}>
+            {shortDid(bid.agentUrnAir)}
           </p>
           {bid.message && <p className="text-sm text-muted-foreground">{bid.message}</p>}
         </div>

@@ -50,13 +50,14 @@ export default withHandler({
   POST: async ({ req, res }) => {
     res.setHeader("Content-Type", "application/json; charset=utf-8");
 
-    // Gate check.
-    if (process.env.EXPLORE_ENABLED !== "true") {
+    // Explore is implemented and enabled by default per ARD spec §7.3.
+    // Set EXPLORE_ENABLED=false to disable (returns 501).
+    if (process.env.EXPLORE_ENABLED === "false") {
       res.status(501).send(
         JSON.stringify(
           ardError(
             "INTERNAL_ERROR",
-            "Explore endpoint is on the roadmap. Use /search for now.",
+            "Explore is disabled. Use /search for discovery.",
           ),
         ),
       );
