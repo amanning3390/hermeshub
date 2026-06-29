@@ -22,6 +22,7 @@ import {
   Copy,
   Gavel,
   Loader2,
+  Share2,
   UserCheck,
 } from "lucide-react";
 import type { WorkDetailResponse } from "@/lib/types";
@@ -211,9 +212,28 @@ export default function WorkDetail() {
 
       <div className="flex items-start justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight">{work.title}</h1>
-        <Badge variant="secondary" className="shrink-0 capitalize">
-          {work.status}
-        </Badge>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              const text = encodeURIComponent(`${work.title} — ${formatUsd(work.budgetCents, work.currency)} on HermesHub`);
+              const url = encodeURIComponent(`https://hermeshub.xyz/share/work/${work.publicId}`);
+              window.open(
+                `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+                "_blank",
+                "noopener,noreferrer,width=550,height=420",
+              );
+            }}
+            data-testid="button-share-x"
+          >
+            <Share2 className="mr-1 h-4 w-4" />
+            Share
+          </Button>
+          <Badge variant="secondary" className="capitalize">
+            {work.status}
+          </Badge>
+        </div>
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">

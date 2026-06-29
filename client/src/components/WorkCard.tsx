@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CapabilityChip } from "@/components/CapabilityChip";
 import { formatUsd, formatDate, relativeTime } from "@/lib/format";
-import { CalendarDays, Gavel } from "lucide-react";
+import { CalendarDays, Gavel, Share2 } from "lucide-react";
 import type { WorkRequest } from "@/lib/types";
 
 const STATUS_TONE: Record<string, string> = {
@@ -63,7 +63,25 @@ export function WorkCard({ work, bidCount }: WorkCardProps) {
                 {bidCount} {bidCount === 1 ? "bid" : "bids"}
               </span>
             )}
-            <span className="ml-auto text-xs">{relativeTime(work.createdAt)}</span>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const text = encodeURIComponent(`${work.title} — ${formatUsd(work.budgetCents, work.currency)} on HermesHub`);
+                const url = encodeURIComponent(`https://hermeshub.xyz/share/work/${work.publicId}`);
+                window.open(
+                  `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+                  "_blank",
+                  "noopener,noreferrer,width=550,height=420",
+                );
+              }}
+              className="ml-auto inline-flex items-center gap-1 text-xs transition-colors hover:text-primary"
+              aria-label="Share on X"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </button>
+            <span className="text-xs">{relativeTime(work.createdAt)}</span>
           </div>
         </CardContent>
       </Card>
