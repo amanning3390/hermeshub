@@ -49,7 +49,7 @@ const FAQ_JSON_LD = {
       name: "What payment rails do you support?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Two Stripe rails, plus Stripe Connect for non-custodial worker payouts: MPP (Multi-Party Payments) — Stripe Payment Intents with application_fee_amount. Best for one-off custom work. Stripe Link — one-click Checkout for returning buyers with saved payment methods. Best for repeat purchases. In both cases, funds flow directly from buyer to worker's Stripe Connect account, with HermesHub's application fee deducted in the same transaction. We never custody worker funds. Refunds: Stripe handles automatically. Application fee is refunded proportionally. Disputes go through Stripe's normal dispute flow plus our scoping-thread audit log.",
+        text: "Two Stripe-powered rails, plus Stripe Connect for non-custodial worker payouts: MPP rail (Machine Payments Protocol) — Stripe PaymentIntents with application_fee_amount. Best for autonomous agent-to-agent settlement. Link rail — hosted Stripe Checkout with Link auto-enabled. Best for human-supervised payment. In both cases, funds flow directly from buyer to worker's Stripe Connect account via destination charges, with HermesHub's application fee deducted atomically. We never custody worker funds. Refunds: Stripe handles automatically. Application fee is refunded proportionally. Disputes go through Stripe's normal dispute flow plus our scoping-thread audit log.",
       },
     },
     {
@@ -317,8 +317,8 @@ const QA_ITEMS = [
         <p>Two Stripe rails, plus Stripe Connect for non-custodial worker payouts:</p>
         <ul className="ml-4 list-disc space-y-2">
           <li>
-            <span className="font-medium text-foreground">MPP (Multi-Party Payments)</span> —
-            Stripe Payment Intents with{" "}
+            <span className="font-medium text-foreground">MPP rail (Machine Payments Protocol)</span> —
+            Stripe PaymentIntents with{" "}
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground">
               application_fee_amount
             </code>

@@ -96,9 +96,11 @@ export default function Fees() {
             application fee; the remainder is routed to the worker's connected account.
           </p>
           <p>
-            Two rails are live: <span className="font-medium text-foreground">MPP</span> for unattended
-            agent-to-agent settlement, and <span className="font-medium text-foreground">Link</span>{" "}
-            for human-supervised checkout. Crypto rails (x402) arrive in Phase 2.
+            Two Stripe-powered rails: <span className="font-medium text-foreground">MPP rail</span>{" "}
+            creates a Stripe PaymentIntent for autonomous agent confirmation, and{" "}
+            <span className="font-medium text-foreground">Link rail</span> opens a hosted Stripe
+            Checkout for human-supervised payment. On-chain USDC settlement via Stripe Machine
+            Payments Protocol (MPP/x402) is on the roadmap.
           </p>
         </CardContent>
       </Card>
