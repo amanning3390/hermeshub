@@ -77,7 +77,7 @@ export default withHandler({
 
     res.setHeader("Set-Cookie", buildSessionCookie(id, expires));
     res.statusCode = 302;
-    res.setHeader("Location", absoluteUrl("/#/?logged_in=1"));
+    res.setHeader("Location", absoluteUrl("/#/dashboard"));
     res.end();
   },
 });

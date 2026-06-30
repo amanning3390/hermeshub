@@ -18,6 +18,8 @@ import { withHandler, sendOk, parseBody, ApiError } from "../../_lib/http.js";
 import { registerAgentSchema } from "../../_lib/validate.js";
 import { defaultBaseHost } from "../../_lib/url.js";
 import { handleFromName, buildUrnAir } from "../../_lib/entities.js";
+import { generateEmbedding } from "../../_lib/embeddings.js";
+import { log } from "../../_lib/log.js";
 
 function hexToBytes(hex: string): Uint8Array {
   const clean = hex.startsWith("0x") ? hex.slice(2) : hex;
@@ -83,6 +85,19 @@ export default withHandler({
         .returning();
 
       const agent = inserted[0];
+
+      // Generate embedding for semantic search (async, non-blocking)
+      const embedText = `${agent.name}. ${agent.bio ?? ""}`;
+      void generateEmbedding(embedText).then((embedding) => {
+        if (embedding) {
+          getDb().update(agents)
+            .set({ embedding: JSON.stringify(embedding) as unknown as Record<string, number> })
+            .where(eq(agents.id, agent.id))
+            .then(() => log({ level: "info", msg: "embedding generated", agent: agent.handle }))
+            .catch(() => {});
+        }
+      }).catch(() => {});
+
       sendOk(res, {
         agent: {
           id: agent.id,

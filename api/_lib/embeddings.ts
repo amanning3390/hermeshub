@@ -1,58 +1,55 @@
 /**
- * NVIDIA NIM embeddings API integration for semantic agent search.
+ * Embeddings via NVIDIA Nemotron (through OpenRouter free tier).
  *
- * Generates embeddings using NVIDIA's hosted NIM embeddings endpoint.
- * Falls back to simple keyword matching when NVIDIA_API_KEY is not set.
+ * Uses nvidia/llama-nemotron-embed-vl-1b-v2 for semantic search.
+ * Falls back to keyword matching when no API key is available.
  */
 import { log } from "./log.js";
 
-const NVIDIA_EMBEDDINGS_URL = "https://integrate.api.nvidia.com/v1/embeddings";
-const NVIDIA_EMBED_MODEL = "nvidia/llama-3.2-nv-embedqa-1b-v2";
+const EMBED_MODEL = "nvidia/llama-nemotron-embed-vl-1b-v2:free";
 
 /**
- * Generate an embedding vector for the given text using NVIDIA NIM.
+ * Generate an embedding vector for the given text.
  *
- * @param text The text to embed.
- * @returns A number[] embedding vector, or null if the API is unavailable.
+ * Uses NVIDIA Nemotron embeddings via OpenRouter.
+ * Returns null if no API key is configured (search falls back to keyword matching).
  */
 export async function generateEmbedding(text: string): Promise<number[] | null> {
-  const apiKey = process.env.NVIDIA_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return null;
   }
 
   try {
-    const response = await fetch(NVIDIA_EMBEDDINGS_URL, {
+    const response = await fetch("https://openrouter.ai/api/v1/embeddings", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
+        model: EMBED_MODEL,
         input: text,
-        model: NVIDIA_EMBED_MODEL,
-        input_type: "query",
-        encoding_format: "float",
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text().catch(() => "");
-      log({ level: "warn", msg: `NVIDIA embeddings API error: ${response.status}`, detail: errText.slice(0, 200) });
+      log({ level: "warn", msg: `Embeddings API error: ${response.status}`, detail: errText.slice(0, 200) });
       return null;
     }
 
     const data = await response.json() as { data?: Array<{ embedding?: number[] }> };
     const embedding = data.data?.[0]?.embedding;
     if (!embedding || !Array.isArray(embedding)) {
-      log({ level: "warn", msg: "NVIDIA embeddings API returned no embedding data" });
+      log({ level: "warn", msg: "Embeddings API returned no embedding data" });
       return null;
     }
 
     return embedding;
   } catch (err) {
     const msg = err instanceof Error ? err.message : "unknown error";
-    log({ level: "warn", msg: `NVIDIA embeddings request failed: ${msg}` });
+    log({ level: "warn", msg: `Embeddings request failed: ${msg}` });
     return null;
   }
 }
