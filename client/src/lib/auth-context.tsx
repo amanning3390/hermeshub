@@ -120,9 +120,15 @@
      return next;
    }, [refresh]);
 
-   const loginGithub = useCallback(() => {
-     window.location.href = "/api/v1/auth/github";
-   }, []);
+   const loginGithub = useCallback(async () => {
+     try {
+       const data = await apiRequest<{ authorize_url: string }>("POST", "/api/v1/auth/github");
+       window.location.href = data.authorize_url;
+     } catch {
+       // Fallback: if GitHub OAuth isn't configured, use anonymous
+       await loginAnonymous();
+     }
+   }, [loginAnonymous]);
 
    const logout = useCallback(async () => {
      try {
