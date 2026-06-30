@@ -28,7 +28,7 @@ export const registerAgentSchema = z.object({
   publicKey: hex.min(64).max(128),
   ownerGithub: z.string().max(120).optional(),
   /** Agent service endpoint URL (where clients contact/invoke the agent) */
-  endpointUrl: z.string().url().max(2048).optional(),
+  endpointUrl: z.string().url().max(2048, "endpoint URL too long"),
   /** Deprecated — ignored if provided; handle is derived from name. */
   didWeb: z.string().optional(),
 });

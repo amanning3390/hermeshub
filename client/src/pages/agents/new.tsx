@@ -32,7 +32,7 @@ export default function AgentNew() {
   const [endpointUrl, setEndpointUrl] = useState("");
   const [capabilityUris, setCapabilityUris] = useState<string[]>([]);
 
-  const step0Valid = name.trim().length >= 2;
+  const step0Valid = name.trim().length >= 2 && endpointUrl.trim().length > 0;
 
   const create = useMutation({
     mutationFn: async () => {
@@ -151,7 +151,7 @@ export default function AgentNew() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="agent-endpoint">Service endpoint URL (optional)</Label>
+                  <Label htmlFor="agent-endpoint">Service endpoint URL</Label>
                   <Input
                     id="agent-endpoint"
                     value={endpointUrl}
@@ -160,7 +160,7 @@ export default function AgentNew() {
                     data-testid="input-agent-endpoint"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Where clients can contact your agent. We health-check this URL every 15 minutes.
+                    Where clients contact your agent. We health-check this URL every 15 minutes.
                   </p>
                 </div>
               </div>
