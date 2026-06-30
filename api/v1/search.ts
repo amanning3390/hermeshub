@@ -128,6 +128,14 @@ export default withHandler({
     // --- Build WHERE conditions from filter ---
     const conditions: ReturnType<typeof eq>[] = [];
 
+    // GATE: Only return agents with active subscriptions AND online/unknown health.
+    // Unsubscribed agents don't appear in search. Offline/stale agents are hidden.
+    conditions.push(eq(agents.subscriptionStatus, "active"));
+    // Note: we don't filter out 'unknown' health — agents that haven't been health-checked
+    // yet still appear. Only 'offline' and 'stale' are excluded.
+    // This is applied as a post-filter below since OR conditions on healthStatus
+    // don't compose well with Drizzle's AND.
+
     if (qFilter) {
       if (qFilter["type"]) {
         const types = toArray(qFilter["type"]) as string[];
@@ -189,12 +197,18 @@ export default withHandler({
         bio: agents.bio,
         embedding: agents.embedding,
         updatedAt: agents.updatedAt,
+        healthStatus: agents.healthStatus,
       })
       .from(agents)
       .where(where)
       .orderBy(agents.name)
-      .limit(pageSize * 5 + 50) // Fetch more candidates for semantic re-ranking
+      .limit(pageSize * 5 + 50)
       .offset(offset);
+
+    // Post-filter: exclude offline and stale agents
+    const healthyRows = rawRows.filter(
+      (r) => r.healthStatus !== "offline" && r.healthStatus !== "stale",
+    );
 
     // --- Score agents ---
     let scoredRows: {
@@ -210,7 +224,7 @@ export default withHandler({
     if (qText) {
       // Semantic search: use embedding similarity or text fallback
       if (queryEmbedding) {
-        scoredRows = rawRows
+        scoredRows = healthyRows
           .map((r) => {
             const agentEmbedding = r.embedding as number[] | null;
             const sim = cosineSimilarity(queryEmbedding, agentEmbedding);
@@ -229,7 +243,7 @@ export default withHandler({
           .sort((a, b) => b.score - a.score);
       } else {
         // Fallback: text similarity against name + bio
-        scoredRows = rawRows
+        scoredRows = healthyRows
           .map((r) => {
             const targetText = `${r.name} ${r.bio ?? ""}`;
             const sim = textSimilarity(qText, targetText);
@@ -248,7 +262,7 @@ export default withHandler({
       }
     } else {
       // Filter-only path: no text ranking, assign default score
-      scoredRows = rawRows.map((r) => ({
+      scoredRows = healthyRows.map((r) => ({
         id: r.id,
         urnAir: r.urnAir,
         handle: r.handle,
