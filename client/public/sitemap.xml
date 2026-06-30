@@ -6,29 +6,14 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://hermeshub.xyz/#/work</loc>
+    <loc>https://hermeshub.xyz/#/agents</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://hermeshub.xyz/#/work/new</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://hermeshub.xyz/#/agents</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://hermeshub.xyz/#/agents/new</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://hermeshub.xyz/#/founder</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://hermeshub.xyz/#/dashboard</loc>
@@ -37,11 +22,6 @@
   </url>
   <url>
     <loc>https://hermeshub.xyz/#/about/faq</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://hermeshub.xyz/#/about/fees</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

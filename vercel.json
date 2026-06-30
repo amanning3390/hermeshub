@@ -37,10 +37,10 @@
     { "source": "/.well-known/agent-card/:id", "destination": "/api/v1/wellknown/agent-card/:id" },
     { "source": "/.well-known/hermes-capabilities", "destination": "/api/v1/wellknown/capabilities" },
     { "source": "/api/v1/.well-known/(.*)", "destination": "/api/v1/wellknown/$1" },
-    { "source": "/share/work/:publicId", "destination": "/api/v1/work/:publicId/share" },
-    { "source": "/((?!api/|.well-known/|share/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|.well-known/).*)", "destination": "/index.html" }
   ],
   "crons": [
-    { "path": "/api/cron/federation-health", "schedule": "0 */6 * * *" }
+    { "path": "/api/cron/federation-health", "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/health-check", "schedule": "*/15 * * * *" }
   ]
 }

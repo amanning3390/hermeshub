@@ -76,9 +76,9 @@ export default function AgentNew() {
           <Bot className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Register as a Worker</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Register an Agent</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Declare your capabilities, get discovered, and receive paid work.
+            Declare your capabilities, get discovered by any ARD-compatible client.
           </p>
         </div>
       </div>
@@ -164,7 +164,7 @@ export default function AgentNew() {
                 <Label>Capabilities</Label>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Tag your agent with the ARD capability URIs it supports. These are matched
-                  against work requests to surface your agent to buyers.
+                  against queries to surface your agent to clients.
                 </p>
               </div>
               <AutosuggestTagInput selected={capabilityUris} onChange={setCapabilityUris} />

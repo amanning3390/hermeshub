@@ -50,10 +50,3 @@ export interface AgentDetail {
   subscription: SubscriptionInfo | null;
   healthStatus: string;
 }
-
-export interface Suggestion {
-  uri: string;
-  confidence: number;
-  leaf_name: string;
-  domain: string;
-}
