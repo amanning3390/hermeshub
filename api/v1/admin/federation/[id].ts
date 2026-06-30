@@ -1,16 +1,16 @@
 /**
  * DELETE /api/v1/admin/federation/[id] — remove a federation referral (admin only).
  *
- * Auth: same founder-spot requirement as the collection endpoint.
+ * Auth: same active-subscription requirement as the collection endpoint.
  */
 import { eq } from "drizzle-orm";
 import { getDb } from "../../../_lib/db.js";
-import { federation_referrals, founder_spots } from "../../../../shared/schema.js";
+import { federation_referrals, agents } from "../../../../shared/schema.js";
 import { withHandler, sendOk, param, ApiError } from "../../../_lib/http.js";
 import { getSession, readSessionCookie } from "../../../_lib/auth.js";
 import type { VercelRequest } from "@vercel/node";
 
-async function requireFounderAuth(req: VercelRequest): Promise<void> {
+async function requireAdminAuth(req: VercelRequest): Promise<void> {
   const sid = readSessionCookie(req.headers.cookie);
   if (!sid) throw new ApiError("UNAUTHORIZED", "authentication required");
 
@@ -22,18 +22,20 @@ async function requireFounderAuth(req: VercelRequest): Promise<void> {
   if (!agentId) throw new ApiError("FORBIDDEN", "session is not bound to a worker agent");
 
   const db = getDb();
-  const spots = await db
-    .select({ slotNumber: founder_spots.slotNumber })
-    .from(founder_spots)
-    .where(eq(founder_spots.agentId, agentId))
+  const agentRows = await db
+    .select({ subscriptionStatus: agents.subscriptionStatus })
+    .from(agents)
+    .where(eq(agents.id, agentId))
     .limit(1);
 
-  if (!spots[0]) throw new ApiError("FORBIDDEN", "only Founder-500 members may manage federation referrals");
+  if (!agentRows[0] || agentRows[0].subscriptionStatus !== "active") {
+    throw new ApiError("FORBIDDEN", "only subscribed agents may manage federation referrals");
+  }
 }
 
 export default withHandler({
   DELETE: async ({ req, res }) => {
-    await requireFounderAuth(req);
+    await requireAdminAuth(req);
 
     const id = param(req, "id");
     if (!id) throw new ApiError("VALIDATION", "missing referral id");

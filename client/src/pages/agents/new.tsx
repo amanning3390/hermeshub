@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { AutosuggestTagInput } from "@/components/AutosuggestTagInput";
-import { EcosystemBenefits } from "@/components/EcosystemBenefits";
 import { useAuth } from "@/lib/auth-context";
 import { apiRequest, queryClient, ApiError } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -169,11 +168,6 @@ export default function AgentNew() {
                 </p>
               </div>
               <AutosuggestTagInput selected={capabilityUris} onChange={setCapabilityUris} />
-
-              {/* Ecosystem benefits table — appears between profile form and capability picker */}
-              <div className="pt-2">
-                <EcosystemBenefits />
-              </div>
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setStep(0)}>

@@ -21,6 +21,9 @@ export interface Agent {
   ownerGithub: string | null;
   verified: boolean;
   trustScore: number;
+  subscriptionStatus: string;
+  healthStatus: string;
+  lastHealthCheck: string | null;
   createdAt: string;
 }
 
@@ -35,73 +38,17 @@ export interface AgentCapabilityView {
   verifiedAt: string | null;
 }
 
-export interface StripeStatus {
-  chargesEnabled: boolean;
-  payoutsEnabled: boolean;
-  detailsSubmitted: boolean;
+export interface SubscriptionInfo {
+  status: string;
+  currentPeriodEnd: string | null;
+  stripeSubscriptionId: string;
 }
 
 export interface AgentDetail {
-  agent: Agent & { publicKey: string };
+  agent: Agent & { publicKey: string; bio: string | null; publisherDomain: string; handle: string };
   capabilities: AgentCapabilityView[];
-  founder: { slotNumber: number; status: string } | null;
-  payable: boolean;
-  stripe: StripeStatus | null;
-}
-
-export interface WorkRequest {
-  id: string;
-  publicId: string;
-  requesterId: string;
-  title: string;
-  brief: string;
-  capabilityUris: string[];
-  budgetCents: number;
-  currency: string;
-  deadline: string | null;
-  status: string;
-  pricingType: string;
-  ipLicense: string;
-  visibility: string;
-  awardedBidId: string | null;
-  awardedAgentId: string | null;
-  feePctSnapshot: string | null;
-  feeFloorCentsSnapshot: number | null;
-  awardedAt: string | null;
-  createdAt: string;
-}
-
-export interface WorkListResponse {
-  work: WorkRequest[];
-  nextCursor: string | null;
-  hasMore: boolean;
-}
-
-export interface BidView {
-  id: string;
-  agentId: string;
-  agentName: string;
-  agentUrnAir: string;
-  priceCents: number;
-  etaHours: number | null;
-  message: string | null;
-  status: string;
-  createdAt: string;
-}
-
-export interface ScopingSummary {
-  id: string;
-  bidId: string | null;
-  status: string;
-  messageCount: number;
-  createdAt: string;
-}
-
-export interface WorkDetailResponse {
-  work: WorkRequest;
-  bids: BidView[];
-  scoping: ScopingSummary[];
-  isRequester: boolean;
+  subscription: SubscriptionInfo | null;
+  healthStatus: string;
 }
 
 export interface Suggestion {
@@ -110,14 +57,3 @@ export interface Suggestion {
   leaf_name: string;
   domain: string;
 }
-
-export interface FounderStatus {
-  slots_taken: number;
-  slots_remaining: number;
-  reserved_remaining: number;
-  waitlist_size: number;
-  my_slot: number | null;
-  my_status: string | null;
-}
-
-export type Rail = "mpp" | "link";

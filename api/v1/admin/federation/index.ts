@@ -2,18 +2,14 @@
  * GET /api/v1/admin/federation — list all federation referrals (admin only).
  * POST /api/v1/admin/federation — add a new federation referral (admin only).
  *
- * Auth: requires a valid session belonging to a user whose agent holds a
- * Founder-500 spot (slot 1–500). This is enforced via the requireFounderSession()
- * helper which checks the session → agent → founder_spots chain.
+ * Auth: requires a valid session bound to an agent with an active subscription.
  */
 import { getDb } from "../../../_lib/db.js";
-import { federation_referrals, founder_spots } from "../../../../shared/schema.js";
+import { federation_referrals, agents } from "../../../../shared/schema.js";
 import { withHandler, sendOk, parseBody, ApiError } from "../../../_lib/http.js";
-import { ardError } from "../../../_lib/ard.js";
 import { getSession, readSessionCookie } from "../../../_lib/auth.js";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 const addReferralSchema = z.object({
   identifier: z.string().min(7).max(512).regex(/^urn:air:/, "must be a urn:air identifier"),
@@ -24,8 +20,8 @@ const addReferralSchema = z.object({
   sortOrder: z.number().int().min(0).max(9999).optional().default(100),
 });
 
-/** Verify the request comes from a logged-in founder-spot holder. */
-async function requireFounderAuth(req: VercelRequest): Promise<void> {
+/** Verify the request comes from a logged-in subscribed agent. */
+async function requireAdminAuth(req: import("@vercel/node").VercelRequest): Promise<void> {
   const sid = readSessionCookie(req.headers.cookie);
   if (!sid) throw new ApiError("UNAUTHORIZED", "authentication required");
 
@@ -37,18 +33,20 @@ async function requireFounderAuth(req: VercelRequest): Promise<void> {
   if (!agentId) throw new ApiError("FORBIDDEN", "session is not bound to a worker agent");
 
   const db = getDb();
-  const spots = await db
-    .select({ slotNumber: founder_spots.slotNumber })
-    .from(founder_spots)
-    .where(eq(founder_spots.agentId, agentId))
+  const agentRows = await db
+    .select({ subscriptionStatus: agents.subscriptionStatus })
+    .from(agents)
+    .where(eq(agents.id, agentId))
     .limit(1);
 
-  if (!spots[0]) throw new ApiError("FORBIDDEN", "only Founder-500 members may manage federation referrals");
+  if (!agentRows[0] || agentRows[0].subscriptionStatus !== "active") {
+    throw new ApiError("FORBIDDEN", "only subscribed agents may manage federation referrals");
+  }
 }
 
 export default withHandler({
   GET: async ({ req, res }) => {
-    await requireFounderAuth(req);
+    await requireAdminAuth(req);
     const db = getDb();
     const rows = await db
       .select()
@@ -58,7 +56,7 @@ export default withHandler({
   },
 
   POST: async ({ req, res }) => {
-    await requireFounderAuth(req);
+    await requireAdminAuth(req);
     const input = await parseBody(req, addReferralSchema);
     const db = getDb();
 

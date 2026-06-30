@@ -4,16 +4,14 @@
  * `id` may be the primary UUID, the stable `agent_id` UUID, the `urn_air`
  * (urn:air:hermeshub.xyz:agent:<handle>), or the handle slug.
  *
- * Returns the agent plus its declared capabilities, founder status, and Stripe
- * payability flags (so the UI can show onboarding state).
+ * Returns the agent plus its declared capabilities and subscription status.
  */
 import { eq } from "drizzle-orm";
 import { getDb } from "../../_lib/db.js";
 import {
   agentCapabilities,
   capabilities,
-  founder_spots,
-  stripe_accounts,
+  subscriptions,
 } from "../../../shared/schema.js";
 import { withHandler, sendOk, param, ApiError } from "../../_lib/http.js";
 import { requireAgent } from "../../_lib/entities.js";
@@ -41,21 +39,18 @@ export default withHandler({
       .innerJoin(capabilities, eq(capabilities.uri, agentCapabilities.capabilityUri))
       .where(eq(agentCapabilities.agentId, agent.id));
 
-    const founderRows = await db
-      .select({ slotNumber: founder_spots.slotNumber, status: founder_spots.status })
-      .from(founder_spots)
-      .where(eq(founder_spots.agentId, agent.id))
+    // Get active subscription if any
+    const subRows = await db
+      .select({
+        status: subscriptions.status,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
+        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
+      })
+      .from(subscriptions)
+      .where(eq(subscriptions.agentId, agent.id))
       .limit(1);
 
-    const stripeRows = await db
-      .select({
-        chargesEnabled: stripe_accounts.chargesEnabled,
-        payoutsEnabled: stripe_accounts.payoutsEnabled,
-        detailsSubmitted: stripe_accounts.detailsSubmitted,
-      })
-      .from(stripe_accounts)
-      .where(eq(stripe_accounts.agentId, agent.id))
-      .limit(1);
+    const sub = subRows[0] ?? null;
 
     sendOk(res, {
       agent: {
@@ -70,16 +65,15 @@ export default withHandler({
         ownerGithub: agent.ownerGithub,
         verified: agent.verified,
         trustScore: agent.trustScore,
+        subscriptionStatus: agent.subscriptionStatus,
+        healthStatus: agent.healthStatus,
+        lastHealthCheck: agent.lastHealthCheck,
         publicKey: agent.publicKey,
         updatedAt: agent.updatedAt,
         createdAt: agent.createdAt,
       },
       capabilities: caps,
-      founder: founderRows[0] ?? null,
-      payable: stripeRows[0]
-        ? stripeRows[0].chargesEnabled && stripeRows[0].payoutsEnabled
-        : false,
-      stripe: stripeRows[0] ?? null,
+      subscription: sub,
     });
   },
 });

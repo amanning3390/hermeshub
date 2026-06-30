@@ -15,13 +15,11 @@ import { getDb } from "../../../_lib/db.js";
 import {
   agentCapabilities,
   capabilities,
-  founder_spots,
-  stripe_accounts,
+  subscriptions,
 } from "../../../../shared/schema.js";
 import { withHandler, param } from "../../../_lib/http.js";
 import { findAgent } from "../../../_lib/entities.js";
 import { buildAgentCard, ardError, MEDIA_TYPES } from "../../../_lib/ard.js";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export default withHandler({
   GET: async ({ req, res }) => {
@@ -58,19 +56,13 @@ export default withHandler({
       .innerJoin(capabilities, eq(capabilities.uri, agentCapabilities.capabilityUri))
       .where(eq(agentCapabilities.agentId, agent.id));
 
-    const founderRows = await db
-      .select({ slot: founder_spots.slotNumber })
-      .from(founder_spots)
-      .where(eq(founder_spots.agentId, agent.id))
-      .limit(1);
-
-    const stripeRows = await db
+    const subRows = await db
       .select({
-        stripeAccountId: stripe_accounts.stripeAccountId,
-        payoutsEnabled: stripe_accounts.payoutsEnabled,
+        status: subscriptions.status,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
       })
-      .from(stripe_accounts)
-      .where(eq(stripe_accounts.agentId, agent.id))
+      .from(subscriptions)
+      .where(eq(subscriptions.agentId, agent.id))
       .limit(1);
 
     // Collect representative queries from capability example_queries (up to 5 total).
@@ -95,9 +87,9 @@ export default withHandler({
       trustScore: agent.trustScore,
       updatedAt: agent.updatedAt,
       capabilities: caps,
-      founderSlot: founderRows[0]?.slot ?? null,
-      stripeAccountId: stripeRows[0]?.stripeAccountId ?? null,
-      payoutsEnabled: stripeRows[0]?.payoutsEnabled ?? false,
+      founderSlot: null,
+      stripeAccountId: null,
+      payoutsEnabled: subRows[0]?.status === "active",
     });
 
     // Override representativeQueries with real queries from capability data.

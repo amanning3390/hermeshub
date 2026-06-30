@@ -2,13 +2,9 @@
  * GET /api/v1/auth/callback — GitHub OAuth callback.
  *
  * Validates the CSRF `state` against the oauth-state cookie, exchanges the code
- * for an access token, fetches the GitHub profile, upserts a `requesters` row
- * keyed by GitHub id, creates a real session, and redirects to the app. Returns
- * 503 if OAuth isn't configured.
+ * for an access token, fetches the GitHub profile, creates a session, and
+ * redirects to the app. Returns 503 if OAuth isn't configured.
  */
-import { eq } from "drizzle-orm";
-import { getDb } from "../../_lib/db.js";
-import { requesters } from "../../../shared/schema.js";
 import { withHandler, param, ApiError } from "../../_lib/http.js";
 import {
   createSession,
@@ -71,29 +67,12 @@ export default withHandler({
     if (!ghUser?.id) throw new ApiError("UNAUTHORIZED", "failed to fetch GitHub profile");
 
     const githubId = String(ghUser.id);
-    const db = getDb();
-    const existing = await db
-      .select()
-      .from(requesters)
-      .where(eq(requesters.githubId, githubId))
-      .limit(1);
-    let requester = existing[0];
-    if (!requester) {
-      const inserted = await db
-        .insert(requesters)
-        .values({ githubId, name: ghUser.name ?? ghUser.login })
-        .onConflictDoNothing({ target: requesters.githubId })
-        .returning();
-      requester = inserted[0] ?? existing[0];
-    }
-
     const { id, expires } = await createSession(`github:${githubId}`, {
       kind: "github",
       githubId,
       login: ghUser.login,
       name: ghUser.name ?? ghUser.login,
       avatarUrl: ghUser.avatar_url,
-      requesterId: requester?.id,
     });
 
     res.setHeader("Set-Cookie", buildSessionCookie(id, expires));

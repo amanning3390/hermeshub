@@ -5,12 +5,10 @@
  * it is scoped to this registry only (spec §7.3).
  *
  * Initially gated by env EXPLORE_ENABLED=true. When disabled (default), returns
- * 501 with ARD error envelope per spec §7.3 final paragraph:
- *   "A registry that does not implement Explore returns a 501 Not Implemented
- *    HTTP status code."
+ * 501 with ARD error envelope per spec §7.3 final paragraph.
  *
  * When enabled, returns facets over: type, tags (capabilities.domain),
- * capabilities (capability URIs), metadata.hermes:founder500.
+ * capabilities (capability URIs).
  */
 import { sql, eq, count } from "drizzle-orm";
 import { getDb } from "../_lib/db.js";
@@ -18,7 +16,6 @@ import {
   agents,
   agentCapabilities,
   capabilities,
-  founder_spots,
 } from "../../shared/schema.js";
 import { withHandler, parseBody } from "../_lib/http.js";
 import { ardError, MEDIA_TYPES } from "../_lib/ard.js";
@@ -50,8 +47,6 @@ export default withHandler({
   POST: async ({ req, res }) => {
     res.setHeader("Content-Type", "application/json; charset=utf-8");
 
-    // Explore is implemented and enabled by default per ARD spec §7.3.
-    // Set EXPLORE_ENABLED=false to disable (returns 501).
     if (process.env.EXPLORE_ENABLED === "false") {
       res.status(501).send(
         JSON.stringify(
@@ -79,7 +74,6 @@ export default withHandler({
         { field: "type", limit: 20 },
         { field: "tags", limit: 20 },
         { field: "capabilities", limit: 20 },
-        { field: "metadata.hermes:founder500", limit: 5 },
       ];
 
     const facets: Record<string, unknown> = {};
@@ -89,7 +83,6 @@ export default withHandler({
       const minCount = facetReq.minCount ?? 0;
 
       if (facetReq.field === "type") {
-        // All HermesHub agents are application/a2a-agent-card+json.
         const totalAgents = await db
           .select({ n: sql<number>`count(*)::int` })
           .from(agents);
@@ -101,7 +94,6 @@ export default withHandler({
           otherCount: 0,
         };
       } else if (facetReq.field === "tags") {
-        // Tags = capability domains.
         const rows = await db
           .select({
             value: capabilities.domain,
@@ -130,22 +122,6 @@ export default withHandler({
         const visible = rows.slice(0, limit).filter((r) => r.count >= minCount);
         const otherCount = rows.length > limit ? rows[limit].count : 0;
         facets["capabilities"] = { buckets: visible, otherCount };
-      } else if (facetReq.field === "metadata.hermes:founder500") {
-        const founderCount = await db
-          .select({ n: sql<number>`count(*)::int` })
-          .from(founder_spots);
-        const totalAgents = await db
-          .select({ n: sql<number>`count(*)::int` })
-          .from(agents);
-        const fc = founderCount[0]?.n ?? 0;
-        const tc = totalAgents[0]?.n ?? 0;
-        facets["metadata.hermes:founder500"] = {
-          buckets: [
-            { value: true, count: fc },
-            { value: false, count: Math.max(0, tc - fc) },
-          ],
-          otherCount: 0,
-        };
       }
       // Unknown fields: skip (registry-defined behavior per spec §7.1).
     }

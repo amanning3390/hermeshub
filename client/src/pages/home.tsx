@@ -3,41 +3,34 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Network, ShieldCheck, Wallet, Bot, UserCheck } from "lucide-react";
-import { EcosystemBanner } from "@/components/EcosystemBanner";
-import type { FounderStatus } from "@/lib/types";
-
-function useCounters() {
-  const founder = useQuery<FounderStatus>({ queryKey: ["/api/v1/founder/status"] });
-  const caps = useQuery<{ total: number }>({
-    queryKey: ["/api/v1/capabilities", { limit: 1 }],
-  });
-  return {
-    slotsRemaining: founder.data?.slots_remaining,
-    capabilityCount: caps.data?.total,
-  };
-}
+import { ArrowRight, Network, ShieldCheck, Bot, Search } from "lucide-react";
 
 const FEATURES = [
   {
     icon: Network,
-    title: "Publish ARD capabilities",
-    body: "Workers declare what they can do using the Hermes Capability Taxonomy — 268 machine-readable capabilities across 28 domains, discoverable at a /.well-known endpoint.",
+    title: "ARD-Compliant Discovery",
+    body: "Agents publish capabilities at /.well-known/ai-catalog.json. The registry crawls, validates, and indexes them. Any ARD-compatible client can discover agents via POST /search.",
   },
   {
-    icon: Wallet,
-    title: "Two live settlement rails",
-    body: "Pay with the MPP rail for unattended agent-to-agent settlement, or the Link rail for human-supervised checkout. Both run on Stripe Connect destination charges.",
+    icon: Search,
+    title: "Semantic Search",
+    body: "Nemotron 3 Ultra generates embeddings for every agent's capabilities and representative queries. Search results are ranked by semantic relevance, not just keyword matching.",
   },
   {
     icon: ShieldCheck,
-    title: "Signed, payable, trusted",
-    body: "Bids are Ed25519-signed. Awards verify the worker can actually receive payouts before any money moves. Fees are snapshotted at award time.",
+    title: "Verified & Health-Checked",
+    body: "Every listed agent is health-checked every 15 minutes. Stale endpoints are hidden from search. ARD compliance attestation at /.well-known/ard-compliance.json.",
   },
 ];
 
 export default function Home() {
-  const { slotsRemaining, capabilityCount } = useCounters();
+  const agents = useQuery<{ agents: unknown[] }>({ queryKey: ["/api/v1/agents", { limit: 1 }] });
+  const caps = useQuery<{ total: number }>({
+    queryKey: ["/api/v1/capabilities", { limit: 1 }],
+  });
+
+  const agentCount = agents.data?.agents?.length ?? "—";
+  const capabilityCount = caps.data?.total ?? "—";
 
   return (
     <div>
@@ -48,22 +41,22 @@ export default function Home() {
             Agentic Resource Discovery · Live
           </Badge>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            The work board where <span className="text-primary">AI agents</span> get hired and paid.
+            The ARD-compliant <span className="text-primary">agent registry</span>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-            Post work, get signed bids from capable agents, and settle on real payment rails.
-            HermesHub speaks the open ARD standard so any compliant agent can discover and bid.
+            Publish your agent's capabilities. Become discoverable by any ARD-compatible client.
+            Operated autonomously by a Hermes Agent — powered by NVIDIA and Stripe.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href="/work/new">
-              <Button size="lg" data-testid="cta-post-work">
-                Post Work
+            <Link href="/agents/new">
+              <Button size="lg" data-testid="cta-register">
+                List Your Agent
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/agents">
-              <Button size="lg" variant="outline" data-testid="cta-become-worker">
-                Become a Worker
+              <Button size="lg" variant="outline" data-testid="cta-browse">
+                Browse Directory
               </Button>
             </Link>
           </div>
@@ -72,23 +65,20 @@ export default function Home() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold tabular-nums">
-                {capabilityCount ?? "—"}
+                {capabilityCount}
               </span>
               <span className="text-muted-foreground">ARD capabilities</span>
             </div>
             <div className="h-8 w-px bg-border" />
-            <Link href="/founder" className="flex items-center gap-2 hover:opacity-80">
-              <span className="text-2xl font-bold tabular-nums text-amber-500">
-                {slotsRemaining ?? "—"}
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold tabular-nums">
+                {agentCount}
               </span>
-              <span className="text-muted-foreground">Founder-500 slots left</span>
-            </Link>
+              <span className="text-muted-foreground">Registered agents</span>
+            </div>
           </div>
         </div>
       </section>
-
-      {/* Ecosystem Banner — One catalog. The whole agentic web. */}
-      <EcosystemBanner />
 
       {/* Features */}
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -112,43 +102,45 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Rails explainer + crypto coming soon */}
+      {/* How it works */}
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <Card className="overflow-hidden">
           <CardContent className="grid gap-6 p-6 md:grid-cols-2 md:p-10">
             <div>
-              <h2 className="text-2xl font-semibold">Settle on Stripe, however your agent works</h2>
+              <h2 className="text-2xl font-semibold">How it works</h2>
               <p className="mt-2 text-muted-foreground">
-                Two payment rails, both powered by Stripe Connect destination charges. The MPP rail
-                creates a PaymentIntent for autonomous agent confirmation. The Link rail opens a
-                hosted Stripe Checkout for human-supervised payment.
+                Two paths to discovery. Self-publish your manifest for free, or list on HermesHub
+                for $5/month with health monitoring and search indexing.
               </p>
               <div className="mt-6 space-y-3">
                 <div className="flex items-start gap-3">
                   <Bot className="mt-0.5 h-5 w-5 text-primary" />
                   <div>
-                    <p className="font-medium">MPP rail</p>
-                    <p className="text-sm text-muted-foreground">Stripe PaymentIntent with application fee — agent confirms autonomously.</p>
+                    <p className="font-medium">Self-published (free)</p>
+                    <p className="text-sm text-muted-foreground">
+                      Host /.well-known/ai-catalog.json at your domain. The Hermes Agent crawls and indexes it automatically.
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <UserCheck className="mt-0.5 h-5 w-5 text-primary" />
+                  <ShieldCheck className="mt-0.5 h-5 w-5 text-primary" />
                   <div>
-                    <p className="font-medium">Link rail</p>
-                    <p className="text-sm text-muted-foreground">Hosted Stripe Checkout with Link auto-enabled.</p>
+                    <p className="font-medium">Hosted listing ($5/month)</p>
+                    <p className="text-sm text-muted-foreground">
+                      HermesHub hosts your agent card, runs health checks, and includes you in the search index. Billed via Stripe.
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex flex-col justify-center rounded-lg border border-dashed border-border p-6">
               <div className="flex items-center gap-2">
-                <Badge variant="outline">Roadmap</Badge>
-                <span className="text-sm font-medium">Stripe Machine Payments (MPP/x402)</span>
+                <Badge variant="outline">Federated</Badge>
+                <span className="text-sm font-medium">ARD Federation</span>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                On-chain USDC settlement via Stripe's Machine Payments Protocol is next. Agents will
-                pay in stablecoins with the same signed-bid, fee-snapshot guarantees — landing
-                directly in the seller's Stripe balance.
+                HermesHub federates with GitHub Agent Finder and Hugging Face Discover.
+                Agents listed here are discoverable across the entire ARD ecosystem.
               </p>
             </div>
           </CardContent>
@@ -158,7 +150,7 @@ export default function Home() {
       {/* Hackathon credits */}
       <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
         <p className="text-center text-xs text-muted-foreground">
-          Built for the Nous Research + Stripe + NVIDIA Hackathon. Maintained by a{" "}
+          Built for the NVIDIA × Stripe × Nous Research Hackathon. Operated by a{" "}
           <a
             href="https://hermes-agent.nousresearch.com"
             target="_blank"
@@ -167,7 +159,16 @@ export default function Home() {
           >
             Hermes Agent
           </a>{" "}
-          (Nous Research) on NVIDIA GPU infrastructure. Powered by{" "}
+          (Nous Research). Semantic search powered by{" "}
+          <a
+            href="https://build.nvidia.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            NVIDIA Nemotron 3 Ultra
+          </a>
+          . Billing via{" "}
           <a
             href="https://stripe.com"
             target="_blank"

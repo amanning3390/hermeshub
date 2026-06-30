@@ -30,14 +30,9 @@ export default withHandler({
         ],
         payment_handlers: [
           {
-            type: "stripe-connect",
-            description: "Destination charges with non-custodial settlement",
+            type: "stripe-subscription",
+            description: "Monthly subscription billing for agent listings",
             capabilities: ["fiat", "card", "link"],
-          },
-          {
-            type: "stripe-mpp",
-            description: "Machine Payments Protocol via PaymentIntent (roadmap)",
-            capabilities: ["crypto-usdc"],
           },
         ],
       },

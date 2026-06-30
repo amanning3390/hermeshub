@@ -66,15 +66,6 @@ describe("Capability registry", () => {
   });
 });
 
-describe("Work board", () => {
-  it("GET /api/v1/work?status=open returns seeded work", async () => {
-    const { status, body } = await apiGet("/api/v1/work?status=open&limit=5");
-    expect(status).toBe(200);
-    const data = (body as { ok: boolean; data: { work: unknown[] } }).data;
-    expect(data.work.length).toBeGreaterThan(0);
-  });
-});
-
 describe("Agent directory", () => {
   it("GET /api/v1/agents returns non-empty directory", async () => {
     const { status, body } = await apiGet("/api/v1/agents?limit=5");
@@ -85,23 +76,12 @@ describe("Agent directory", () => {
   });
 });
 
-describe("Founder-500", () => {
-  it("GET /api/v1/founder/status returns correct shape", async () => {
-    const { status, body } = await apiGet("/api/v1/founder/status");
-    expect(status).toBe(200);
-    const data = (body as { ok: boolean; data: { slots_taken: number; slots_remaining: number } }).data;
-    expect(data.slots_taken).toBeGreaterThanOrEqual(0);
-    expect(data.slots_remaining).toBeLessThanOrEqual(500);
-  });
-});
-
 describe("Search (ARD §7.2)", () => {
   it("POST /api/v1/search with text query returns results", async () => {
     const { status, body } = await apiPost("/api/v1/search", {
       query: { text: "video editing" },
       pageSize: 5,
     });
-    // Search may return 200 (fixed) or 500 (pre-fix). Assert structure when 200.
     if (status === 200) {
       const result = body as { results: unknown[] };
       expect(Array.isArray(result.results)).toBe(true);
@@ -129,7 +109,6 @@ describe("Search (ARD §7.2)", () => {
 describe("Explore (ARD §7.3)", () => {
   it("POST /api/v1/explore returns facets or 501 when disabled", async () => {
     const { status } = await apiPost("/api/v1/explore", {});
-    // Explore may return 200 (enabled) or 501 (disabled by env).
     expect([200, 501]).toContain(status);
   });
 });
@@ -137,7 +116,6 @@ describe("Explore (ARD §7.3)", () => {
 describe("Health", () => {
   it("GET /api/v1/health returns status", async () => {
     const res = await fetch(`${BASE}/api/v1/health`);
-    // May not be deployed yet — accept 200 or 404.
     expect([200, 404]).toContain(res.status);
   });
 });

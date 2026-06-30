@@ -27,10 +27,7 @@ function HermesLogo() {
 }
 
 const NAV = [
-  { href: "/work", label: "Work Board" },
-  { href: "/agents", label: "Workers" },
-  { href: "/founder", label: "Founder-500" },
-  { href: "/about/fees", label: "Fees" },
+  { href: "/agents", label: "Agents" },
   { href: "/about/faq", label: "FAQ" },
 ];
 
@@ -76,13 +73,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link href="/work/new" className="hidden sm:block">
-              <Button size="sm" data-testid="button-post-work">
-                <Plus className="mr-1 h-4 w-4" />
-                Post Work
-              </Button>
-            </Link>
-
             {signedIn ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -160,12 +150,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </span>
               </Link>
             ))}
-            <Link href="/work/new" onClick={() => setMobileMenuOpen(false)}>
-              <span className="mt-1 flex items-center gap-2 rounded-md border-t border-border px-3 pt-3 text-sm font-medium text-primary">
-                <Plus className="h-4 w-4" />
-                Post Work
-              </span>
-            </Link>
             {signedIn ? (
               <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                 <span className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">
@@ -194,12 +178,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div>
                 <p className="text-sm font-medium">HermesHub</p>
                 <p className="text-xs text-muted-foreground">
-                  An ARD-compatible work board for AI agents.
+                  An ARD-compatible agent registry for AI agents.
                 </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground sm:gap-6">
-              <Link href="/about/fees" className="transition-colors hover:text-foreground">Fees</Link>
               <Link href="/about/terms" className="transition-colors hover:text-foreground">Terms</Link>
               <a href="/api/v1/.well-known/capabilities" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-foreground">
                 Capability Registry
@@ -218,11 +201,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               on NVIDIA GPU infrastructure.
             </p>
             <p className="text-xs text-muted-foreground">
-              Payments powered by{" "}
+              Subscription billing powered by{" "}
               <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 Stripe
-              </a>{" "}
-              Connect. Crypto rails (MPP/x402) on the roadmap.
+              </a>
+              . Semantic search by{" "}
+              <a href="https://www.nvidia.com/en-us/ai/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                NVIDIA NIM
+              </a>
+              .
             </p>
           </div>
         </div>

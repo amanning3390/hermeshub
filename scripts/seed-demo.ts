@@ -1,13 +1,8 @@
 /**
- * Seed demo data for HermesHub: worker agents, declared capabilities, open work
- * requests, and a few claimed Founder-500 slots.
+ * Seed demo data for HermesHub: worker agents and declared capabilities.
  *
  * Idempotent: agents are keyed by `handle` (urn:air slug), capability
- * declarations by (agent, capability), work requests by a deterministic
- * `public_id`, and founder slots by `slot_number`. Re-running never duplicates.
- *
- * Stripe Connect is intentionally skipped — the platform's Connect application
- * is pending approval, so we leave `stripe_accounts` empty.
+ * declarations by (agent, capability). Re-running never duplicates.
  *
  * Usage:
  *   DATABASE_URL=<neon-url> npx tsx scripts/seed-demo.ts
@@ -19,11 +14,6 @@ import * as ed25519 from "@noble/ed25519";
 import {
   agents,
   agentCapabilities,
-  requesters,
-  work_requests,
-  bids,
-  payouts,
-  founder_spots,
   capabilities,
 } from "../shared/schema.js";
 
@@ -182,100 +172,6 @@ const SEED_AGENTS: SeedAgent[] = [
   },
 ];
 
-interface SeedWork {
-  key: string; // deterministic seed key → public_id
-  title: string;
-  brief: string;
-  capabilityUris: string[];
-  budgetUsd: number;
-}
-
-const SEED_WORK: SeedWork[] = [
-  {
-    key: "demo-video-explainer",
-    title: "Edit a 90-second product explainer video",
-    brief:
-      "We have 12 minutes of raw screen-capture footage and a voiceover track. Need a tight 90s cut with color correction and auto-generated captions. Deliver as 1080p MP4.",
-    capabilityUris: ["hct:video:edit:short-form", "hct:video:edit:captions"],
-    budgetUsd: 450,
-  },
-  {
-    key: "demo-podcast-master",
-    title: "Master a 40-minute podcast episode",
-    brief:
-      "Two-host conversation recorded in separate rooms. Need denoising, level matching, and a polished master. Source files are WAV.",
-    capabilityUris: ["hct:audio:edit:master", "hct:audio:edit:denoise"],
-    budgetUsd: 180,
-  },
-  {
-    key: "demo-logo-set",
-    title: "Generate a logo set for a fintech startup",
-    brief:
-      "Looking for three logo concepts in a clean, modern style plus a favicon export. Brand is calm/trustworthy, navy and electric blue.",
-    capabilityUris: ["hct:image:logo:concept", "hct:image:edit:bg-remove"],
-    budgetUsd: 320,
-  },
-  {
-    key: "demo-feature-impl",
-    title: "Implement CSV export for a dashboard",
-    brief:
-      "Add a server-side CSV export endpoint to an existing React + Node dashboard, with unit tests. Repo is TypeScript throughout.",
-    capabilityUris: ["hct:code:write:feature", "hct:code:test:unit"],
-    budgetUsd: 600,
-  },
-  {
-    key: "demo-market-research",
-    title: "Summarize the agentic-payments landscape",
-    brief:
-      "Produce a 6-page briefing on emerging agent-to-agent payment protocols, with cited sources and a one-paragraph executive summary.",
-    capabilityUris: [
-      "hct:research:literature-review:synthesis",
-      "hct:research:competitive-scan:landscape",
-    ],
-    budgetUsd: 250,
-  },
-  {
-    key: "demo-seo-audit",
-    title: "Technical SEO audit for a SaaS marketing site",
-    brief:
-      "Crawl a ~120-page marketing site and deliver a prioritized list of technical SEO issues (crawlability, Core Web Vitals, schema).",
-    capabilityUris: ["hct:seo:audit:technical", "hct:seo:keyword:research"],
-    budgetUsd: 300,
-  },
-  {
-    key: "demo-blog-series",
-    title: "Write a 3-part blog series on ARD",
-    brief:
-      "Three 1,200-word articles explaining Agentic Resource Discovery to a technical audience. Friendly but precise tone.",
-    capabilityUris: ["hct:writing:longform:blog"],
-    budgetUsd: 525,
-  },
-  {
-    key: "demo-data-cleanup",
-    title: "Clean and dedupe a 50k-row customer dataset",
-    brief:
-      "Messy CSV export with duplicate and malformed rows. Need a cleaned dataset plus a short summary of what was changed.",
-    capabilityUris: ["hct:data:dedupe:semantic", "hct:data:transform:schema"],
-    budgetUsd: 75,
-  },
-];
-
-function deterministicPublicId(key: string): string {
-  // Stable 12-char hex derived from the seed key, so re-runs target the same row.
-  let h = 0x811c9dc5;
-  for (let i = 0; i < key.length; i++) {
-    h ^= key.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  const a = (h >>> 0).toString(16).padStart(8, "0");
-  let h2 = 0x9e3779b9 ^ h;
-  for (let i = 0; i < key.length; i++) {
-    h2 = Math.imul(h2 ^ key.charCodeAt(i), 0x85ebca6b);
-  }
-  const b = (h2 >>> 0).toString(16).padStart(8, "0");
-  return (a + b).slice(0, 12);
-}
-
 async function main() {
   const db: NeonHttpDatabase = drizzle(neon(getDatabaseUrl()));
 
@@ -292,23 +188,7 @@ async function main() {
     (await db.select({ uri: capabilities.uri }).from(capabilities)).map((r) => r.uri),
   );
 
-  // 1) Demo requester — keyed by name to avoid the removed did_web column.
-  const existingReq = await db
-    .select({ id: requesters.id })
-    .from(requesters)
-    .where(eq(requesters.name, "HermesHub Demo"))
-    .limit(1);
-  let requesterId = existingReq[0]?.id;
-  if (!requesterId) {
-    const ins = await db
-      .insert(requesters)
-      .values({ name: "HermesHub Demo" })
-      .returning({ id: requesters.id });
-    requesterId = ins[0].id;
-  }
-
-  // 2) Agents + capability declarations — keyed by urn_air handle.
-  const agentIdBySlug = new Map<string, string>();
+  // Agents + capability declarations — keyed by urn_air handle.
   for (const a of SEED_AGENTS) {
     const urnAir = buildUrnAir(a.slug);
     const existing = await db
@@ -332,22 +212,20 @@ async function main() {
           publicKey,
           verified: true,
           trustScore: a.trustScore,
+          subscriptionStatus: "active",
         })
         .returning({ id: agents.id });
       agentId = ins[0].id;
     }
-    agentIdBySlug.set(a.slug, agentId);
 
     for (const uri of a.capabilityUris) {
-      if (!allUris.has(uri)) continue; // skip URIs not present in the taxonomy
+      if (!allUris.has(uri)) continue;
       await db
         .insert(agentCapabilities)
         .values({
           agentId,
           capabilityUri: uri,
           slaP95Ms: 60_000,
-          priceMinCents: 5_000,
-          priceMaxCents: 75_000,
         })
         .onConflictDoNothing({
           target: [agentCapabilities.agentId, agentCapabilities.capabilityUri],
@@ -355,190 +233,20 @@ async function main() {
     }
   }
 
-  // 3) Open work requests.
-  for (const w of SEED_WORK) {
-    const publicId = deterministicPublicId(w.key);
-    const existing = await db
-      .select({ id: work_requests.id })
-      .from(work_requests)
-      .where(eq(work_requests.publicId, publicId))
-      .limit(1);
-    if (existing[0]) continue;
-    const uris = w.capabilityUris.filter((u) => allUris.has(u));
-    await db.insert(work_requests).values({
-      publicId,
-      requesterId,
-      title: w.title,
-      brief: w.brief,
-      capabilityUris: uris,
-      budgetCents: Math.round(w.budgetUsd * 100),
-      currency: "usd",
-      status: "open",
-    });
-  }
-
-  // 4) Founder slots 1,2,3 for the first three agents.
-  const founderSlugs = SEED_AGENTS.slice(0, 3).map((a) => a.slug);
-  for (let i = 0; i < founderSlugs.length; i++) {
-    const slotNumber = i + 1;
-    const slug = founderSlugs[i];
-    const agentId = agentIdBySlug.get(slug)!;
-    const urnAir = buildUrnAir(slug);
-    const existing = await db
-      .select({ id: founder_spots.id })
-      .from(founder_spots)
-      .where(eq(founder_spots.slotNumber, slotNumber))
-      .limit(1);
-    if (existing[0]) continue;
-    await db
-      .insert(founder_spots)
-      .values({
-        agentId,
-        urnAir,
-        slotNumber,
-        status: "active",
-        activatedAt: new Date(),
-      })
-      .onConflictDoNothing();
-  }
-
-  // 5) Seed one awarded work item (for demo settlement UI).
-  const awardedKey = "demo-awarded-video";
-  const awardedPublicId = deterministicPublicId(awardedKey);
-  const awardedAgentSlug = "lumen-cut";
-  const awardedAgentId = agentIdBySlug.get(awardedAgentSlug);
-  if (awardedAgentId) {
-    const existingAwarded = await db
-      .select({ id: work_requests.id })
-      .from(work_requests)
-      .where(eq(work_requests.publicId, awardedPublicId))
-      .limit(1);
-    if (!existingAwarded[0]) {
-      const awardedWork = await db
-        .insert(work_requests)
-        .values({
-          publicId: awardedPublicId,
-          requesterId,
-          title: "Edit a 60-second social media ad spot",
-          brief:
-            "Raw footage and a script. Need a polished 60-second cut with motion graphics, color correction, and captions. Deliver as 1080p MP4 + vertical 9:16.",
-          capabilityUris: ["hct:video:edit:short-form", "hct:video:edit:color-grade"].filter((u) => allUris.has(u)),
-          budgetCents: 35000,
-          currency: "usd",
-          status: "awarded",
-          pricingType: "fixed",
-          awardedAgentId: awardedAgentId,
-          feePctSnapshot: "5.0000",
-          feeFloorCentsSnapshot: 0,
-          awardedAt: new Date(),
-        })
-        .returning({ id: work_requests.id, publicId: work_requests.publicId });
-
-      if (awardedWork[0]) {
-        // Insert the winning bid and link it to the work row.
-        const insertedBid = await db.insert(bids).values({
-          workRequestId: awardedWork[0].id,
-          agentId: awardedAgentId,
-          priceCents: 32000,
-          etaHours: 48,
-          message: "Can deliver in 2 days. Includes 2 revision rounds.",
-          status: "awarded",
-        }).returning({ id: bids.id });
-
-        if (insertedBid[0]) {
-          await db.update(work_requests)
-            .set({ awardedBidId: insertedBid[0].id })
-            .where(eq(work_requests.id, awardedWork[0].id));
-        }
-      }
-    }
-  }
-
-  // 6) Seed one confirmed/paid work item (for demo end-state).
-  const confirmedKey = "demo-confirmed-seo";
-  const confirmedPublicId = deterministicPublicId(confirmedKey);
-  const confirmedAgentSlug = "rank-rise";
-  const confirmedAgentId = agentIdBySlug.get(confirmedAgentSlug);
-  if (confirmedAgentId) {
-    const existingConfirmed = await db
-      .select({ id: work_requests.id })
-      .from(work_requests)
-      .where(eq(work_requests.publicId, confirmedPublicId))
-      .limit(1);
-    if (!existingConfirmed[0]) {
-      const confirmedWork = await db
-        .insert(work_requests)
-        .values({
-          publicId: confirmedPublicId,
-          requesterId,
-          title: "SEO audit and optimization plan",
-          brief:
-            "Comprehensive technical SEO audit of a 50-page SaaS site. Deliver a prioritized action plan with estimated impact.",
-          capabilityUris: ["hct:seo:audit:technical"].filter((u) => allUris.has(u)),
-          budgetCents: 28000,
-          currency: "usd",
-          status: "confirmed",
-          pricingType: "fixed",
-          awardedAgentId: confirmedAgentId,
-          feePctSnapshot: "5.0000",
-          feeFloorCentsSnapshot: 0,
-          awardedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        })
-        .returning({ id: work_requests.id });
-
-      if (confirmedWork[0]) {
-        const insertedBid = await db.insert(bids).values({
-          workRequestId: confirmedWork[0].id,
-          agentId: confirmedAgentId,
-          priceCents: 26000,
-          etaHours: 72,
-          message: "Full audit with prioritized fixes. 3 years of SEO experience.",
-          status: "awarded",
-        }).returning({ id: bids.id });
-
-        if (insertedBid[0]) {
-          await db.update(work_requests)
-            .set({ awardedBidId: insertedBid[0].id })
-            .where(eq(work_requests.id, confirmedWork[0].id));
-        }
-
-        // Seed a completed payout row.
-        await db.insert(payouts).values({
-          workRequestId: confirmedWork[0].id,
-          workerAgentId: confirmedAgentId,
-          grossCents: 26000,
-          feeCents: 1300,
-          netCents: 24700,
-          status: "paid",
-        });
-      }
-    }
-  }
-
-  // 7) Verify counts.
-  const [agentN, capN, workN, founderN] = await Promise.all([
+  // Verify counts.
+  const [agentN, capN] = await Promise.all([
     db.select({ n: sql<number>`count(*)::int` }).from(agents),
     db.select({ n: sql<number>`count(*)::int` }).from(agentCapabilities),
-    db.select({ n: sql<number>`count(*)::int` }).from(work_requests),
-    db.select({ n: sql<number>`count(*)::int` }).from(founder_spots),
   ]);
 
   const summary = {
     agents: agentN[0]?.n ?? 0,
     agent_capabilities: capN[0]?.n ?? 0,
-    work_requests: workN[0]?.n ?? 0,
-    founder_spots: founderN[0]?.n ?? 0,
   };
   process.stdout.write(`Demo seed complete:\n${JSON.stringify(summary, null, 2)}\n`);
 
   if (summary.agents < SEED_AGENTS.length) {
     throw new Error(`expected >= ${SEED_AGENTS.length} agents, found ${summary.agents}`);
-  }
-  if (summary.work_requests < SEED_WORK.length) {
-    throw new Error(`expected >= ${SEED_WORK.length} work requests, found ${summary.work_requests}`);
-  }
-  if (summary.founder_spots < 3) {
-    throw new Error(`expected >= 3 founder spots, found ${summary.founder_spots}`);
   }
 }
 

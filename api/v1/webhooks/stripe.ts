@@ -1,32 +1,22 @@
 /**
- * POST /api/v1/webhooks/stripe — the single Stripe webhook handler.
+ * POST /api/v1/webhooks/stripe — Stripe webhook handler for subscription events.
  *
- * Flow (brief §Webhook + requirements #2, #8, #10):
- *   1. Read the RAW request body (signature is computed over exact bytes, so
- *      Vercel's body parser is disabled below).
- *   2. Verify with `stripe.webhooks.constructEvent`; reject unsigned/tampered.
- *   3. Dedup on `webhook_events.stripe_event_id` (Stripe retries at-least-once).
- *   4. Dispatch by event type and apply settlement side effects.
- *   5. Return 200 on success; 400 on bad signature; 500 on handler error so
- *      Stripe retries. Never log full webhook payloads (security rule).
+ * Handles:
+ *   - checkout.session.completed   → create subscription record, set agent active
+ *   - invoice.paid                  → set subscription active, update currentPeriodEnd
+ *   - invoice.payment_failed        → set subscription delinquent
+ *   - customer.subscription.deleted → set subscription canceled, agent inactive
  *
- * Body parsing is disabled so `readRawBody` sees the unparsed stream.
+ * Body parsing is disabled so `readRawBody` sees the unparsed stream for
+ * signature verification.
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
 import { getDb } from "../../_lib/db.js";
-import {
-  checkout_sessions,
-  mpp_sessions,
-  payouts,
-  work_requests,
-  stripe_accounts,
-  webhook_events,
-} from "../../../shared/schema.js";
+import { agents, subscriptions, webhook_events } from "../../../shared/schema.js";
 import { readRawBody } from "../../_lib/http.js";
 import { constructEvent, recordEvent, markProcessed } from "../../_lib/webhook.js";
-import { syncStripeAccountFlags } from "../../_lib/stripe-accounts.js";
 import { log } from "../../_lib/log.js";
 
 export const config = { api: { bodyParser: false } };
@@ -37,7 +27,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  // Fail closed if the signing secret isn't configured (security rule).
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
     log({ level: "error", path: req.url, msg: "STRIPE_WEBHOOK_SECRET not set — refusing webhook" });
     res.status(500).json({ ok: false, error: { code: "STRIPE_NOT_CONFIGURED", message: "webhook secret missing" } });
@@ -56,7 +45,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  // Dedup: record once; duplicates are acknowledged without re-running effects.
   const outcome = await recordEvent(event);
   if (outcome.kind === "duplicate") {
     log({ level: "info", path: req.url, msg: "duplicate webhook", type: event.type });
@@ -71,9 +59,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   } catch (err) {
     const msg = err instanceof Error ? err.message : "handler error";
     log({ level: "error", path: req.url, type: event.type, msg: `webhook handler failed: ${msg}` });
-    // Delete the dedup row so Stripe's retry re-runs the side effects: without
-    // this the retry would be swallowed as a duplicate and the work would never
-    // settle. Deletion is safe because the effects are themselves idempotent.
     await getDb()
       .delete(webhook_events)
       .where(eq(webhook_events.stripeEventId, event.id))
@@ -84,159 +69,157 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
 async function dispatch(event: Stripe.Event): Promise<void> {
   switch (event.type) {
-    case "account.updated":
-      await onAccountUpdated(event.data.object as Stripe.Account);
-      break;
-    case "account.application.deauthorized":
-      await onAccountDeauthorized(event);
-      break;
     case "checkout.session.completed":
       await onCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
       break;
-    case "payment_intent.succeeded":
-      await onPaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+    case "invoice.paid":
+      await onInvoicePaid(event.data.object as Stripe.Invoice);
       break;
-    case "payment_intent.payment_failed":
-      await onPaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
+    case "invoice.payment_failed":
+      await onInvoiceFailed(event.data.object as Stripe.Invoice);
       break;
-    case "charge.refunded":
-      await onChargeRefunded(event.data.object as Stripe.Charge);
-      break;
-    case "transfer.created":
-    case "transfer.reversed":
-      await onTransfer(event.type, event.data.object as Stripe.Transfer);
+    case "customer.subscription.deleted":
+      await onSubscriptionDeleted(event.data.object as Stripe.Subscription);
       break;
     default:
-      // Acknowledged + recorded but no side effect.
       log({ level: "info", msg: "unhandled webhook type", type: event.type });
   }
 }
 
-async function onAccountUpdated(account: Stripe.Account): Promise<void> {
-  await syncStripeAccountFlags(account);
-}
-
-async function onAccountDeauthorized(event: Stripe.Event): Promise<void> {
-  // The connected account id arrives as the event's `account` field.
-  const accountId = (event as unknown as { account?: string }).account;
-  if (!accountId) return;
-  await getDb()
-    .update(stripe_accounts)
-    .set({ chargesEnabled: false, payoutsEnabled: false, lastSyncedAt: new Date() })
-    .where(eq(stripe_accounts.stripeAccountId, accountId));
-}
-
+/**
+ * checkout.session.completed — the subscription was created.
+ * Extract the subscription ID and customer ID from the session, look up the
+ * agent via client_reference_id, create a subscription record, and set the
+ * agent's subscriptionStatus to 'active'.
+ */
 async function onCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
-  const db = getDb();
-  const rows = await db
-    .select()
-    .from(checkout_sessions)
-    .where(eq(checkout_sessions.stripeSessionId, session.id))
-    .limit(1);
-  const row = rows[0];
-  if (!row) return;
-
-  await db
-    .update(checkout_sessions)
-    .set({ status: "completed" })
-    .where(eq(checkout_sessions.id, row.id));
-
-  await markWorkPaidAndPayout(
-    row.workRequestId,
-    session.amount_total ?? row.amountCents,
-    row.feeCents,
-  );
-}
-
-async function onPaymentIntentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
-  // Idempotent backstop for the MPP rail.
-  const db = getDb();
-  const rows = await db
-    .select()
-    .from(mpp_sessions)
-    .where(eq(mpp_sessions.stripeSessionId, pi.id))
-    .limit(1);
-  const row = rows[0];
-  if (!row) return;
-
-  if (row.status !== "completed") {
-    await db.update(mpp_sessions).set({ status: "completed" }).where(eq(mpp_sessions.id, row.id));
+  const agentId = session.client_reference_id;
+  if (!agentId) {
+    log({ level: "warn", msg: "checkout.session.completed missing client_reference_id" });
+    return;
   }
-  await markWorkPaidAndPayout(row.workRequestId, pi.amount_received || row.amountCents, row.feeCents);
-}
 
-async function onPaymentIntentFailed(pi: Stripe.PaymentIntent): Promise<void> {
-  const db = getDb();
-  await db
-    .update(mpp_sessions)
-    .set({ status: "failed" })
-    .where(eq(mpp_sessions.stripeSessionId, pi.id));
-  log({ level: "warn", msg: "payment_intent failed", type: "payment_intent.payment_failed" });
-}
-
-async function onChargeRefunded(charge: Stripe.Charge): Promise<void> {
-  const db = getDb();
-  const piId = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
-  // Reconcile via the work linked through metadata if present.
-  const workPublicId = charge.metadata?.work_public_id;
-  if (workPublicId) {
-    const works = await db
-      .select({ id: work_requests.id })
-      .from(work_requests)
-      .where(eq(work_requests.publicId, workPublicId))
-      .limit(1);
-    if (works[0]) {
-      await db.update(work_requests).set({ status: "cancelled" }).where(eq(work_requests.id, works[0].id));
-      await db.update(payouts).set({ status: "reversed" }).where(eq(payouts.workRequestId, works[0].id));
-    }
+  const subscriptionId = session.subscription as string | undefined;
+  const customerId = session.customer as string | undefined;
+  if (!subscriptionId || !customerId) {
+    log({ level: "warn", msg: "checkout.session.completed missing subscription or customer id" });
+    return;
   }
-  void piId;
-}
 
-async function onTransfer(type: string, transfer: Stripe.Transfer): Promise<void> {
   const db = getDb();
-  const status = type === "transfer.reversed" ? "reversed" : "in_transit";
-  // Link the transfer to a payout via its id when we have one recorded.
+
+  // Fetch the subscription from Stripe to get the price ID and period end.
+  const stripe = (await import("../../_lib/stripe.js")).getStripe();
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const priceId = subscription.items.data[0]?.price?.id ?? "";
+  const currentPeriodEnd = subscription.current_period_end
+    ? new Date(subscription.current_period_end * 1000)
+    : null;
+
+  // Insert subscription record (idempotent via unique stripe_subscription_id).
   await db
-    .update(payouts)
-    .set({ status, stripeTransferId: transfer.id })
-    .where(eq(payouts.stripeTransferId, transfer.id));
+    .insert(subscriptions)
+    .values({
+      agentId,
+      stripeCustomerId: customerId,
+      stripeSubscriptionId: subscriptionId,
+      stripePriceId: priceId,
+      status: "active",
+      currentPeriodEnd,
+    })
+    .onConflictDoNothing({ target: subscriptions.stripeSubscriptionId });
+
+  // Set agent subscription status to active.
+  await db
+    .update(agents)
+    .set({ subscriptionStatus: "active", updatedAt: new Date() })
+    .where(eq(agents.id, agentId));
 }
 
 /**
- * Mark the work paid and upsert a payout row (gross/fee/net). Idempotent: a
- * second completion event for the same work won't duplicate the payout because
- * we only insert when none exists for the work.
+ * invoice.paid — recurring payment succeeded.
+ * Update the subscription status to active and the current period end.
  */
-async function markWorkPaidAndPayout(
-  workRequestId: string,
-  grossCents: number,
-  feeCents: number,
-): Promise<void> {
+async function onInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
+  const subscriptionId = invoice.subscription as string | undefined;
+  if (!subscriptionId) return;
+
   const db = getDb();
-  const works = await db
-    .select()
-    .from(work_requests)
-    .where(eq(work_requests.id, workRequestId))
+  const currentPeriodEnd = invoice.period_end ? new Date(invoice.period_end * 1000) : null;
+
+  await db
+    .update(subscriptions)
+    .set({ status: "active", currentPeriodEnd, updatedAt: new Date() })
+    .where(eq(subscriptions.stripeSubscriptionId, subscriptionId));
+
+  // Also update the agent's subscription status.
+  const subRows = await db
+    .select({ agentId: subscriptions.agentId })
+    .from(subscriptions)
+    .where(eq(subscriptions.stripeSubscriptionId, subscriptionId))
     .limit(1);
-  const work = works[0];
-  if (!work || !work.awardedAgentId) return;
 
-  await db.update(work_requests).set({ status: "confirmed" }).where(eq(work_requests.id, work.id));
+  if (subRows[0]) {
+    await db
+      .update(agents)
+      .set({ subscriptionStatus: "active", updatedAt: new Date() })
+      .where(eq(agents.id, subRows[0].agentId));
+  }
+}
 
-  const existing = await db
-    .select({ id: payouts.id })
-    .from(payouts)
-    .where(eq(payouts.workRequestId, work.id))
+/**
+ * invoice.payment_failed — a recurring payment failed.
+ * Set the subscription status to delinquent.
+ */
+async function onInvoiceFailed(invoice: Stripe.Invoice): Promise<void> {
+  const subscriptionId = invoice.subscription as string | undefined;
+  if (!subscriptionId) return;
+
+  const db = getDb();
+
+  await db
+    .update(subscriptions)
+    .set({ status: "delinquent", updatedAt: new Date() })
+    .where(eq(subscriptions.stripeSubscriptionId, subscriptionId));
+
+  const subRows = await db
+    .select({ agentId: subscriptions.agentId })
+    .from(subscriptions)
+    .where(eq(subscriptions.stripeSubscriptionId, subscriptionId))
     .limit(1);
-  if (existing[0]) return;
 
-  await db.insert(payouts).values({
-    workRequestId: work.id,
-    workerAgentId: work.awardedAgentId,
-    grossCents,
-    feeCents,
-    netCents: grossCents - feeCents,
-    status: "pending",
-  });
+  if (subRows[0]) {
+    await db
+      .update(agents)
+      .set({ subscriptionStatus: "delinquent", updatedAt: new Date() })
+      .where(eq(agents.id, subRows[0].agentId));
+  }
+
+  log({ level: "warn", msg: "invoice payment failed", subscriptionId });
+}
+
+/**
+ * customer.subscription.deleted — the subscription was canceled.
+ * Set the subscription status to canceled and the agent's subscriptionStatus to inactive.
+ */
+async function onSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
+  const db = getDb();
+
+  await db
+    .update(subscriptions)
+    .set({ status: "canceled", updatedAt: new Date() })
+    .where(eq(subscriptions.stripeSubscriptionId, subscription.id));
+
+  const subRows = await db
+    .select({ agentId: subscriptions.agentId })
+    .from(subscriptions)
+    .where(eq(subscriptions.stripeSubscriptionId, subscription.id))
+    .limit(1);
+
+  if (subRows[0]) {
+    await db
+      .update(agents)
+      .set({ subscriptionStatus: "inactive", updatedAt: new Date() })
+      .where(eq(agents.id, subRows[0].agentId));
+  }
 }

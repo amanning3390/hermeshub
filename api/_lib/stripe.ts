@@ -1,19 +1,8 @@
 /**
- * Shared Stripe client + Connect helpers (non-custodial settlement).
+ * Shared Stripe client + subscription billing helpers.
  *
- * HermesHub never custodies funds. Requesters pay workers directly through
- * Stripe Connect destination charges: the PaymentIntent / Checkout Session
- * carries `transfer_data[destination]` (the worker's connected account) plus an
- * `application_fee_amount` (Hermes' platform fee), so the split happens
- * atomically at capture (https://docs.stripe.com/connect/destination-charges).
- *
- * Every mutating Stripe call MUST pass an idempotency key (brief constraint #7);
- * the helpers here require one.
- *
- * API version: Pinned to match the installed stripe-node typings. When Stripe
- * enables crypto deposit mode (MPP/x402) on the account, upgrade to
- * `2026-03-04.preview` to unlock `payment_method_types: ["crypto"]` with
- * `payment_method_options.crypto.mode: "deposit"` for on-chain USDC settlement.
+ * Simple subscription model: $5/month per agent listing via Stripe Checkout
+ * in subscription mode. No Connect, no destination charges, no Express accounts.
  */
 import Stripe from "stripe";
 
@@ -38,122 +27,36 @@ export function getStripe(): Stripe {
   return _stripe;
 }
 
-export interface DestinationChargeParams {
-  /** Total amount the requester pays, in integer cents. */
-  amountCents: number;
-  /** Platform fee routed to Hermes, in integer cents. */
-  applicationFeeCents: number;
-  /** Worker's connected account id (acct_...). */
-  destinationAccountId: string;
-  currency: string;
-  /** Idempotency key — required for every write. */
-  idempotencyKey: string;
-  successUrl: string;
-  cancelUrl: string;
-  /** Work request public id, threaded through for reconciliation. */
-  workPublicId: string;
-  description?: string;
-}
-
 /**
- * Create a Stripe Checkout Session as a destination charge with Link enabled.
+ * Create a Stripe Checkout Session in subscription mode for an agent listing.
  *
- * `automatic_payment_methods.enabled` surfaces Link automatically alongside card
- * (brief constraint / plan §9.5). The fee is taken via `application_fee_amount`
- * and the worker is the `transfer_data.destination`.
+ * @param agentId   The agent's UUID (stored in metadata for webhook reconciliation)
+ * @param urnAir    The agent's urn:air identifier (stored in metadata)
+ * @param successUrl  URL to redirect after successful checkout
+ * @param cancelUrl   URL to redirect after checkout cancellation
+ * @returns Stripe Checkout Session
  */
-export async function createCheckoutDestinationCharge(
-  params: DestinationChargeParams,
+export async function createSubscriptionCheckout(
+  agentId: string,
+  urnAir: string,
+  successUrl: string,
+  cancelUrl: string,
 ): Promise<Stripe.Checkout.Session> {
   const stripe = getStripe();
-  return stripe.checkout.sessions.create(
-    {
-      mode: "payment",
-      success_url: params.successUrl,
-      cancel_url: params.cancelUrl,
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: params.currency,
-            unit_amount: params.amountCents,
-            product_data: {
-              name: params.description ?? `HermesHub work ${params.workPublicId}`,
-            },
-          },
-        },
-      ],
-      payment_intent_data: {
-        application_fee_amount: params.applicationFeeCents,
-        transfer_data: { destination: params.destinationAccountId },
-      },
-      // Omitting `payment_method_types` lets Stripe auto-enable eligible methods
-      // (card + Link) from the dashboard config — the recommended path for
-      // surfacing Link in Checkout (plan §9.5).
-      client_reference_id: params.workPublicId,
-      metadata: { work_public_id: params.workPublicId },
-    },
-    { idempotencyKey: params.idempotencyKey },
-  );
-}
+  const priceId = process.env.STRIPE_PRICE_ID;
+  if (!priceId) {
+    throw new Error("STRIPE_PRICE_ID environment variable is not set");
+  }
 
-/**
- * Create a PaymentIntent destination charge (MPP / unattended-agent path).
- * Returns the PI so the caller can hand the client secret to the paying agent.
- */
-export async function createPaymentIntentDestinationCharge(
-  params: DestinationChargeParams,
-): Promise<Stripe.PaymentIntent> {
-  const stripe = getStripe();
-  return stripe.paymentIntents.create(
-    {
-      amount: params.amountCents,
-      currency: params.currency,
-      application_fee_amount: params.applicationFeeCents,
-      transfer_data: { destination: params.destinationAccountId },
-      automatic_payment_methods: { enabled: true },
-      description: params.description ?? `HermesHub work ${params.workPublicId}`,
-      metadata: { work_public_id: params.workPublicId },
+  return stripe.checkout.sessions.create({
+    mode: "subscription",
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    line_items: [{ price: priceId, quantity: 1 }],
+    client_reference_id: agentId,
+    metadata: {
+      agent_id: agentId,
+      urn_air: urnAir,
     },
-    { idempotencyKey: params.idempotencyKey },
-  );
-}
-
-/** Create a Connect Express account for a worker agent. */
-export async function createExpressAccount(
-  email: string | undefined,
-  idempotencyKey: string,
-): Promise<Stripe.Account> {
-  const stripe = getStripe();
-  return stripe.accounts.create(
-    {
-      type: "express",
-      email,
-      capabilities: {
-        card_payments: { requested: true },
-        transfers: { requested: true },
-      },
-    },
-    { idempotencyKey },
-  );
-}
-
-/** Create an onboarding AccountLink for a connected account. */
-export async function createAccountLink(
-  accountId: string,
-  refreshUrl: string,
-  returnUrl: string,
-): Promise<Stripe.AccountLink> {
-  const stripe = getStripe();
-  return stripe.accountLinks.create({
-    account: accountId,
-    refresh_url: refreshUrl,
-    return_url: returnUrl,
-    type: "account_onboarding",
   });
-}
-
-/** Fetch a connected account's current capability flags. */
-export async function retrieveAccount(accountId: string): Promise<Stripe.Account> {
-  return getStripe().accounts.retrieve(accountId);
 }

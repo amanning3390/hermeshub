@@ -2,79 +2,59 @@
  * Unit tests for pure-function modules with no database dependency.
  */
 import { describe, it, expect } from "vitest";
-import { computeFee, feeFromSnapshot, MINIMUM_JOB_CENTS, STANDARD_FEE_BPS, FOUNDER_FEE_BPS, FOUNDER_FEE_FLOOR_CENTS } from "../api/_lib/fee.js";
+import { cosineSimilarity, textSimilarity } from "../api/_lib/embeddings.js";
 import { canonicalize } from "../api/_lib/auth.js";
 
-describe("Fee math", () => {
-  it("computeFee: standard tier — 4% on $75 job (Standard band)", () => {
-    expect(computeFee({ amountCents: 7500, feeBps: 400, feeFloorCents: 0 })).toBe(300);
+describe("Cosine similarity", () => {
+  it("returns 1 for identical vectors", () => {
+    expect(cosineSimilarity([1, 2, 3], [1, 2, 3])).toBeCloseTo(1, 5);
   });
 
-  it("computeFee: standard tier — 3% on $100 job (Pro band)", () => {
-    expect(computeFee({ amountCents: 10000, feeBps: 300, feeFloorCents: 0 })).toBe(300);
+  it("returns 0 for orthogonal vectors", () => {
+    expect(cosineSimilarity([1, 0], [0, 1])).toBeCloseTo(0, 5);
   });
 
-  it("computeFee: standard tier — 2% on $1000 job (Enterprise band)", () => {
-    expect(computeFee({ amountCents: 100000, feeBps: 200, feeFloorCents: 0 })).toBe(2000);
+  it("returns 0 for null or empty vectors", () => {
+    expect(cosineSimilarity(null, [1, 2])).toBe(0);
+    expect(cosineSimilarity([], [1, 2])).toBe(0);
+    expect(cosineSimilarity([1, 2], [])).toBe(0);
   });
 
-  it("computeFee: starter band — 5% on $10 job but floor applies", () => {
-    // 5% of $10 = $0.50, floor is $0.60 → max(50, 60) = 60
-    expect(computeFee({ amountCents: 1000, feeBps: 500, feeFloorCents: 60 })).toBe(60);
+  it("returns 0 for mismatched lengths", () => {
+    expect(cosineSimilarity([1, 2, 3], [1, 2])).toBe(0);
   });
 
-  it("computeFee: starter band — 5% on $25 job exceeds floor", () => {
-    // 5% of $25 = $1.25, floor is $0.60 → max(125, 60) = 125
-    expect(computeFee({ amountCents: 2500, feeBps: 500, feeFloorCents: 60 })).toBe(125);
+  it("returns -1 for opposite vectors", () => {
+    expect(cosineSimilarity([1, 0], [-1, 0])).toBeCloseTo(-1, 5);
   });
 
-  it("computeFee: micro band — 10% on $3 job but floor applies", () => {
-    // 10% of $3 = $0.30, floor is $0.40 → max(30, 40) = 40
-    expect(computeFee({ amountCents: 300, feeBps: 1000, feeFloorCents: 40 })).toBe(40);
+  it("returns 0 for zero vectors (avoiding NaN)", () => {
+    expect(cosineSimilarity([0, 0], [0, 0])).toBe(0);
+  });
+});
+
+describe("Text similarity (Jaccard)", () => {
+  it("returns 1 for identical text", () => {
+    expect(textSimilarity("hello world", "hello world")).toBe(1);
   });
 
-  it("computeFee: founder tier — 2.5% on $75 job", () => {
-    expect(computeFee({ amountCents: 7500, feeBps: 250, feeFloorCents: 0 })).toBe(188);
+  it("returns 0 for completely different text", () => {
+    expect(textSimilarity("apple banana", "cherry date")).toBe(0);
   });
 
-  it("computeFee: founder tier — 1% on $5000 job (Enterprise band)", () => {
-    expect(computeFee({ amountCents: 500000, feeBps: 100, feeFloorCents: 0 })).toBe(5000);
+  it("returns partial match for overlapping words", () => {
+    // intersection: {hello}, union: {hello, world, there}
+    // 1/3 ≈ 0.333
+    expect(textSimilarity("hello world", "hello there")).toBeCloseTo(1 / 3, 2);
   });
 
-  it("feeFromSnapshot uses frozen percentage", () => {
-    // 4% stored as "4.0000" percent → 400 bps → 300 on 7500
-    expect(feeFromSnapshot(7500, "4.0000", 0)).toBe(300);
-    // 2% stored as "2.0000" percent → 200 bps → 200 on 10000
-    expect(feeFromSnapshot(10000, "2.0000", 0)).toBe(200);
+  it("is case-insensitive", () => {
+    expect(textSimilarity("Hello World", "hello world")).toBe(1);
   });
 
-  it("feeFromSnapshot defaults to legacy standard rate when null", () => {
-    // Legacy: 5% → 500 bps
-    expect(feeFromSnapshot(10000, null, null)).toBe(500);
-  });
-
-  it("feeFromSnapshot applies floor from snapshot", () => {
-    expect(feeFromSnapshot(1000, "5.0000", 60)).toBe(60);
-  });
-
-  it("rejects non-integer or negative amounts", () => {
-    expect(() => computeFee({ amountCents: 10.5, feeBps: 500, feeFloorCents: 0 })).toThrow();
-    expect(() => computeFee({ amountCents: -1, feeBps: 500, feeFloorCents: 0 })).toThrow();
-  });
-
-  it("zero amount gives zero fee (standard) or floor (with floor)", () => {
-    expect(computeFee({ amountCents: 0, feeBps: 400, feeFloorCents: 0 })).toBe(0);
-    expect(computeFee({ amountCents: 0, feeBps: 500, feeFloorCents: 60 })).toBe(60);
-  });
-
-  it("MINIMUM_JOB_CENTS is $5.00 (500 cents)", () => {
-    expect(MINIMUM_JOB_CENTS).toBe(500);
-  });
-
-  it("legacy constants preserved for backward compatibility", () => {
-    expect(STANDARD_FEE_BPS).toBe(500);
-    expect(FOUNDER_FEE_BPS).toBe(150);
-    expect(FOUNDER_FEE_FLOOR_CENTS).toBe(60);
+  it("returns 0 for empty strings", () => {
+    expect(textSimilarity("", "hello")).toBe(0);
+    expect(textSimilarity("hello", "")).toBe(0);
   });
 });
 

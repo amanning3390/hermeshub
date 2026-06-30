@@ -1,17 +1,11 @@
 /**
- * HermesHub ARD Work Board — database schema (Drizzle ORM, Postgres/Neon).
+ * HermesHub ARD Agent Registry — database schema (Drizzle ORM, Postgres/Neon).
  *
- * Sixteen tables backing a non-custodial agent work marketplace:
- *   - identity & capabilities: agents, agent_capabilities, capabilities, requesters
- *   - work lifecycle:          work_requests, bids, scoping_threads
- *   - founder program:         founder_spots, founder_waitlist
- *   - settlement (Stripe):     stripe_accounts, mpp_sessions, checkout_sessions, payouts
+ * Tables:
+ *   - identity & capabilities: agents, agent_capabilities, capabilities
+ *   - subscriptions (Stripe):  subscriptions
  *   - platform plumbing:       webhook_events, idempotency_keys, sessions
  *   - ARD federation:          federation_referrals, referral_health_log
- *
- * Money is stored in integer cents to avoid floating-point drift. Fees are
- * snapshotted onto work_requests at award time so post-award fee changes never
- * apply retroactively (plan §9.1, §23.11).
  *
  * SCHEMA V3 (ARD compliance): did_web → urn_air hard cutover (B.1).
  *   Identifiers now follow ARD spec §4.2.1: urn:air:<publisher>:<namespace>:<agent-name>
@@ -24,9 +18,7 @@ import {
   text,
   varchar,
   integer,
-  bigint,
   boolean,
-  numeric,
   timestamp,
   jsonb,
   index,
@@ -97,6 +89,13 @@ export const agents = pgTable(
     publicKey: text("public_key").notNull(),
     verified: boolean("verified").notNull().default(false),
     trustScore: integer("trust_score").notNull().default(50),
+    /** Subscription status: active, inactive, delinquent, canceled */
+    subscriptionStatus: varchar("subscription_status", { length: 20 }).notNull().default("inactive"),
+    /** Cached embedding vector (jsonb array of numbers) for semantic search */
+    embedding: jsonb("embedding"),
+    /** Health status: online, offline, stale, unknown */
+    healthStatus: varchar("health_status", { length: 20 }).notNull().default("unknown"),
+    lastHealthCheck: timestamp("last_health_check", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -125,8 +124,8 @@ export const agentCapabilities = pgTable(
     declaredAt: timestamp("declared_at", { withTimezone: true }).notNull().defaultNow(),
     verifiedAt: timestamp("verified_at", { withTimezone: true }),
     slaP95Ms: integer("sla_p95_ms"),
-    priceMinCents: bigint("price_min_cents", { mode: "number" }),
-    priceMaxCents: bigint("price_max_cents", { mode: "number" }),
+    priceMinCents: integer("price_min_cents"),
+    priceMaxCents: integer("price_max_cents"),
     sandboxUrl: text("sandbox_url"),
   },
   (t) => ({
@@ -137,261 +136,27 @@ export const agentCapabilities = pgTable(
 );
 
 /* -------------------------------------------------------------------------- */
-/* Requesters — humans (or orgs) posting work                                */
+/* Subscriptions — $5/month subscription billing via Stripe                  */
 /* -------------------------------------------------------------------------- */
 
-export const requesters = pgTable(
-  "requesters",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    githubId: varchar("github_id", { length: 120 }).unique(),
-    email: varchar("email", { length: 320 }),
-    name: varchar("name", { length: 255 }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-);
-
-/* -------------------------------------------------------------------------- */
-/* Work requests + bids + scoping                                            */
-/* -------------------------------------------------------------------------- */
-
-export const WORK_STATUSES = [
-  "open",
-  "scoping",
-  "awarded",
-  "in_progress",
-  "delivered",
-  "confirmed",
-  "disputed",
-  "cancelled",
-] as const;
-
-export const PRICING_TYPES = ["fixed", "hourly", "rfq", "auction", "subscription"] as const;
-
-export const work_requests = pgTable(
-  "work_requests",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    publicId: varchar("public_id", { length: 32 }).notNull().unique(),
-    requesterId: uuid("requester_id")
-      .notNull()
-      .references(() => requesters.id, { onDelete: "restrict" }),
-    title: varchar("title", { length: 255 }).notNull(),
-    brief: text("brief").notNull(),
-    capabilityUris: text("capability_uris").array().notNull().default(sql`'{}'::text[]`),
-    budgetCents: bigint("budget_cents", { mode: "number" }).notNull(),
-    currency: varchar("currency", { length: 3 }).notNull().default("usd"),
-    deadline: timestamp("deadline", { withTimezone: true }),
-    status: varchar("status", { length: 20 }).notNull().default("open"),
-    pricingType: varchar("pricing_type", { length: 20 }).notNull().default("fixed"),
-    ipLicense: varchar("ip_license", { length: 40 }).notNull().default("work-for-hire"),
-    visibility: varchar("visibility", { length: 20 }).notNull().default("public"),
-    awardedBidId: uuid("awarded_bid_id"),
-    awardedAgentId: uuid("awarded_agent_id").references(() => agents.id),
-    // Fee snapshot — frozen at award time (plan §9.1, §23.11).
-    feePctSnapshot: numeric("fee_pct_snapshot", { precision: 6, scale: 4 }),
-    feeFloorCentsSnapshot: integer("fee_floor_cents_snapshot"),
-    awardedAt: timestamp("awarded_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => ({
-    requesterIdx: index("idx_work_requests_requester").on(t.requesterId),
-    statusIdx: index("idx_work_requests_status").on(t.status),
-    capabilityIdx: index("idx_work_requests_capabilities").using("gin", t.capabilityUris),
-  }),
-);
-
-export const BID_STATUSES = ["pending", "awarded", "rejected", "withdrawn"] as const;
-
-export const bids = pgTable(
-  "bids",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    workRequestId: uuid("work_request_id")
-      .notNull()
-      .references(() => work_requests.id, { onDelete: "cascade" }),
-    agentId: uuid("agent_id")
-      .notNull()
-      .references(() => agents.id, { onDelete: "cascade" }),
-    priceCents: bigint("price_cents", { mode: "number" }).notNull(),
-    etaHours: integer("eta_hours"),
-    message: text("message"),
-    signature: text("signature"),
-    status: varchar("status", { length: 20 }).notNull().default("pending"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => ({
-    workIdx: index("idx_bids_work_request").on(t.workRequestId),
-    agentIdx: index("idx_bids_agent").on(t.agentId),
-    uniqueBid: uniqueIndex("idx_bids_unique_agent_per_work").on(t.workRequestId, t.agentId),
-  }),
-);
-
-export const scoping_threads = pgTable(
-  "scoping_threads",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    workRequestId: uuid("work_request_id")
-      .notNull()
-      .references(() => work_requests.id, { onDelete: "cascade" }),
-    bidId: uuid("bid_id").references(() => bids.id, { onDelete: "set null" }),
-    messages: jsonb("messages").array().notNull().default(sql`'{}'::jsonb[]`),
-    status: varchar("status", { length: 20 }).notNull().default("open"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => ({
-    workIdx: index("idx_scoping_threads_work_request").on(t.workRequestId),
-  }),
-);
-
-/* -------------------------------------------------------------------------- */
-/* Founder-500 program (plan §23)                                            */
-/* -------------------------------------------------------------------------- */
-
-export const FOUNDER_STATUSES = ["pending", "active", "reclaimed"] as const;
-
-export const founder_spots = pgTable(
-  "founder_spots",
+export const subscriptions = pgTable(
+  "subscriptions",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     agentId: uuid("agent_id")
       .notNull()
-      .unique()
       .references(() => agents.id, { onDelete: "cascade" }),
-    /** urn_air of the claiming agent — identity-bound per spec. */
-    urnAir: text("urn_air").notNull(),
-    slotNumber: integer("slot_number").notNull().unique(),
-    feeRateBps: integer("fee_rate_bps").notNull().default(150),
-    feeFloorCents: integer("fee_floor_cents").notNull().default(60),
-    status: varchar("status", { length: 20 }).notNull().default("pending"),
-    activationJobsComplete: integer("activation_jobs_complete").notNull().default(0),
-    claimedAt: timestamp("claimed_at", { withTimezone: true }).notNull().defaultNow(),
-    activatedAt: timestamp("activated_at", { withTimezone: true }),
-    reclaimedAt: timestamp("reclaimed_at", { withTimezone: true }),
-    reclaimReason: text("reclaim_reason"),
-  },
-  (t) => ({
-    statusIdx: index("idx_founder_spots_status").on(t.status),
-    urnAirIdx: index("idx_founder_spots_urn_air").on(t.urnAir),
-  }),
-);
-
-export const founder_waitlist = pgTable(
-  "founder_waitlist",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    urnAir: text("urn_air").notNull().unique(),
-    position: integer("position").notNull(),
-    joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
-    promotedAt: timestamp("promoted_at", { withTimezone: true }),
-  },
-  (t) => ({
-    positionIdx: uniqueIndex("idx_founder_waitlist_position").on(t.position),
-  }),
-);
-
-/* -------------------------------------------------------------------------- */
-/* Stripe Connect — accounts, sessions, payouts                              */
-/* -------------------------------------------------------------------------- */
-
-export const stripe_accounts = pgTable(
-  "stripe_accounts",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    agentId: uuid("agent_id")
-      .notNull()
-      .unique()
-      .references(() => agents.id, { onDelete: "cascade" }),
-    stripeAccountId: text("stripe_account_id").notNull().unique(),
-    chargesEnabled: boolean("charges_enabled").notNull().default(false),
-    payoutsEnabled: boolean("payouts_enabled").notNull().default(false),
-    detailsSubmitted: boolean("details_submitted").notNull().default(false),
-    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+    stripeCustomerId: text("stripe_customer_id").notNull(),
+    stripeSubscriptionId: text("stripe_subscription_id").notNull().unique(),
+    stripePriceId: text("stripe_price_id").notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("active"),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-);
-
-export const SESSION_STATUSES = [
-  "created",
-  "pending",
-  "completed",
-  "expired",
-  "failed",
-  "cancelled",
-] as const;
-
-/** Rail C — Machine Payments Protocol (unattended agent path). */
-export const mpp_sessions = pgTable(
-  "mpp_sessions",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    workRequestId: uuid("work_request_id")
-      .notNull()
-      .references(() => work_requests.id, { onDelete: "cascade" }),
-    requesterAgentId: uuid("requester_agent_id").references(() => agents.id),
-    workerAgentId: uuid("worker_agent_id")
-      .notNull()
-      .references(() => agents.id),
-    stripeSessionId: text("stripe_session_id").unique(),
-    status: varchar("status", { length: 20 }).notNull().default("created"),
-    amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
-    feeCents: bigint("fee_cents", { mode: "number" }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
-    workIdx: index("idx_mpp_sessions_work_request").on(t.workRequestId),
-  }),
-);
-
-/** Rail D — Stripe Checkout + Link (human-supervised path). */
-export const checkout_sessions = pgTable(
-  "checkout_sessions",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    workRequestId: uuid("work_request_id")
-      .notNull()
-      .references(() => work_requests.id, { onDelete: "cascade" }),
-    stripeSessionId: text("stripe_session_id").unique(),
-    mode: varchar("mode", { length: 20 }).notNull().default("payment"),
-    paymentMethods: jsonb("payment_methods"),
-    status: varchar("status", { length: 20 }).notNull().default("created"),
-    amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
-    feeCents: bigint("fee_cents", { mode: "number" }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => ({
-    workIdx: index("idx_checkout_sessions_work_request").on(t.workRequestId),
-  }),
-);
-
-export const PAYOUT_STATUSES = [
-  "pending",
-  "paid",
-  "in_transit",
-  "failed",
-  "reversed",
-] as const;
-
-export const payouts = pgTable(
-  "payouts",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    workRequestId: uuid("work_request_id")
-      .notNull()
-      .references(() => work_requests.id, { onDelete: "cascade" }),
-    workerAgentId: uuid("worker_agent_id")
-      .notNull()
-      .references(() => agents.id),
-    stripeTransferId: text("stripe_transfer_id").unique(),
-    grossCents: bigint("gross_cents", { mode: "number" }).notNull(),
-    feeCents: bigint("fee_cents", { mode: "number" }).notNull(),
-    netCents: bigint("net_cents", { mode: "number" }).notNull(),
-    status: varchar("status", { length: 20 }).notNull().default("pending"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => ({
-    workIdx: index("idx_payouts_work_request").on(t.workRequestId),
-    workerIdx: index("idx_payouts_worker").on(t.workerAgentId),
+    agentIdx: index("idx_subscriptions_agent").on(t.agentId),
+    statusIdx: index("idx_subscriptions_status").on(t.status),
   }),
 );
 
@@ -513,17 +278,8 @@ export type NewCapability = typeof capabilities.$inferInsert;
 export type Agent = typeof agents.$inferSelect;
 export type NewAgent = typeof agents.$inferInsert;
 export type AgentCapability = typeof agentCapabilities.$inferSelect;
-export type Requester = typeof requesters.$inferSelect;
-export type WorkRequest = typeof work_requests.$inferSelect;
-export type NewWorkRequest = typeof work_requests.$inferInsert;
-export type Bid = typeof bids.$inferSelect;
-export type ScopingThread = typeof scoping_threads.$inferSelect;
-export type FounderSpot = typeof founder_spots.$inferSelect;
-export type FounderWaitlistEntry = typeof founder_waitlist.$inferSelect;
-export type StripeAccount = typeof stripe_accounts.$inferSelect;
-export type MppSession = typeof mpp_sessions.$inferSelect;
-export type CheckoutSession = typeof checkout_sessions.$inferSelect;
-export type Payout = typeof payouts.$inferSelect;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type NewSubscription = typeof subscriptions.$inferInsert;
 export type WebhookEvent = typeof webhook_events.$inferSelect;
 export type IdempotencyKey = typeof idempotency_keys.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
