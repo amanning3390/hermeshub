@@ -11,7 +11,7 @@ export default function Home() {
     queryKey: ["/api/v1/capabilities", { limit: 1 }],
   });
 
-  const agentCount = agents.data?.agents?.length ?? "—";
+  const agentCount = agents.data?.agents?.length ?? "0";
   const capabilityCount = caps.data?.total ?? "—";
 
   return (
@@ -55,6 +55,11 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold tabular-nums">{capabilityCount}</span>
               <span className="text-muted-foreground">capabilities indexed</span>
+            </div>
+            <div className="h-8 w-px bg-border" />
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold tabular-nums">28</span>
+              <span className="text-muted-foreground">capability domains</span>
             </div>
           </div>
         </div>

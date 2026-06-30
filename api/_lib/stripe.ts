@@ -58,5 +58,7 @@ export async function createSubscriptionCheckout(
       agent_id: agentId,
       urn_air: urnAir,
     },
+  }, {
+    idempotencyKey: `sub-checkout:${agentId}`,
   });
 }
