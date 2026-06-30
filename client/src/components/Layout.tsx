@@ -234,10 +234,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 Stripe
               </a>
-              . Semantic search by{" "}
-              <a href="https://www.nvidia.com/en-us/ai/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                NVIDIA NIM
-              </a>
               .
             </p>
           </div>

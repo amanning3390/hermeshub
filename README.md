@@ -6,7 +6,7 @@
 
 **Live site: [hermeshub.xyz](https://hermeshub.xyz)** · [FAQ](https://hermeshub.xyz/about/faq) · [ARD spec](https://agenticresourcediscovery.org/spec/)
 
-> Operated autonomously by a [Hermes Agent](https://hermes-agent.nousresearch.com) (by Nous Research). Semantic search powered by NVIDIA Nemotron 3 Ultra. Subscription billing via Stripe.
+> Operated autonomously by a [Hermes Agent](https://hermes-agent.nousresearch.com) (by Nous Research) on NVIDIA GPU infrastructure. Capability-based search. Subscription billing via Stripe.
 
 ---
 
@@ -23,9 +23,9 @@ HermesHub is a production registry implementing the [Agentic Resource Discovery 
 
 The registry is operated autonomously by a Hermes Agent running 24/7:
 
-- Crawls and indexes published manifests (via NVIDIA NemoClaw sandbox)
+- Crawls and indexes published manifests
 - Validates manifests against the ARD JSON Schema
-- Generates semantic embeddings using NVIDIA Nemotron 3 Ultra
+- Indexes agents by declared capabilities and keywords
 - Health-checks every listed agent endpoint every 15 minutes
 - Processes registrations and Stripe subscription billing
 - Maintains federation with GitHub Agent Finder and Hugging Face Discover
@@ -35,8 +35,8 @@ The registry is operated autonomously by a Hermes Agent running 24/7:
 | Component | Technology |
 |-----------|-----------|
 | ARD compliance | Full v0.9 implementation — `/.well-known/ai-catalog.json`, `POST /search`, `POST /explore`, federation |
-| Semantic search | NVIDIA Nemotron 3 Ultra embeddings + cosine similarity ranking |
-| Sandbox execution | NVIDIA NemoClaw for manifest crawling and validation |
+| Capability search | Keyword and capability-tag matching with relevance scoring |
+| Infrastructure | NVIDIA GPU infrastructure for Hermes Agent operations |
 | Billing | Stripe subscription billing ($5/month for hosted listings) |
 | Agent operations | Hermes Agent by Nous Research — autonomous 24/7 operation |
 | Database | Neon Postgres (Drizzle ORM) |

@@ -29,7 +29,7 @@ export default function Home() {
           <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
             HermesHub hosts your agent's discovery catalog so any AI client can find it.
             No server to run. No domain to maintain. Just register, get indexed, and
-            clients discover you through semantic search.
+            clients discover you through capability-based search.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/agents/new">
@@ -179,7 +179,7 @@ export default function Home() {
                   /.well-known/agent-card/:handle
                 </code>
                 . We ping your agent's endpoint every 15 minutes — if it's down, it's hidden from
-                search. If it's up, it's ranked by NVIDIA Nemotron semantic relevance.
+                search. If it's up, it's ranked by capability relevance.
               </p>
             </CardContent>
           </Card>
@@ -227,7 +227,7 @@ export default function Home() {
                   <ShieldCheck className="h-4 w-4 text-primary" /> Your endpoint URL for direct contact
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <ShieldCheck className="h-4 w-4 text-primary" /> Semantic search indexing
+                  <ShieldCheck className="h-4 w-4 text-primary" /> Capability-based search indexing
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <ShieldCheck className="h-4 w-4 text-primary" /> Federation across the ARD network
@@ -342,13 +342,13 @@ export default function Home() {
               <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15">
                 <Search className="h-5 w-5 text-primary" />
               </div>
-              <CardTitle className="text-base">NVIDIA semantic search</CardTitle>
+              <CardTitle className="text-base">Capability-based search</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Clients describe what they need in natural language. NVIDIA Nemotron 3 Ultra
-                generates semantic embeddings of your capabilities so you rank by relevance —
-                not keyword matching.
+                Clients describe what they need and filter by capability URIs and tags.
+                Agents are matched and ranked by how well their declared capabilities
+                align with the query — not keyword matching alone.
               </p>
             </CardContent>
           </Card>

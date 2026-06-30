@@ -49,7 +49,7 @@ const FAQ_JSON_LD = {
       name: "How does HermesHub relate to NVIDIA?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "NVIDIA is a working group participant in the ARD specification and is listed in the acknowledgements at agenticresourcediscovery.org. Within HermesHub's infrastructure, NVIDIA technologies are used operationally: Nemotron 3 Ultra generates the semantic embeddings that power the search ranking engine, and NemoClaw provides sandboxed execution for the crawling pipeline. The ARD standard itself is vendor-neutral — any compliant registry can use any underlying technology.",
+        text: "NVIDIA is a working group participant in the ARD specification and is listed in the acknowledgements at agenticresourcediscovery.org. NVIDIA provides GPU infrastructure that powers the Hermes Agent running HermesHub's operations. The ARD standard itself is vendor-neutral — any compliant registry can use any underlying technology.",
       },
     },
     {
@@ -73,7 +73,7 @@ const FAQ_JSON_LD = {
       name: "How does the search work?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Clients send POST /search with query.text (natural language description) and query.filter (structured constraints like capability URIs or tags). Nemotron 3 Ultra generates semantic embeddings from the query text and from each agent's manifest, enabling vector similarity ranking. Results are scored 0–100 by relevance. When federation mode is enabled, HermesHub also returns referral pointers to GitHub Agent Finder and Hugging Face Discover so clients can query those registries for additional matches.",
+        text: "Clients send POST /search with query.text (natural language description) and query.filter (structured constraints like capability URIs or tags). Results are matched by capability keywords and tags, then scored 0–100 by relevance. When federation mode is enabled, HermesHub also returns referral pointers to GitHub Agent Finder and Hugging Face Discover so clients can query those registries for additional matches.",
       },
     },
     {
@@ -297,20 +297,10 @@ const QA_ITEMS = [
           </a>
           .
         </p>
-        <p>Within HermesHub's infrastructure, NVIDIA technologies are used operationally:</p>
-        <ul className="ml-4 list-disc space-y-2 text-sm">
-          <li>
-            <span className="font-medium text-foreground">Nemotron 3 Ultra</span>{" "}
-            — generates the semantic embeddings that power the search ranking
-            engine. Query text and agent manifests are embedded for vector
-            similarity scoring.
-          </li>
-          <li>
-            <span className="font-medium text-foreground">NemoClaw</span> —
-            provides sandboxed execution for the crawling pipeline, allowing
-            safe retrieval and parsing of remote agent manifests.
-          </li>
-        </ul>
+        <p>
+          NVIDIA provides the GPU infrastructure that powers the Hermes Agent
+          running HermesHub's operations.
+        </p>
         <p>
           The ARD standard itself is{" "}
           <strong className="text-foreground">vendor-neutral</strong> — any
@@ -395,10 +385,11 @@ const QA_ITEMS = [
           </li>
         </ul>
         <p>
-          <strong className="text-foreground">Nemotron 3 Ultra</strong> generates
-          semantic embeddings from the query text and from each agent's manifest,
-          enabling vector similarity ranking. Results are scored{" "}
-          <strong className="text-foreground">0–100</strong> by relevance.
+          Results are matched by{" "}
+          <strong className="text-foreground">capability keywords and tags</strong>,
+          then scored{" "}
+          <strong className="text-foreground">0–100</strong> by relevance based on
+          how well the agent's declared capabilities align with the query.
         </p>
         <p>
           When federation mode is enabled, HermesHub also returns{" "}

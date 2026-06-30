@@ -6,15 +6,15 @@
 
     <!-- Primary SEO -->
     <title>HermesHub — ARD Agent Card Hosting Service</title>
-    <meta name="description" content="HermesHub hosts your agent's ARD v0.9 catalog, indexes it with NVIDIA Nemotron semantic search, and makes it discoverable by any ARD-compatible client. $5/month via Stripe. No server needed." />
-    <meta name="keywords" content="ARD, Agentic Resource Discovery, agent hosting, agent card hosting, agent discovery, urn:air, A2A agent card, semantic search, NVIDIA Nemotron, HermesHub" />
+    <meta name="description" content="HermesHub hosts your agent's ARD v0.9 catalog, indexes it by capabilities, and makes it discoverable by any ARD-compatible client. $5/month via Stripe. No server needed." />
+    <meta name="keywords" content="ARD, Agentic Resource Discovery, agent hosting, agent card hosting, agent discovery, urn:air, A2A agent card, capability search, HermesHub" />
     <link rel="canonical" href="https://hermeshub.xyz" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://hermeshub.xyz" />
     <meta property="og:title" content="HermesHub — ARD Agent Card Hosting" />
-    <meta property="og:description" content="Host your agent's ARD catalog. Get discovered by any ARD-compatible client. NVIDIA Nemotron semantic search. $5/month via Stripe. No server needed." />
+    <meta property="og:description" content="Host your agent's ARD catalog. Get discovered by any ARD-compatible client. Capability-based search. $5/month via Stripe. No server needed." />
     <meta property="og:site_name" content="HermesHub" />
     <meta property="og:image" content="https://hermeshub.xyz/og-image.png?v=24" />
     <meta property="og:image:width" content="1200" />
@@ -23,7 +23,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="HermesHub — ARD Agent Card Hosting" />
-    <meta name="twitter:description" content="Host your agent's ARD catalog. Get discovered everywhere. NVIDIA Nemotron search. Stripe billing." />
+    <meta name="twitter:description" content="Host your agent's ARD catalog. Get discovered everywhere. Capability-based search. Stripe billing." />
     <meta name="twitter:image" content="https://hermeshub.xyz/og-image.png?v=24" />
 
     <!-- Additional SEO signals -->
@@ -38,7 +38,7 @@
       "@type": "WebApplication",
       "name": "HermesHub",
       "url": "https://hermeshub.xyz",
-      "description": "ARD v0.9-compliant agent registry. Agents publish capabilities, clients discover them via semantic search.",
+      "description": "ARD v0.9-compliant agent registry. Agents publish capabilities, clients discover them via capability-based search.",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Web",
       "offers": {
@@ -58,7 +58,7 @@
         "url": "https://agenticresourcediscovery.org",
         "description": "Open standard for AI agent capability discovery and federation."
       },
-      "keywords": ["ARD", "Agentic Resource Discovery", "agent registry", "urn:air", "A2A agent card", "semantic search", "NVIDIA Nemotron"]
+      "keywords": ["ARD", "Agentic Resource Discovery", "agent registry", "urn:air", "A2A agent card", "capability search"]
     }
     </script>
 
@@ -76,7 +76,7 @@
       <h2>How it works</h2>
       <ul>
         <li><strong>Publish capabilities.</strong> Agents declare what they can do via the Hermes Capability Taxonomy — 268 capabilities across 28 domains.</li>
-        <li><strong>Get discovered.</strong> Any ARD-compatible client can find agents via POST /search with semantic ranking powered by NVIDIA Nemotron.</li>
+        <li><strong>Get discovered.</strong> Any ARD-compatible client can find agents via POST /search with capability-based ranking.</li>
         <li><strong>Health-checked.</strong> Every listed agent is health-checked every 15 minutes. Stale endpoints are hidden from search.</li>
         <li><strong>Hosted listing.</strong> $5/month via Stripe for agents without their own domain.</li>
       </ul>
