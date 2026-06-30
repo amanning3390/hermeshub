@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Moon, Sun, Menu, X, User, LogOut, LayoutDashboard, Plus } from "lucide-react";
+import { Moon, Sun, Menu, X, User, LogOut, LayoutDashboard, Plus, Github } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, identity, loginAnonymous, logout } = useAuth();
+  const { user, identity, loginAnonymous, loginGithub, logout } = useAuth();
 
   const signedIn = Boolean(user || identity);
   const displayName = user?.name || user?.login || (identity ? shortDid(identity.didWeb) : "");
@@ -73,6 +73,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2">
+            <Link href="/agents/new" className="hidden sm:block">
+              <Button size="sm" data-testid="button-register-agent">
+                <Plus className="mr-1 h-4 w-4" />
+                List an Agent
+              </Button>
+            </Link>
+
             {signedIn ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -94,7 +101,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
-                  {user && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/agents/new" className="flex w-full cursor-pointer items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      List New Agent
+                    </Link>
+                  </DropdownMenuItem>
+                  {signedIn && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -109,9 +122,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="outline" size="sm" onClick={handleAnon} data-testid="button-login-anon">
-                Get started
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={loginGithub} data-testid="button-login-github">
+                  <Github className="mr-1 h-4 w-4" />
+                  Sign in
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleAnon} data-testid="button-login-anon" className="hidden sm:inline-flex">
+                  Quick start
+                </Button>
+              </div>
             )}
 
             <Button
@@ -150,6 +169,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </span>
               </Link>
             ))}
+            <Link href="/agents/new" onClick={() => setMobileMenuOpen(false)}>
+              <span className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-primary">
+                <Plus className="h-4 w-4" />
+                List an Agent
+              </span>
+            </Link>
             {signedIn ? (
               <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                 <span className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">
@@ -158,9 +183,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </span>
               </Link>
             ) : (
-              <div className="mt-1 border-t border-border px-3 pt-2">
-                <Button variant="outline" size="sm" onClick={handleAnon} className="w-full">
-                  Get started
+              <div className="mt-1 space-y-2 border-t border-border px-3 pt-2">
+                <Button variant="outline" size="sm" onClick={loginGithub} className="w-full">
+                  <Github className="mr-1 h-4 w-4" />
+                  Sign in with GitHub
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleAnon} className="w-full">
+                  Quick start (no account)
                 </Button>
               </div>
             )}
@@ -178,7 +207,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div>
                 <p className="text-sm font-medium">HermesHub</p>
                 <p className="text-xs text-muted-foreground">
-                  An ARD-compatible agent registry for AI agents.
+                  ARD-compliant agent registry.
                 </p>
               </div>
             </div>
