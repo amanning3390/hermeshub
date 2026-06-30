@@ -91,6 +91,8 @@ export const agents = pgTable(
     trustScore: integer("trust_score").notNull().default(50),
     /** Subscription status: active, inactive, delinquent, canceled */
     subscriptionStatus: varchar("subscription_status", { length: 20 }).notNull().default("inactive"),
+    /** URL where the agent can be contacted/invoked (e.g. https://my-agent.com/api). Optional. */
+    endpointUrl: text("endpoint_url"),
     /** Cached embedding vector (jsonb array of numbers) for semantic search */
     embedding: jsonb("embedding"),
     /** Health status: online, offline, stale, unknown */

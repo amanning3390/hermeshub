@@ -94,9 +94,8 @@ export interface AgentCardInput {
   trustScore: number;
   updatedAt: Date;
   capabilities: { uri: string; displayName: string; exampleQueries?: string[] | null; verifiedAt: Date | null }[];
-  founderSlot?: number | null;
-  stripeAccountId?: string | null;
-  payoutsEnabled?: boolean;
+  endpointUrl?: string | null;
+  subscriptionStatus?: string;
   totalCompletedJobs?: number;
 }
 
@@ -135,15 +134,9 @@ export function buildAgentCard(input: AgentCardInput): Record<string, unknown> {
 
 function buildMetadata(input: AgentCardInput): Record<string, unknown> {
   const meta: Record<string, unknown> = {
-    "hermes:founder500": input.founderSlot != null,
-    "hermes:feeRate": input.founderSlot != null ? 0.015 : 0.05,
-    "hermes:totalCompletedJobs": input.totalCompletedJobs ?? 0,
+    "hermes:subscriptionStatus": input.subscriptionStatus ?? "inactive",
+    "hermes:endpoint": input.endpointUrl ?? null,
   };
-
-  // Only include stripeAccountId when payouts are enabled (per spec — don't leak internal IDs).
-  if (input.payoutsEnabled && input.stripeAccountId) {
-    meta["hermes:stripeAccountId"] = input.stripeAccountId;
-  }
 
   return meta;
 }

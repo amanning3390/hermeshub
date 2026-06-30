@@ -77,6 +77,7 @@ export default withHandler({
           bio: input.bio,
           model: input.model,
           ownerGithub: input.ownerGithub,
+          endpointUrl: input.endpointUrl,
           publicKey: input.publicKey,
         })
         .returning();

@@ -1,17 +1,18 @@
 /**
  * GET/POST /api/v1/cron/health-check — agent health check cron.
  *
- * Pings each active agent's /.well-known/ai-catalog.json endpoint and
- * updates the healthStatus and lastHealthCheck fields on the agent.
+ * Pings each agent's actual endpointUrl. If no endpointUrl is provided,
+ * the agent defaults to 'unknown' status (we can't verify what we can't reach).
  *
  * Status mapping:
- *   - 200 OK             → 'online'
- *   - Connection failed   → 'offline'
+ *   - 200 OK               → 'online'
+ *   - Non-200 or timeout    → 'offline'
  *   - 3+ consecutive failures → 'stale'
+ *   - No endpointUrl        → 'unknown'
  *
- * Protected by CRON_SECRET env var (same pattern as federation-health cron).
+ * Protected by CRON_SECRET env var.
  */
-import { eq } from "drizzle-orm";
+import { eq, isNotNull, is, and, ne } from "drizzle-orm";
 import { getDb } from "../../_lib/db.js";
 import { agents } from "../../../shared/schema.js";
 import { log } from "../../_lib/log.js";
@@ -31,17 +32,16 @@ function isCronAuthorized(req: VercelRequest): boolean {
 }
 
 /**
- * Ping an agent's /.well-known/ai-catalog.json endpoint.
- * We derive the catalog URL from the agent's publisher_domain + handle.
+ * Ping an agent's actual endpoint URL. This is NOT our own server —
+ * it's the URL the agent owner provided at registration (e.g. their
+ * actual service running on their infrastructure).
  */
-async function pingAgent(publisherDomain: string, handle: string): Promise<{ ok: boolean; statusCode: number | null }> {
-  const catalogUrl = `https://${publisherDomain}/.well-known/agent-card/${handle}`;
-
+async function pingAgentUrl(url: string): Promise<{ ok: boolean; statusCode: number | null }> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
 
-    const response = await fetch(catalogUrl, {
+    const response = await fetch(url, {
       method: "GET",
       signal: controller.signal,
       headers: { "Accept": "application/json", "User-Agent": "HermesHub-HealthCheck/1.0" },
@@ -54,24 +54,12 @@ async function pingAgent(publisherDomain: string, handle: string): Promise<{ ok:
   }
 }
 
-/**
- * Determine new health status based on current status and check result.
- * If the agent was already 'offline' and fails again, it becomes 'stale'
- * (indicating 3+ consecutive failures — we use the transition to 'stale'
- * after 'offline' as a proxy for 2+ prior failures).
- */
 function computeHealthStatus(
   currentStatus: string,
   checkOk: boolean,
 ): "online" | "offline" | "stale" {
   if (checkOk) return "online";
-
-  // If already offline or stale, mark as stale (3+ consecutive failures).
-  if (currentStatus === "offline" || currentStatus === "stale") {
-    return "stale";
-  }
-
-  // First failure from online/unknown → offline.
+  if (currentStatus === "offline" || currentStatus === "stale") return "stale";
   return "offline";
 }
 
@@ -81,7 +69,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  // Accept both GET (Vercel cron) and POST (manual trigger).
   const method = (req.method ?? "").toUpperCase();
   if (method !== "GET" && method !== "POST") {
     res.status(405).json({ error: "method not allowed" });
@@ -90,21 +77,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   const db = getDb();
 
-  // Get all agents (we check all of them; could filter by subscriptionStatus='active'
-  // but for now we check all registered agents).
-  const allAgents = await db
+  // Only check agents that HAVE an endpoint URL
+  const checkableAgents = await db
     .select({
       id: agents.id,
       handle: agents.handle,
-      publisherDomain: agents.publisherDomain,
+      endpointUrl: agents.endpointUrl,
       healthStatus: agents.healthStatus,
     })
-    .from(agents);
+    .from(agents)
+    .where(isNotNull(agents.endpointUrl));
 
   const results: { id: string; handle: string; healthStatus: string; statusCode: number | null }[] = [];
 
-  for (const agent of allAgents) {
-    const { ok, statusCode } = await pingAgent(agent.publisherDomain, agent.handle);
+  for (const agent of checkableAgents) {
+    if (!agent.endpointUrl) continue;
+
+    const { ok, statusCode } = await pingAgentUrl(agent.endpointUrl);
     const newStatus = computeHealthStatus(agent.healthStatus, ok);
 
     await db
@@ -128,6 +117,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   res.status(200).json({
     checked: results.length,
+    skipped: "agents without endpointUrl are not checked",
     results,
     checkedAt: new Date().toISOString(),
   });

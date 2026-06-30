@@ -87,9 +87,8 @@ export default withHandler({
       trustScore: agent.trustScore,
       updatedAt: agent.updatedAt,
       capabilities: caps,
-      founderSlot: null,
-      stripeAccountId: null,
-      payoutsEnabled: subRows[0]?.status === "active",
+      endpointUrl: agent.endpointUrl,
+      subscriptionStatus: subRows[0]?.status ?? "inactive",
     });
 
     // Override representativeQueries with real queries from capability data.

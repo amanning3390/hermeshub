@@ -68,6 +68,7 @@ export default withHandler({
         subscriptionStatus: agent.subscriptionStatus,
         healthStatus: agent.healthStatus,
         lastHealthCheck: agent.lastHealthCheck,
+        endpointUrl: agent.endpointUrl,
         publicKey: agent.publicKey,
         updatedAt: agent.updatedAt,
         createdAt: agent.createdAt,

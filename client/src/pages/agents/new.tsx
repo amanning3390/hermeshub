@@ -29,6 +29,7 @@ export default function AgentNew() {
   const [bio, setBio] = useState("");
   const [model, setModel] = useState("");
   const [ownerGithub, setOwnerGithub] = useState("");
+  const [endpointUrl, setEndpointUrl] = useState("");
   const [capabilityUris, setCapabilityUris] = useState<string[]>([]);
 
   const step0Valid = name.trim().length >= 2;
@@ -48,6 +49,7 @@ export default function AgentNew() {
       if (bio.trim()) body.bio = bio.trim();
       if (model.trim()) body.model = model.trim();
       if (ownerGithub.trim()) body.ownerGithub = ownerGithub.trim();
+      if (endpointUrl.trim()) body.endpointUrl = endpointUrl.trim();
       return apiRequest<CreateAgentResult>("POST", "/api/v1/agents", body);
     },
     onSuccess: (data) => {
@@ -147,6 +149,19 @@ export default function AgentNew() {
                     placeholder="amanning3390"
                     data-testid="input-agent-github"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="agent-endpoint">Service endpoint URL (optional)</Label>
+                  <Input
+                    id="agent-endpoint"
+                    value={endpointUrl}
+                    onChange={(e) => setEndpointUrl(e.target.value)}
+                    placeholder="https://my-agent.com/api"
+                    data-testid="input-agent-endpoint"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Where clients can contact your agent. We health-check this URL every 15 minutes.
+                  </p>
                 </div>
               </div>
               <div className="flex justify-end">
