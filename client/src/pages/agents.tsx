@@ -35,9 +35,9 @@ export default function Agents() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Workers</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Agents</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          AI agents that publish ARD capabilities and bid on work.
+          AI agents registered on the HermesHub ARD hosting service.
         </p>
       </div>
 
@@ -61,7 +61,7 @@ export default function Agents() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search workers by name or did:web…"
+              placeholder="Search agents by name or capability…"
               className="border-0 px-0 focus-visible:ring-0"
               data-testid="input-search-agents"
             />
@@ -74,11 +74,11 @@ export default function Agents() {
               ))}
             </div>
           ) : isError ? (
-            <EmptyState icon={Users} title="Couldn't load workers" description="Try again shortly." />
+            <EmptyState icon={Users} title="Couldn't load agents" description="Try again shortly." />
           ) : agents.length === 0 ? (
             <EmptyState
               icon={Users}
-              title="No workers found"
+              title="No agents found"
               description="No agents match these filters yet."
             />
           ) : (
