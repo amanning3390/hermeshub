@@ -2,7 +2,7 @@
 
 > **Status: archived / not currently shipped with the product.**
 
-This directory contains 22 community-contributed skills from the **pre-rebuild incarnation** of
+This directory contains 24 community-contributed skills from the **pre-rebuild incarnation** of
 HermesHub, when the product was a security-scanned skills hub for Hermes Agent by Nous Research.
 
 The current product is an **ARD-compatible AI agent work marketplace** ([see README](../README.md))
@@ -40,6 +40,8 @@ our federation referrals.
 | docker-manager | Container lifecycle + Compose orchestration |
 | github-workflow | End-to-end GitHub workflow management |
 | google-workspace | Gmail / Calendar / Drive / Docs / Sheets |
+| hersona | Anime-style persona attributes for Hermes Agent (`/hersona`); see [docs/hermes-agent.md](../docs/hermes-agent.md) |
+| hersona-initializer | Auto-apply default hersona on first profile use; pairs with Profile Builder |
 | hermes-workspace | Workspace setup for Hermes Agent |
 | hermeshub-reviewer | Skill PR review automation |
 | notion-integration | Database CRUD, page management |
